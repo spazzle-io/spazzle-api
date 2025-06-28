@@ -21,7 +21,7 @@ else
 	@echo "Running tests for all modules"
 	@for mod in $(modules); do \
 		echo "Testing $$mod..."; \
-		go test -v -race -cover -coverprofile=coverage.out -covermode=atomic -short=$(short) ./$$mod/...; \
+		go test -v -race -cover -coverprofile=coverage.out -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
 	done
 endif
 
