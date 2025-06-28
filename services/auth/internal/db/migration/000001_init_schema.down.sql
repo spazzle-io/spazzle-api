@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS credentials;
+DROP TYPE IF EXISTS "role";
