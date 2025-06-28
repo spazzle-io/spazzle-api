@@ -1,0 +1,12 @@
+version: "2"
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+linters:
+  enable:
+    - dupl
+    - goconst
+    - gocritic
+    - gosec
+    - misspell
