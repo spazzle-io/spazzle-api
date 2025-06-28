@@ -3,9 +3,10 @@ package util
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v7"
 	"strings"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
