@@ -7,6 +7,12 @@ repos:
       - id: trailing-whitespace
       - id: check-added-large-files
         exclude: 'docs/'
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.2.0
+    hooks:
+      - id: golangci-lint-full
+        language: golang
+        language_version: 1.24.4
 
 ci:
   autofix_commit_msg: |

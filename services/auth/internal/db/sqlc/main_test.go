@@ -2,12 +2,13 @@ package db
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/util"
-	"os"
-	"testing"
 )
 
 var testStore Store

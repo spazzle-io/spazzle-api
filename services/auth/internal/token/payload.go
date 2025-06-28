@@ -2,12 +2,15 @@ package token
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-type Role string
-type Type string
+type (
+	Role string
+	Type string
+)
 
 var ErrExpiredToken = errors.New("token is expired")
 
@@ -36,7 +39,8 @@ func NewPayload(
 	walletAddress string,
 	role Role,
 	tokenType Type,
-	duration time.Duration) (*Payload, error) {
+	duration time.Duration,
+) (*Payload, error) {
 	tokenId, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err

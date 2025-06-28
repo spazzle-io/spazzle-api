@@ -1,18 +1,20 @@
 package token
 
 import (
+	"testing"
+	"time"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func createPasetoToken(
 	t *testing.T, role Role,
 	tokenType Type,
-	duration time.Duration) (*commonUtil.EthereumWallet, Maker, string) {
+	duration time.Duration,
+) (*commonUtil.EthereumWallet, Maker, string) {
 	ethereumWallet, err := commonUtil.NewEthereumWallet()
 	require.NoError(t, err)
 	require.NotEmpty(t, ethereumWallet)

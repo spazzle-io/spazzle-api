@@ -3,13 +3,14 @@ package db
 import (
 	"context"
 	"crypto/rand"
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
 	"github.com/stretchr/testify/require"
-	"math/big"
-	"testing"
-	"time"
 )
 
 func createTestSession(t *testing.T, userId uuid.UUID, walletAddress string) Session {

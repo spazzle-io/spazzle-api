@@ -2,10 +2,11 @@ package db
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func createTestCredential(t *testing.T) (uuid.UUID, *commonUtil.EthereumWallet, Credential) {
