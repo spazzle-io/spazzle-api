@@ -21,6 +21,7 @@ updates:
   - package-ecosystem: "gomod"
     directories:
       - "services/*"
+      - "libs/*"
     schedule:
       interval: "weekly"
     target-branch: main

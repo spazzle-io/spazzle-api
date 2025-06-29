@@ -1,2 +1,7 @@
 .idea/
+
 *.out
+*.log
+
+*.env
+!*.development.env

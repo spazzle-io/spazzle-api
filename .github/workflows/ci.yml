@@ -12,6 +12,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
       - name: set-up-go
@@ -19,8 +33,22 @@ jobs:
         with:
           go-version: '1.24'
 
+      - name: set-up-service-databases
+        run: |
+          sudo apt-get install -y postgresql-client
+          ./scripts/init-db-ci.sh
+
+      - name: install-golang-migrate
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/bin/
+          which migrate
+
+      - name: run-db-migrations
+        run: make migrate_up
+
       - name: run-tests
-        run: make test SHORT=false
+        run: make test short=false
 
       - name: upload-coverage-to-codecov
         uses: codecov/codecov-action@v5
