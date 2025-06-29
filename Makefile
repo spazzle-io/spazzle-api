@@ -20,12 +20,14 @@ endef
 test:
 ifdef module
 	@echo "Running tests for module: $(module)"
-	go test -v -race -cover -coverprofile=coverage.out -covermode=atomic -short=$(short) ./$(module)/...
+	@coverprofile_base_name=$(subst /,-,$(module))-coverage.out; \
+	go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$(module)/...
 else
 	@echo "Running tests for all modules"
 	@for mod in $(modules); do \
 		echo "Testing $$mod..."; \
-		go test -v -race -cover -coverprofile=coverage.out -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
+		coverprofile_base_name=$$(echo $$mod | tr '/' '-')-coverage.out; \
+		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
 	done
 endif
 
