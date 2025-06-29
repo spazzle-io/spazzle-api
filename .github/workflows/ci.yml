@@ -34,22 +34,19 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: create-databases
+      - name: set-up-service-databases
         run: |
           sudo apt-get install -y postgresql-client
-          
-          # Wait for postgres to be ready
-          for i in {1..10}; do
-            if pg_isready -h localhost -p 5432 -U root; then break; fi
-            echo "Waiting for PostgreSQL..." && sleep 2
-          done
+          ./scripts/init-db.sh
 
-          # Create a DB for each subdir in services/*
-          for dir in services/*/; do
-            db=$(basename "$dir")
-            echo "Creating database: $db"
-            PGPASSWORD=password psql -h localhost -U root -d postgres -c "CREATE DATABASE \"$db\";"
-          done
+      - name: install-golang-migrate
+        run: |
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
+          sudo mv migrate /usr/bin/
+          which migrate
+
+      - name: run-db-migrations
+        run: make migrate_up
 
       - name: run-tests
         run: make test short=false

@@ -11,7 +11,11 @@ DB_PORT := 5432
 DB_PASS := password
 DATABASE_NAME := $(notdir $(module)) # Set the DB name as the directory name without the path prefix e.g "auth" for module: "services/auth"
 POSTGRES_VERSION := 17
-DATABASE_URL := "postgresql://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(strip $(DATABASE_NAME))?sslmode=disable"
+
+define compute-db-url
+	db_name=$$(basename $(1)); \
+	db_url="postgresql://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$$db_name?sslmode=disable"
+endef
 
 test:
 ifdef module
@@ -41,17 +45,49 @@ migrate_create:
 	migrate create -ext sql -dir ./$(module)/internal/db/migration -seq $(name)
 
 migrate_up:
-ifdef n
-	migrate -path ./$(module)/internal/db/migration -database $(DATABASE_URL) -verbose up $(n)
+ifdef module
+	@echo "Running migrate_up for module: $(module)"
+	@if [ -n "$(n)" ]; then \
+		$(call compute-db-url,$$module); \
+		migrate -path ./$(module)/internal/db/migration -database $$db_url -verbose up $(n); \
+	else \
+		$(call compute-db-url,$$module); \
+		migrate -path ./$(module)/internal/db/migration -database $$db_url -verbose up; \
+	fi
 else
-	migrate -path ./$(module)/internal/db/migration -database $(DATABASE_URL) -verbose up
+	@echo "Running migrate_up for all modules"
+	@for mod in $(modules); do \
+		if echo "$$mod" | grep -q '^services/'; then \
+			echo "Migrating up $$mod..."; \
+				$(call compute-db-url,$$mod); \
+				migrate -path ./$$mod/internal/db/migration -database $$db_url -verbose up || exit 1; \
+		else \
+			echo "Skipping $$mod (not a service)"; \
+		fi \
+	done
 endif
 
 migrate_down:
-ifdef n
-	migrate -path ./$(module)/internal/db/migration -database $(DATABASE_URL) -verbose down $(n)
+ifdef module
+	@echo "Running migrate_down for module: $(module)"
+	@if [ -n "$(n)" ]; then \
+		$(call compute-db-url,$$module); \
+		migrate -path ./$(module)/internal/db/migration -database $$db_url -verbose down $(n); \
+	else \
+		$(call compute-db-url,$$module); \
+		migrate -path ./$(module)/internal/db/migration -database $$db_url -verbose down; \
+	fi
 else
-	migrate -path ./$(module)/internal/db/migration -database $(DATABASE_URL) -verbose down
+	@echo "Running migrate_down for all modules"
+	@for mod in $(modules); do \
+		if echo "$$mod" | grep -q '^services/'; then \
+			echo "Migrating down $$mod..."; \
+				$(call compute-db-url,$$mod); \
+				migrate -path ./$$mod/internal/db/migration -database $$db_url -verbose down || exit 1; \
+		else \
+			echo "Skipping $$mod (not a service)"; \
+		fi \
+	done
 endif
 
 sqlc:
