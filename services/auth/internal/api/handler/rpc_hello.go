@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth"
 )
 

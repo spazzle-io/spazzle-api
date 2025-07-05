@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/auth/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"

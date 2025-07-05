@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"errors"
+	"net"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	_ "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rakyll/statik/fs"
@@ -22,10 +26,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
-	"net"
-	"net/http"
-	"os"
-	"time"
 )
 
 func main() {

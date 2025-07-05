@@ -9,7 +9,7 @@ import (
 
 type Handler struct {
 	pb.UnimplementedAuthServer
-	
+
 	config     util.Config
 	store      db.Store
 	tokenMaker token.Maker
