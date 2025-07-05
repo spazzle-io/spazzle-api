@@ -60,9 +60,13 @@ else
 	@echo "Running migrate_up for all modules"
 	@for mod in $(modules); do \
 		if echo "$$mod" | grep -q '^services/'; then \
-			echo "Migrating up $$mod..."; \
+			if [ -d "./$$mod/internal/db/migration" ]; then \
+				echo "Migrating up $$mod..."; \
 				$(call compute-db-url,$$mod); \
 				migrate -path ./$$mod/internal/db/migration -database $$db_url -verbose up || exit 1; \
+			else \
+				echo "Skipping $$mod (no migration directory)"; \
+			fi \
 		else \
 			echo "Skipping $$mod (not a service)"; \
 		fi \
