@@ -1,0 +1,43 @@
+Project auth_service {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Auth Service Database
+  '''
+}
+
+enum role {
+    admin
+    user
+}
+
+Table credentials {
+  id UUID [default: `gen_random_uuid()`, pk]
+  user_id UUID [unique, not null]
+  wallet_address varchar [unique, not null]
+  role role [not null, default: 'user']
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    user_id
+    wallet_address
+  }
+}
+
+Table sessions {
+  id UUID [pk]
+  user_id UUID [not null, ref: > credentials.user_id]
+  wallet_address varchar [not null, ref: > credentials.wallet_address]
+  refresh_token varchar [unique, not null]
+  user_agent varchar [not null]
+  client_ip varchar [not null]
+  is_revoked boolean [not null, default: false]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  Indexes {
+    user_id
+    wallet_address
+    refresh_token
+    (user_id, is_revoked)
+  }
+}
