@@ -54,5 +54,4 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
-          gcov_ignore: './libs/common/docs,./services/proto'
           token: ${{ secrets.CODECOV_TOKEN }}
