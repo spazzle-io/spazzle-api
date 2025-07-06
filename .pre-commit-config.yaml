@@ -3,8 +3,11 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-yaml
+        exclude: '(^|/)docs/.*'
       - id: end-of-file-fixer
+        exclude: '(^|/)docs/.*'
       - id: trailing-whitespace
+        exclude: '(^|/)docs/.*'
       - id: check-added-large-files
         exclude: '(^|/)docs/.*'
 
