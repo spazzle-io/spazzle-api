@@ -13,4 +13,3 @@ coverage:
 ignore:
   - "**/docs/**/*"
   - "services/proto"
-  - "libs/common/docs"
