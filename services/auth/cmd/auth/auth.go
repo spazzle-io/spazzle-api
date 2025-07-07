@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"golang.org/x/sync/errgroup"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -20,6 +25,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+var interruptSignals = []os.Signal{
+	os.Interrupt,
+	syscall.SIGTERM,
+	syscall.SIGINT,
+}
+
 func main() {
 	config, err := commonConfig.LoadConfig[util.Config](".", ".development")
 	if err != nil {
@@ -30,23 +41,36 @@ func main() {
 
 	commonConfig.RunDBMigration(config.DBMigrationURL, config.DBSource)
 
-	connPool, err := pgxpool.New(context.Background(), config.DBSource)
+	ctx, stop := signal.NotifyContext(context.Background(), interruptSignals...)
+
+	connPool, err := pgxpool.New(ctx, config.DBSource)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not connect to database")
 	}
 	store := db.NewStore(connPool)
 
-	go runGRPCServer(config, store)
-	runGatewayServer(config, store)
+	waitGroup, ctx := errgroup.WithContext(ctx)
+
+	runGRPCServer(ctx, waitGroup, config, store)
+	runGatewayServer(ctx, waitGroup, config, store)
+
+	err = waitGroup.Wait()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not wait for server shutdown")
+	}
+
+	stop()
 }
 
-func runGRPCServer(config util.Config, store db.Store) {
+func runGRPCServer(ctx context.Context, waitGroup *errgroup.Group, config util.Config, store db.Store) {
 	s, err := server.New(config, store)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
 	commonServer.RunGRPCServer(
+		ctx,
+		waitGroup,
 		config.GRPCServerAddress,
 		[]commonServer.GrpcMiddlewareProvider{},
 		[]commonServer.GrpcServiceRegistrar{
@@ -57,13 +81,15 @@ func runGRPCServer(config util.Config, store db.Store) {
 	)
 }
 
-func runGatewayServer(config util.Config, store db.Store) {
+func runGatewayServer(ctx context.Context, waitGroup *errgroup.Group, config util.Config, store db.Store) {
 	s, err := server.New(config, store)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
 	commonServer.RunGatewayServer(
+		ctx,
+		waitGroup,
 		config.HTTPServerAddress,
 		config.IsDevelopmentEnvironment(),
 		[]commonServer.GatewayRouteRegistrar{

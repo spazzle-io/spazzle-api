@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rakyll/statik/fs"
@@ -113,6 +116,8 @@ Example usage:
 	)
 */
 func RunGRPCServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
 	address string,
 	middlewareProviders []GrpcMiddlewareProvider,
 	serviceRegistrars []GrpcServiceRegistrar,
@@ -135,10 +140,29 @@ func RunGRPCServer(
 		log.Fatal().Err(err).Msg("failed to create gRPC listener")
 	}
 
-	log.Info().Msgf("started gRPC server at %s", listener.Addr().String())
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatal().Err(err).Msg("failed to serve gRPC")
-	}
+	waitGroup.Go(func() error {
+		log.Info().Msgf("started gRPC server at %s", listener.Addr().String())
+
+		if err := grpcServer.Serve(listener); err != nil {
+			if errors.Is(err, grpc.ErrServerStopped) {
+				return nil
+			}
+			log.Error().Err(err).Msg("failed to serve gRPC")
+			return err
+		}
+
+		return nil
+	})
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("shutting down gRPC server")
+
+		grpcServer.GracefulStop()
+		log.Info().Msg("gRPC server stopped")
+
+		return nil
+	})
 }
 
 /*
@@ -169,6 +193,8 @@ Example usage:
 	)
 */
 func RunGatewayServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
 	address string,
 	isDevelopmentEnvironment bool,
 	routeRegistrars []GatewayRouteRegistrar,
@@ -184,8 +210,6 @@ func RunGatewayServer(
 			DiscardUnknown: true,
 		},
 	})
-
-	ctx, cancel := context.WithCancel(context.Background())
 
 	grpcMux := runtime.NewServeMux(opt)
 
@@ -210,22 +234,36 @@ func RunGatewayServer(
 
 	srv := &http.Server{
 		Handler:      finalHandler,
+		Addr:         address,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to start HTTP listener")
-	}
+	waitGroup.Go(func() error {
+		log.Info().Msgf("started HTTP gateway server at %s", srv.Addr)
+		if err := srv.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			log.Error().Err(err).Msg("failed to serve HTTP")
+			return err
+		}
 
-	log.Info().Msgf("started HTTP gateway server at %s", listener.Addr().String())
-	if err := srv.Serve(listener); err != nil {
-		log.Fatal().Err(err).Msg("HTTP gateway server crashed")
-	}
+		return nil
+	})
 
-	cancel()
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("shutting down HTTP server")
+
+		if err := srv.Shutdown(context.Background()); err != nil {
+			log.Error().Err(err).Msg("failed to shutdown HTTP server")
+		}
+
+		log.Info().Msg("HTTP server stopped")
+		return nil
+	})
 }
 
 func serveSwagger(mux *http.ServeMux) *http.ServeMux {
