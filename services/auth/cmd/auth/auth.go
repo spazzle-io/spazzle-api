@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -16,7 +18,6 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/util"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth"
 	"google.golang.org/grpc"
-	"net/http"
 )
 
 func main() {

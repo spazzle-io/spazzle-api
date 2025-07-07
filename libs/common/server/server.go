@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"time"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
-	"net"
-	"net/http"
-	"time"
 )
 
 /*
@@ -185,7 +186,6 @@ func RunGatewayServer(
 	})
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	grpcMux := runtime.NewServeMux(opt)
 
@@ -224,6 +224,8 @@ func RunGatewayServer(
 	if err := srv.Serve(listener); err != nil {
 		log.Fatal().Err(err).Msg("HTTP gateway server crashed")
 	}
+
+	cancel()
 }
 
 func serveSwagger(mux *http.ServeMux) *http.ServeMux {

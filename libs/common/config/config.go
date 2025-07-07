@@ -2,11 +2,12 @@ package config
 
 import (
 	"errors"
+	"os"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"os"
 )
 
 // LoadConfig loads configuration from a file and environment variables into a generic config struct.
