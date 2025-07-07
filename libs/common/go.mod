@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.3.0
-	github.com/ethereum/go-ethereum v1.16.0
+	github.com/ethereum/go-ethereum v1.16.1
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/rakyll/statik v0.1.7
