@@ -92,6 +92,7 @@ func runGatewayServer(ctx context.Context, waitGroup *errgroup.Group, config uti
 		waitGroup,
 		config.HTTPServerAddress,
 		config.IsDevelopmentEnvironment(),
+		config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
 				return pb.RegisterAuthHandlerServer(ctx, mux, s)

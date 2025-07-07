@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/cors"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -197,6 +199,7 @@ func RunGatewayServer(
 	waitGroup *errgroup.Group,
 	address string,
 	isDevelopmentEnvironment bool,
+	allowedOrigins []string,
 	routeRegistrars []GatewayRouteRegistrar,
 	httpRouteRegistrars []HttpRouteRegistrar,
 	middlewareBuilder HttpMiddlewareBuilder,
@@ -230,10 +233,27 @@ func RunGatewayServer(
 		mux = serveSwagger(mux)
 	}
 
-	finalHandler := middlewareBuilder(mux)
+	handler := middlewareBuilder(mux)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: allowedOrigins,
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+		},
+		AllowedHeaders: []string{
+			"Authorization",
+			"Content-Type",
+		},
+		AllowCredentials: true,
+	})
+	handler = c.Handler(handler)
 
 	srv := &http.Server{
-		Handler:      finalHandler,
+		Handler:      handler,
 		Addr:         address,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
