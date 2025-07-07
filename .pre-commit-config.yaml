@@ -3,10 +3,22 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-yaml
+        exclude: '(^|/)docs/.*'
       - id: end-of-file-fixer
+        exclude: '(^|/)docs/.*'
       - id: trailing-whitespace
+        exclude: '(^|/)docs/.*'
       - id: check-added-large-files
-        exclude: 'docs/'
+        exclude: '(^|/)docs/.*'
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.2.1
+    hooks:
+      - id: golangci-lint-full
+        language: golang
+        language_version: 1.24.4
+        args: ["--fix"]
+        entry: ./scripts/golangci-lint.sh
+        pass_filenames: false
 
 ci:
   autofix_commit_msg: |
@@ -17,3 +29,5 @@ ci:
   autoupdate_commit_msg: 'chore(pre-commit.ci): pre-commit autoupdate'
   autoupdate_schedule: weekly
   submodules: false
+  skip:
+    - golangci-lint-full

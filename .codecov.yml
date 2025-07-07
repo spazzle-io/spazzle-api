@@ -10,3 +10,6 @@ coverage:
         target: 0%
         threshold: 50%
         base: auto
+ignore:
+  - "**/docs/**/*"
+  - "services/proto"
