@@ -14,7 +14,8 @@ repos:
     rev: v2.2.1
     hooks:
       - id: golangci-lint-full
-        language: system
+        language: golang
+        language_version: 1.24.4
         args: [ "--fix" ]
         entry: ./scripts/golangci-lint.sh
         pass_filenames: false
