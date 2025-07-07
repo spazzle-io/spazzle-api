@@ -10,6 +10,14 @@ repos:
         exclude: '(^|/)docs/.*'
       - id: check-added-large-files
         exclude: '(^|/)docs/.*'
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.2.1
+    hooks:
+      - id: golangci-lint-full
+        language: system
+        args: [ "--fix" ]
+        entry: ./scripts/golangci-lint.sh
+        pass_filenames: false
 
 ci:
   autofix_commit_msg: |
