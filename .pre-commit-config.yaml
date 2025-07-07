@@ -11,10 +11,11 @@ repos:
       - id: check-added-large-files
         exclude: '(^|/)docs/.*'
   - repo: https://github.com/golangci/golangci-lint
-    rev: v2.2.1
+    rev: v1.56.2 # using an older version to stay within pre-commit.ci's size limits
     hooks:
       - id: golangci-lint-full
-        language: system
+        language: golang
+        language_version: 1.21.5 # using an older version to stay within pre-commit.ci's size limits
         args: ["--fix"]
         entry: ./scripts/golangci-lint.sh
         pass_filenames: false
