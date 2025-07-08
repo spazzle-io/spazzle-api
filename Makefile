@@ -11,6 +11,7 @@ DB_PORT := 5432
 DB_PASS := password
 DATABASE_NAME := $(notdir $(module)) # Set the DB name as the directory name without the path prefix e.g "auth" for module: "services/auth"
 POSTGRES_VERSION := 17
+REDIS_VERSION := 8
 
 define compute-db-url
 	db_name=$$(basename $(1)); \
@@ -30,6 +31,13 @@ else
 		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
 	done
 endif
+
+tidy:
+	@echo "Running go mod tidy for all modules"
+	@for mod in $(modules); do \
+		echo "Tidying up $$mod..."; \
+		( cd ./$$mod && go mod tidy ) || exit 1; \
+	done
 
 db_schema:
 	dbml2sql --postgres -o ./$(module)/docs/db_schema.sql ./$(module)/docs/db.dbml
@@ -96,6 +104,9 @@ else
 	done
 endif
 
+redis:
+	docker run --name redis -p 6379:6379 -d redis:$(REDIS_VERSION)-alpine
+
 sqlc:
 	cd ./$(module) && sqlc generate
 
@@ -114,4 +125,4 @@ proto:
 	statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
 	cd ./services/proto && go install tool && go mod tidy
 
-.PHONY: test db_schema postgres create_db drop_db migrate_create migrate_up migrate_down sqlc proto
+.PHONY: test tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis sqlc proto

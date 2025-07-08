@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/libs/common/middleware"
+
 	"github.com/rs/cors"
 
 	"golang.org/x/sync/errgroup"
@@ -124,7 +126,11 @@ func RunGRPCServer(
 	middlewareProviders []GrpcMiddlewareProvider,
 	serviceRegistrars []GrpcServiceRegistrar,
 ) {
-	var interceptors []grpc.UnaryServerInterceptor
+	interceptors := []grpc.UnaryServerInterceptor{
+		middleware.GrpcExtractMetadata,
+		middleware.GrpcRateLimiter,
+		middleware.GrpcLogger,
+	}
 
 	for _, provider := range middlewareProviders {
 		interceptors = append(interceptors, provider())
@@ -233,7 +239,13 @@ func RunGatewayServer(
 		mux = serveSwagger(mux)
 	}
 
-	handler := middlewareBuilder(mux)
+	handler := middleware.HTTPExtractMetadata(
+		middleware.HTTPRateLimiter(
+			middleware.HTTPLogger(
+				middlewareBuilder(mux),
+			),
+		),
+	)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
@@ -244,10 +256,7 @@ func RunGatewayServer(
 			http.MethodPatch,
 			http.MethodDelete,
 		},
-		AllowedHeaders: []string{
-			"Authorization",
-			"Content-Type",
-		},
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
 	handler = c.Handler(handler)

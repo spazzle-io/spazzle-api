@@ -13,6 +13,7 @@ require (
 	github.com/spazzle-io/spazzle-api/libs/common v0.0.0-00010101000000-000000000000
 	github.com/spazzle-io/spazzle-api/services/proto v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.10.0
+	github.com/ulule/limiter/v3 v3.11.2
 	golang.org/x/crypto v0.39.0
 	golang.org/x/sync v0.15.0
 	google.golang.org/grpc v1.73.0
@@ -23,11 +24,13 @@ require (
 	github.com/aead/chacha20poly1305 v0.0.0-20201124145622-1a5aba2a8b29 // indirect
 	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/consensys/gnark-crypto v0.18.0 // indirect
 	github.com/crate-crypto/go-eth-kzg v1.3.0 // indirect
 	github.com/crate-crypto/go-ipa v0.0.0-20240724233137-53bbb0ceb27a // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.0 // indirect
 	github.com/ethereum/go-ethereum v1.16.0 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
@@ -47,6 +50,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
+	github.com/redis/go-redis/v9 v9.0.4 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
