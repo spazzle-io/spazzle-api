@@ -109,13 +109,20 @@ var getLimiterContext = func(ctx context.Context, l *limiter.Limiter, key string
 	return l.Get(ctx, key)
 }
 
+func shouldRateLimit(ctx context.Context) bool {
+	_, ok := ctx.Value(AuthenticatedService).(string)
+	return !ok
+}
+
 func GrpcRateLimiter(
 	ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
-	// TODO: Skip rate limits for authenticated services
+	if !shouldRateLimit(ctx) {
+		return handler(ctx, req)
+	}
 
 	endpoint := info.FullMethod
 	logger := log.With().Str("endpoint", endpoint).Logger()
@@ -182,7 +189,7 @@ func httpError(res http.ResponseWriter, grpcError error, httpStatusCode int) {
 		}
 	}
 
-	res.Header().Set(ContentTypeHeader, applicationJSONValue)
+	res.Header().Set(contentTypeHeader, applicationJSONValue)
 
 	res.WriteHeader(httpStatusCode)
 	err := json.NewEncoder(res).Encode(errorResponse)
@@ -194,7 +201,10 @@ func httpError(res http.ResponseWriter, grpcError error, httpStatusCode int) {
 
 func HTTPRateLimiter(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		// TODO: Skip rate limits for authenticated services
+		if !shouldRateLimit(req.Context()) {
+			handler.ServeHTTP(res, req)
+			return
+		}
 
 		endpoint := req.URL.Path
 		logger := log.With().Str("endpoint", endpoint).Logger()

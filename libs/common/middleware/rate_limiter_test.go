@@ -359,7 +359,7 @@ func TestHTTPRateLimiter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			req.Header.Set(XForwardedForHeader, tc.clientIP)
+			req.Header.Set(xForwardedForHeader, tc.clientIP)
 
 			res := httptest.NewRecorder()
 

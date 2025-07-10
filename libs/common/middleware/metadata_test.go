@@ -19,21 +19,27 @@ func TestGrpcExtractMetadata(t *testing.T) {
 	}{
 		{
 			name:        "set user-agent header",
-			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(UserAgentHeader, "testUserAgent")),
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(userAgentHeader, "testUserAgent")),
 			ctxKey:      UserAgent,
 			expectedCtx: context.WithValue(context.Background(), UserAgent, "testUserAgent"),
 		},
 		{
 			name:        "set grpcgateway-user-agent header",
-			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(GrpcGatewayUserAgentHeader, "testGrpcGatewayUserAgent")),
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(grpcGatewayUserAgentHeader, "testGrpcGatewayUserAgent")),
 			ctxKey:      UserAgent,
 			expectedCtx: context.WithValue(context.Background(), UserAgent, "testGrpcGatewayUserAgent"),
 		},
 		{
 			name:        "set x-forwarded-for header",
-			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(XForwardedForHeader, "testClientIP")),
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(xForwardedForHeader, "testClientIP")),
 			ctxKey:      ClientIP,
 			expectedCtx: context.WithValue(context.Background(), ClientIP, "testClientIP"),
+		},
+		{
+			name:        "set x-service-authentication header",
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(xServiceAuthenticationHeader, "some service auth header")),
+			ctxKey:      ServiceAuthentication,
+			expectedCtx: context.WithValue(context.Background(), ServiceAuthentication, "some service auth header"),
 		},
 	}
 
@@ -61,16 +67,23 @@ func TestHTTPExtractMetadata(t *testing.T) {
 		{
 			name: "set user-agent header",
 			headers: map[string]string{
-				UserAgentHeader: "testUserAgent",
+				userAgentHeader: "testUserAgent",
 			},
 			expectedUserAgent: "testUserAgent",
 		},
 		{
 			name: "set x-forwarded-for header",
 			headers: map[string]string{
-				XForwardedForHeader: "testClientIP",
+				xForwardedForHeader: "testClientIP",
 			},
 			expectedClientIP: "testClientIP",
+		},
+		{
+			name: "set x-service-authentication header",
+			headers: map[string]string{
+				xServiceAuthenticationHeader: "some service auth header",
+			},
+			expectedServiceAuthentication: "some service auth header",
 		},
 	}
 
