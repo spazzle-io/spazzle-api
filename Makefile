@@ -107,22 +107,36 @@ endif
 redis:
 	docker run --name redis -p 6379:6379 -d redis:$(REDIS_VERSION)-alpine
 
+mock:
+	@sh -c " \
+		if [ -f ./$(module)/Makefile ]; then \
+			if grep -qE '^[^#]*\<mock\>[: ]' ./$(module)/Makefile; then \
+				echo 'Running make mock in $(module)'; \
+				make -C ./$(module) mock; \
+			else \
+				echo 'mock target not found in $(module)/Makefile'; \
+			fi; \
+		else \
+			echo 'Makefile not found in $(module)'; \
+		fi"
+
 sqlc:
 	cd ./$(module) && sqlc generate
+	@$(MAKE) mock
 
 server:
 	cd ./$(module) && go run ./cmd/$(notdir $(module))
 
 proto:
-	rm -f ./services/proto/$(notdir $(module))/*.go
-	rm -f ./libs/common/docs/swagger/$(notdir $(module)).swagger.json
-	rm -rf ./libs/common/docs/statik
-	protoc --proto_path=./$(module)/api/proto --go_out=./services/proto/$(notdir $(module)) --go_opt=paths=source_relative \
+	@rm -f ./services/proto/$(notdir $(module))/*.go
+	@rm -f ./libs/common/docs/swagger/$(notdir $(module)).swagger.json
+	@rm -rf ./libs/common/docs/statik
+	@protoc --proto_path=./$(module)/api/proto --go_out=./services/proto/$(notdir $(module)) --go_opt=paths=source_relative \
 	--go-grpc_out=./services/proto/$(notdir $(module)) --go-grpc_opt=paths=source_relative \
 	--grpc-gateway_out=./services/proto/$(notdir $(module)) --grpc-gateway_opt=paths=source_relative \
 	--openapiv2_out=./libs/common/docs/swagger --openapiv2_opt=allow_merge=true,merge_file_name=$(notdir $(module)) \
 	./$(module)/api/proto/*.proto
-	statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
-	cd ./services/proto && go install tool && go mod tidy
+	@statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
+	@cd ./services/proto && go install tool && go mod tidy
 
-.PHONY: test tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis sqlc proto
+.PHONY: test tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc proto

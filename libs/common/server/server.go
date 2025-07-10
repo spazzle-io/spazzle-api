@@ -126,15 +126,14 @@ func RunGRPCServer(
 	middlewareProviders []GrpcMiddlewareProvider,
 	serviceRegistrars []GrpcServiceRegistrar,
 ) {
-	interceptors := []grpc.UnaryServerInterceptor{
-		middleware.GrpcExtractMetadata,
-		middleware.GrpcRateLimiter,
-		middleware.GrpcLogger,
-	}
+	interceptors := []grpc.UnaryServerInterceptor{middleware.GrpcExtractMetadata}
 
 	for _, provider := range middlewareProviders {
 		interceptors = append(interceptors, provider())
 	}
+
+	interceptors = append(interceptors, middleware.GrpcRateLimiter)
+	interceptors = append(interceptors, middleware.GrpcLogger)
 
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors...))
 
@@ -240,9 +239,9 @@ func RunGatewayServer(
 	}
 
 	handler := middleware.HTTPExtractMetadata(
-		middleware.HTTPRateLimiter(
-			middleware.HTTPLogger(
-				middlewareBuilder(mux),
+		middlewareBuilder(
+			middleware.HTTPRateLimiter(
+				middleware.HTTPLogger(mux),
 			),
 		),
 	)

@@ -7,6 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
+
 	"golang.org/x/sync/errgroup"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -41,7 +44,7 @@ func main() {
 
 	commonConfig.RunDBMigration(config.DBMigrationURL, config.DBSource)
 
-	ctx, stop := signal.NotifyContext(context.Background(), interruptSignals...)
+	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
 
 	connPool, err := pgxpool.New(ctx, config.DBSource)
 	if err != nil {
@@ -49,21 +52,37 @@ func main() {
 	}
 	store := db.NewStore(connPool)
 
+	redisCache, err := commonCache.NewRedisCache(config.RedisConnURL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create redis cache")
+	}
+
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
-	runGRPCServer(ctx, waitGroup, config, store)
-	runGatewayServer(ctx, waitGroup, config, store)
+	runGRPCServer(ctx, waitGroup, config, store, redisCache)
+	runGatewayServer(ctx, waitGroup, config, store, redisCache)
 
 	err = waitGroup.Wait()
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not wait for server shutdown")
 	}
 
-	stop()
+	stopInterruptCtx()
+
+	err = redisCache.Close()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not close redis cache")
+	}
 }
 
-func runGRPCServer(ctx context.Context, waitGroup *errgroup.Group, config util.Config, store db.Store) {
-	s, err := server.New(config, store)
+func runGRPCServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	config util.Config,
+	store db.Store,
+	cache commonCache.Cache,
+) {
+	s, err := server.New(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
@@ -72,7 +91,14 @@ func runGRPCServer(ctx context.Context, waitGroup *errgroup.Group, config util.C
 		ctx,
 		waitGroup,
 		config.GRPCServerAddress,
-		[]commonServer.GrpcMiddlewareProvider{},
+		[]commonServer.GrpcMiddlewareProvider{
+			func() grpc.UnaryServerInterceptor {
+				config := &commonMiddleware.AuthenticateServiceConfig{
+					Cache: cache,
+				}
+				return config.AuthenticateServiceGrpc
+			},
+		},
 		[]commonServer.GrpcServiceRegistrar{
 			func(grpcServer *grpc.Server) {
 				pb.RegisterAuthServer(grpcServer, s)
@@ -81,8 +107,14 @@ func runGRPCServer(ctx context.Context, waitGroup *errgroup.Group, config util.C
 	)
 }
 
-func runGatewayServer(ctx context.Context, waitGroup *errgroup.Group, config util.Config, store db.Store) {
-	s, err := server.New(config, store)
+func runGatewayServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	config util.Config,
+	store db.Store,
+	cache commonCache.Cache,
+) {
+	s, err := server.New(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
@@ -100,7 +132,10 @@ func runGatewayServer(ctx context.Context, waitGroup *errgroup.Group, config uti
 		},
 		[]commonServer.HttpRouteRegistrar{},
 		func(handler http.Handler) http.Handler {
-			return handler
+			config := &commonMiddleware.AuthenticateServiceConfig{
+				Cache: cache,
+			}
+			return commonMiddleware.AuthenticateServiceHTTP(handler, config)
 		},
 	)
 }

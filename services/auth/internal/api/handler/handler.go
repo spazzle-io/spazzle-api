@@ -3,6 +3,8 @@ package handler
 import (
 	"time"
 
+	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	db "github.com/spazzle-io/spazzle-api/services/auth/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
@@ -15,13 +17,15 @@ type Handler struct {
 
 	config     util.Config
 	store      db.Store
+	cache      commonCache.Cache
 	tokenMaker token.Maker
 }
 
-func New(config util.Config, store db.Store, tokenMaker token.Maker) *Handler {
+func New(config util.Config, store db.Store, cache commonCache.Cache, tokenMaker token.Maker) *Handler {
 	return &Handler{
 		config:     config,
 		store:      store,
+		cache:      cache,
 		tokenMaker: tokenMaker,
 	}
 }

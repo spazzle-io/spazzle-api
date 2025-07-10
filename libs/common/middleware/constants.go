@@ -2,14 +2,15 @@ package middleware
 
 // Headers
 const (
-	UserAgentHeader            = "user-agent"
-	ContentTypeHeader          = "Content-Type"
-	applicationJSONValue       = "application/json"
-	XForwardedForHeader        = "x-forwarded-for"
-	GrpcGatewayUserAgentHeader = "grpcgateway-user-agent"
-	xRateLimitLimitHeader      = "x-ratelimit-limit"
-	xRateLimitRemainingHeader  = "x-ratelimit-remaining"
-	xRateLimitResetHeader      = "x-ratelimit-reset"
+	userAgentHeader              = "user-agent"
+	contentTypeHeader            = "Content-Type"
+	applicationJSONValue         = "application/json"
+	xForwardedForHeader          = "x-forwarded-for"
+	grpcGatewayUserAgentHeader   = "grpcgateway-user-agent"
+	xServiceAuthenticationHeader = "x-service-authentication"
+	xRateLimitLimitHeader        = "x-ratelimit-limit"
+	xRateLimitRemainingHeader    = "x-ratelimit-remaining"
+	xRateLimitResetHeader        = "x-ratelimit-reset"
 )
 
 // Errors
@@ -22,6 +23,8 @@ const (
 type ReqContextKey string
 
 const (
-	ClientIP  ReqContextKey = "client_ip"
-	UserAgent ReqContextKey = "user_agent"
+	ClientIP              ReqContextKey = "client_ip"
+	UserAgent             ReqContextKey = "user_agent"
+	ServiceAuthentication ReqContextKey = "service_authentication"
+	AuthenticatedService  ReqContextKey = "authenticated_service"
 )

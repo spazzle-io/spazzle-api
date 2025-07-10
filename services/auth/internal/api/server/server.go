@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	"github.com/ulule/limiter/v3"
 
@@ -19,13 +21,13 @@ type Server struct {
 
 var once sync.Once
 
-func New(config util.Config, store db.Store) (*Server, error) {
+func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 
-	h := handler.New(config, store, tokenMaker)
+	h := handler.New(config, store, cache, tokenMaker)
 
 	err = setupRateLimiter(config.ServiceName, config.RedisConnURL, h.RateLimits())
 	if err != nil {
