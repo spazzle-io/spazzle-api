@@ -1,10 +1,10 @@
-allowedChains:
+chains:
   - name: Ronin
     chainId: 2020
-    allowedEnvironments:
+    environments:
       - production
   - name: Saigon Testnet
     chainId: 2021
-    allowedEnvironments:
+    environments:
       - development
       - staging

@@ -11,19 +11,19 @@ import (
 var defaultSIWEConfigYAML []byte
 
 type Chain struct {
-	Name                string   `yaml:"name"`
-	ChainId             int32    `yaml:"chainId"`
-	AllowedEnvironments []string `yaml:"allowedEnvironments"`
+	Name         string   `yaml:"name"`
+	ChainId      int32    `yaml:"chainId"`
+	Environments []string `yaml:"environments"`
 }
 
 type Config struct {
-	AllowedChains []Chain `yaml:"allowedChains"`
+	Chains []Chain `yaml:"chains"`
 }
 
 func (c *Config) getChain(chainId int32, environment string) *Chain {
-	for _, allowedChain := range c.AllowedChains {
-		if allowedChain.ChainId == chainId && isEnvironmentValid(environment, allowedChain.AllowedEnvironments) {
-			return &allowedChain
+	for _, chain := range c.Chains {
+		if chain.ChainId == chainId && isEnvironmentValid(environment, chain.Environments) {
+			return &chain
 		}
 	}
 

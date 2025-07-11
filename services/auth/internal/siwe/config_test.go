@@ -19,11 +19,11 @@ func TestGetChain(t *testing.T) {
 			chainId:     2020,
 			environment: "production",
 			config: Config{
-				AllowedChains: []Chain{
+				Chains: []Chain{
 					{
-						ChainId:             2020,
-						Name:                "Ronin",
-						AllowedEnvironments: []string{"production"},
+						ChainId:      2020,
+						Name:         "Ronin",
+						Environments: []string{"production"},
 					},
 				},
 			},
@@ -34,11 +34,11 @@ func TestGetChain(t *testing.T) {
 			chainId:     2021,
 			environment: "production",
 			config: Config{
-				AllowedChains: []Chain{
+				Chains: []Chain{
 					{
-						ChainId:             2020,
-						Name:                "Ronin",
-						AllowedEnvironments: []string{"production"},
+						ChainId:      2020,
+						Name:         "Ronin",
+						Environments: []string{"production"},
 					},
 				},
 			},
@@ -49,11 +49,11 @@ func TestGetChain(t *testing.T) {
 			chainId:     2021,
 			environment: "production",
 			config: Config{
-				AllowedChains: []Chain{
+				Chains: []Chain{
 					{
-						ChainId:             2021,
-						Name:                "Saigon Testnet",
-						AllowedEnvironments: []string{"development", "staging"},
+						ChainId:      2021,
+						Name:         "Saigon Testnet",
+						Environments: []string{"development", "staging"},
 					},
 				},
 			},
@@ -67,7 +67,7 @@ func TestGetChain(t *testing.T) {
 			if tc.isChainFound {
 				require.NotNil(t, chain)
 				require.NotNil(t, chain.Name)
-				require.NotNil(t, chain.AllowedEnvironments)
+				require.NotNil(t, chain.Environments)
 				require.Equal(t, tc.chainId, chain.ChainId)
 				return
 			}
@@ -82,5 +82,5 @@ func TestLoadDefaultSIWEConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
-	require.Len(t, config.AllowedChains, 2)
+	require.Len(t, config.Chains, 2)
 }

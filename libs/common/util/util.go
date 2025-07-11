@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"strings"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -32,4 +33,12 @@ func GenerateRandomNumericString(length int) (string, error) {
 	randomStr := fmt.Sprintf("%0*s", length, randomNum)
 
 	return randomStr, nil
+}
+
+func NormalizeHexString(s string) string {
+	s = strings.TrimSpace(s)
+	if !strings.HasPrefix(s, "0x") {
+		return "0x" + s
+	}
+	return s
 }

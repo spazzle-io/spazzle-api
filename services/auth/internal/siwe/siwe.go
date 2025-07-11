@@ -63,6 +63,7 @@ func GenerateSIWEPayload(
 	chainId int32,
 	walletAddress string,
 ) (*Payload, error) {
+	walletAddress = commonUtil.NormalizeHexString(walletAddress)
 	if !common.IsHexAddress(walletAddress) {
 		return nil, fmt.Errorf("invalid wallet address: %s", walletAddress)
 	}
@@ -77,7 +78,7 @@ func GenerateSIWEPayload(
 		return nil, fmt.Errorf("chain %d is not supported", chainId)
 	}
 
-	parsedUri, err := url.ParseRequestURI(uri)
+	parsedUri, err := url.ParseRequestURI(strings.TrimSpace(uri))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse uri %s", uri)
 	}
@@ -130,6 +131,11 @@ func FetchSIWEMessage(
 	cache commonCache.Cache,
 	walletAddress string,
 ) (string, error) {
+	walletAddress = commonUtil.NormalizeHexString(walletAddress)
+	if !common.IsHexAddress(walletAddress) {
+		return "", fmt.Errorf("invalid wallet address: %s", walletAddress)
+	}
+
 	cacheKey := fmt.Sprintf("%s-%s:%s", config.ServiceName, prefix, walletAddress)
 
 	res, err := cache.Get(ctx, cacheKey)
@@ -152,7 +158,7 @@ func FetchSIWEMessage(
 
 func isDomainAllowed(domain string, allowedOrigins []string) bool {
 	for _, allowedOrigin := range allowedOrigins {
-		parsedOrigin, _ := url.ParseRequestURI(allowedOrigin)
+		parsedOrigin, _ := url.ParseRequestURI(strings.TrimSpace(allowedOrigin))
 		originHostName := strings.TrimPrefix(parsedOrigin.Hostname(), "www.")
 		if originHostName == domain {
 			return true

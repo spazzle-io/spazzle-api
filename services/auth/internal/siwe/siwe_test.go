@@ -203,11 +203,11 @@ func TestGenerateSIWEPayload(t *testing.T) {
 	}
 
 	siweConfig = &Config{
-		AllowedChains: []Chain{
+		Chains: []Chain{
 			{
-				ChainId:             2021,
-				Name:                "Saigon Testnet",
-				AllowedEnvironments: []string{"development", "staging"},
+				ChainId:      2021,
+				Name:         "Saigon Testnet",
+				Environments: []string{"development", "staging"},
 			},
 		},
 	}
@@ -266,6 +266,20 @@ func TestFetchSIWEMessage(t *testing.T) {
 			},
 		},
 		{
+			name:          "invalid wallet address",
+			walletAddress: "invalid_wallet_address",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Set(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any(), expiration).
+					Times(1).
+					Return(nil)
+			},
+			checkResponse: func(message string, err error) {
+				require.Error(t, err)
+				require.Empty(t, message)
+			},
+		},
+		{
 			name:          "SIWE message not found in cache",
 			walletAddress: testWalletAddress,
 			buildStubs: func(cache *mockcache.MockCache) {
@@ -317,11 +331,11 @@ func TestFetchSIWEMessage(t *testing.T) {
 	}
 
 	siweConfig = &Config{
-		AllowedChains: []Chain{
+		Chains: []Chain{
 			{
-				ChainId:             2021,
-				Name:                "Saigon Testnet",
-				AllowedEnvironments: []string{"production"},
+				ChainId:      2021,
+				Name:         "Saigon Testnet",
+				Environments: []string{"production"},
 			},
 		},
 	}
@@ -357,6 +371,12 @@ func TestIsDomainAllowed(t *testing.T) {
 			name:           "domain allowed",
 			domain:         "test.com",
 			allowedDomains: []string{"https://test.com"},
+			isAllowed:      true,
+		},
+		{
+			name:           "domain allowed with whitespace",
+			domain:         "test.com",
+			allowedDomains: []string{" https://test.com "},
 			isAllowed:      true,
 		},
 		{
