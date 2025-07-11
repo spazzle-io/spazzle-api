@@ -17,18 +17,7 @@ type Chain struct {
 }
 
 type Config struct {
-	AllowedDomains []string `yaml:"allowedDomains"`
-	AllowedChains  []Chain  `yaml:"allowedChains"`
-}
-
-func (c *Config) isDomainAllowed(domain string) bool {
-	for _, allowedDomain := range c.AllowedDomains {
-		if allowedDomain == domain {
-			return true
-		}
-	}
-
-	return false
+	AllowedChains []Chain `yaml:"allowedChains"`
 }
 
 func (c *Config) getChain(chainId int32, environment string) *Chain {

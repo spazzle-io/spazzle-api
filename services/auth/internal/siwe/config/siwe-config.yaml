@@ -1,6 +1,3 @@
-allowedDomains:
-  - spazzle.io
-
 allowedChains:
   - name: Ronin
     chainId: 2020

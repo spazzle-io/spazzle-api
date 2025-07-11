@@ -21,6 +21,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 		uri           string
 		chainId       int32
 		walletAddress string
+		environment   string
 		buildStubs    func(cache *mockcache.MockCache)
 		checkResponse func(payload *Payload, err error)
 	}{
@@ -30,6 +31,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://spazzle.io/login",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
 					Set(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any(), expiration).
@@ -53,6 +55,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://spazzle.io/login",
 			chainId:       2021,
 			walletAddress: "invalidWalletAddress",
+			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
@@ -65,6 +68,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://spazzle.io/login",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
@@ -77,6 +81,20 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://spazzle.io/login",
 			chainId:       2020,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
+			buildStubs:    func(cache *mockcache.MockCache) {},
+			checkResponse: func(payload *Payload, err error) {
+				require.Error(t, err)
+				require.Nil(t, payload)
+			},
+		},
+		{
+			name:          "environment not supported for chain",
+			domain:        "spazzle.io",
+			uri:           "https://spazzle.io/login",
+			chainId:       2021,
+			walletAddress: testWalletAddress,
+			environment:   "production",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
@@ -89,6 +107,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "invalidUri",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
@@ -101,6 +120,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://www.spazzle.io/login",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
 					Set(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any(), expiration).
@@ -118,6 +138,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://fakeDomain.io/login",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
@@ -130,10 +151,35 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "http://spazzle.io/login",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
 				require.Nil(t, payload)
+			},
+		},
+		{
+			name:          "development environment bypasses schema check",
+			domain:        "localhost",
+			uri:           "http://localhost:3000/login",
+			chainId:       2021,
+			walletAddress: testWalletAddress,
+			environment:   "development",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Set(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any(), expiration).
+					Times(1).
+					Return(nil)
+			},
+			checkResponse: func(payload *Payload, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, payload)
+
+				require.NotEmpty(t, payload.Nonce)
+				require.NotEmpty(t, payload.Message)
+				require.NotEmpty(t, payload.IssuedAt)
+				require.NotEmpty(t, payload.ExpiresAt)
+				require.NotEmpty(t, payload.WalletAddress)
 			},
 		},
 		{
@@ -142,6 +188,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			uri:           "https://spazzle.io/login",
 			chainId:       2021,
 			walletAddress: testWalletAddress,
+			environment:   "development",
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
 					Set(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any(), expiration).
@@ -155,13 +202,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 		},
 	}
 
-	config := util.Config{
-		ServiceName: "test",
-		Environment: "development",
-	}
-
 	siweConfig = &Config{
-		AllowedDomains: []string{"spazzle.io"},
 		AllowedChains: []Chain{
 			{
 				ChainId:             2021,
@@ -173,6 +214,12 @@ func TestGenerateSIWEPayload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			config := util.Config{
+				ServiceName:    "test",
+				Environment:    util.Environment(tc.environment),
+				AllowedOrigins: []string{"http://localhost:3000", "https://spazzle.io"},
+			}
+
 			crtl := gomock.NewController(t)
 			defer crtl.Finish()
 
@@ -269,7 +316,6 @@ func TestFetchSIWEMessage(t *testing.T) {
 	}
 
 	siweConfig = &Config{
-		AllowedDomains: []string{"spazzle.io"},
 		AllowedChains: []Chain{
 			{
 				ChainId:             2021,
@@ -295,6 +341,41 @@ func TestFetchSIWEMessage(t *testing.T) {
 
 			message, err := FetchSIWEMessage(context.Background(), config, cache, tc.walletAddress)
 			tc.checkResponse(message, err)
+		})
+	}
+}
+
+func TestIsDomainAllowed(t *testing.T) {
+	testCases := []struct {
+		name           string
+		domain         string
+		allowedDomains []string
+		isAllowed      bool
+	}{
+		{
+			name:           "domain allowed",
+			domain:         "test.com",
+			allowedDomains: []string{"https://test.com"},
+			isAllowed:      true,
+		},
+		{
+			name:           "domain allowed with www",
+			domain:         "test.com",
+			allowedDomains: []string{"https://www.test.com"},
+			isAllowed:      true,
+		},
+		{
+			name:           "domain not allowed",
+			domain:         "fakeDomain.com",
+			allowedDomains: []string{"https://test.com"},
+			isAllowed:      false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			isAllowed := isDomainAllowed(tc.domain, tc.allowedDomains)
+			require.Equal(t, tc.isAllowed, isAllowed)
 		})
 	}
 }

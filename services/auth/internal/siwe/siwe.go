@@ -67,7 +67,7 @@ func GenerateSIWEPayload(
 		return nil, fmt.Errorf("invalid wallet address: %s", walletAddress)
 	}
 
-	isDomainAllowed := siweConfig.isDomainAllowed(domain)
+	isDomainAllowed := isDomainAllowed(domain, config.AllowedOrigins)
 	if !isDomainAllowed {
 		return nil, fmt.Errorf("domain %s is not allowed", domain)
 	}
@@ -87,7 +87,7 @@ func GenerateSIWEPayload(
 		return nil, fmt.Errorf("uri: %s hostname: %s does not match provided domain: %s", uri, uriHostName, domain)
 	}
 
-	if parsedUri.Scheme != "https" {
+	if parsedUri.Scheme != "https" && config.Environment != util.Development {
 		return nil, fmt.Errorf("uri %s is using an unsupported scheme %s", uri, parsedUri.Scheme)
 	}
 
@@ -148,4 +148,16 @@ func FetchSIWEMessage(
 	}
 
 	return message, nil
+}
+
+func isDomainAllowed(domain string, allowedOrigins []string) bool {
+	for _, allowedOrigin := range allowedOrigins {
+		parsedOrigin, _ := url.ParseRequestURI(allowedOrigin)
+		originHostName := strings.TrimPrefix(parsedOrigin.Hostname(), "www.")
+		if originHostName == domain {
+			return true
+		}
+	}
+
+	return false
 }

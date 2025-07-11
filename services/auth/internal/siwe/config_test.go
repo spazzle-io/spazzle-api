@@ -6,39 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIsDomainAllowed(t *testing.T) {
-	testCases := []struct {
-		name      string
-		domain    string
-		config    Config
-		isAllowed bool
-	}{
-		{
-			name:   "success - allowed domain",
-			domain: "spazzle.io",
-			config: Config{
-				AllowedDomains: []string{"spazzle.io", "staging.spazzle.io"},
-			},
-			isAllowed: true,
-		},
-		{
-			name:   "failure - domain not allowed",
-			domain: "test.io",
-			config: Config{
-				AllowedDomains: []string{"spazzle.io", "staging.spazzle.io"},
-			},
-			isAllowed: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			isAllowedDomain := tc.config.isDomainAllowed(tc.domain)
-			require.Equal(t, tc.isAllowed, isAllowedDomain)
-		})
-	}
-}
-
 func TestGetChain(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -115,6 +82,5 @@ func TestLoadDefaultSIWEConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
-	require.Len(t, config.AllowedDomains, 1)
 	require.Len(t, config.AllowedChains, 2)
 }
