@@ -311,8 +311,9 @@ func TestFetchSIWEMessage(t *testing.T) {
 	}
 
 	config := util.Config{
-		ServiceName: "test",
-		Environment: "development",
+		ServiceName:    "test",
+		Environment:    "production",
+		AllowedOrigins: []string{"https://spazzle.io"},
 	}
 
 	siweConfig = &Config{
@@ -320,7 +321,7 @@ func TestFetchSIWEMessage(t *testing.T) {
 			{
 				ChainId:             2021,
 				Name:                "Saigon Testnet",
-				AllowedEnvironments: []string{"development", "staging"},
+				AllowedEnvironments: []string{"production"},
 			},
 		},
 	}
