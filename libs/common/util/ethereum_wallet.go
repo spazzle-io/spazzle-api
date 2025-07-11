@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -71,6 +73,10 @@ func SignMessageEthereum(privateKeyHex string, message string) (string, error) {
 func IsEthereumSignatureValid(walletAddressHex string, message string, signature string) (bool, error) {
 	if !strings.HasPrefix(walletAddressHex, "0x") {
 		walletAddressHex = fmt.Sprintf("0x%s", walletAddressHex)
+	}
+
+	if !common.IsHexAddress(walletAddressHex) {
+		return false, fmt.Errorf("invalid wallet address: %s", walletAddressHex)
 	}
 
 	if !strings.HasPrefix(signature, "0x") {

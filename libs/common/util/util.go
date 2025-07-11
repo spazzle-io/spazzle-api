@@ -2,6 +2,7 @@ package util
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 )
 
@@ -18,4 +19,17 @@ func GenerateRandomAlphanumericString(length int) (string, error) {
 	}
 
 	return string(result), nil
+}
+
+func GenerateRandomNumericString(length int) (string, error) {
+	maxNum := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(length)), nil)
+
+	randomNum, err := rand.Int(rand.Reader, maxNum)
+	if err != nil {
+		return "", fmt.Errorf("could not generate random number: %w", err)
+	}
+
+	randomStr := fmt.Sprintf("%0*s", length, randomNum)
+
+	return randomStr, nil
 }

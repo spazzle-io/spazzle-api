@@ -1,0 +1,13 @@
+allowedDomains:
+  - spazzle.io
+
+allowedChains:
+  - name: Ronin
+    chainId: 2020
+    allowedEnvironments:
+      - production
+  - name: Saigon Testnet
+    chainId: 2021
+    allowedEnvironments:
+      - development
+      - staging

@@ -1,0 +1,120 @@
+package siwe
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestIsDomainAllowed(t *testing.T) {
+	testCases := []struct {
+		name      string
+		domain    string
+		config    Config
+		isAllowed bool
+	}{
+		{
+			name:   "success - allowed domain",
+			domain: "spazzle.io",
+			config: Config{
+				AllowedDomains: []string{"spazzle.io", "staging.spazzle.io"},
+			},
+			isAllowed: true,
+		},
+		{
+			name:   "failure - domain not allowed",
+			domain: "test.io",
+			config: Config{
+				AllowedDomains: []string{"spazzle.io", "staging.spazzle.io"},
+			},
+			isAllowed: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			isAllowedDomain := tc.config.isDomainAllowed(tc.domain)
+			require.Equal(t, tc.isAllowed, isAllowedDomain)
+		})
+	}
+}
+
+func TestGetChain(t *testing.T) {
+	testCases := []struct {
+		name         string
+		chainId      int32
+		environment  string
+		config       Config
+		isChainFound bool
+	}{
+		{
+			name:        "success - chain found",
+			chainId:     2020,
+			environment: "production",
+			config: Config{
+				AllowedChains: []Chain{
+					{
+						ChainId:             2020,
+						Name:                "Ronin",
+						AllowedEnvironments: []string{"production"},
+					},
+				},
+			},
+			isChainFound: true,
+		},
+		{
+			name:        "failure - chain not defined",
+			chainId:     2021,
+			environment: "production",
+			config: Config{
+				AllowedChains: []Chain{
+					{
+						ChainId:             2020,
+						Name:                "Ronin",
+						AllowedEnvironments: []string{"production"},
+					},
+				},
+			},
+			isChainFound: false,
+		},
+		{
+			name:        "failure - environment not allowed for chain",
+			chainId:     2021,
+			environment: "production",
+			config: Config{
+				AllowedChains: []Chain{
+					{
+						ChainId:             2021,
+						Name:                "Saigon Testnet",
+						AllowedEnvironments: []string{"development", "staging"},
+					},
+				},
+			},
+			isChainFound: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := tc.config.getChain(tc.chainId, tc.environment)
+			if tc.isChainFound {
+				require.NotNil(t, chain)
+				require.NotNil(t, chain.Name)
+				require.NotNil(t, chain.AllowedEnvironments)
+				require.Equal(t, tc.chainId, chain.ChainId)
+				return
+			}
+
+			require.Nil(t, chain)
+		})
+	}
+}
+
+func TestLoadDefaultSIWEConfig(t *testing.T) {
+	config, err := loadDefaultSIWEConfig()
+	require.NoError(t, err)
+	require.NotNil(t, config)
+
+	require.Len(t, config.AllowedDomains, 1)
+	require.Len(t, config.AllowedChains, 2)
+}

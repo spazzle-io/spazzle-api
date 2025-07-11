@@ -14,3 +14,13 @@ func TestGenerateRandomAlphanumericString(t *testing.T) {
 	require.NotEmpty(t, generatedString)
 	require.Len(t, generatedString, expectedLen)
 }
+
+func TestGenerateRandomNumericString(t *testing.T) {
+	expectedLen := 9
+	randomNum, err := GenerateRandomNumericString(expectedLen)
+	println(randomNum)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, randomNum)
+	require.Len(t, randomNum, expectedLen)
+}
