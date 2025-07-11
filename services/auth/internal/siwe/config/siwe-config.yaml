@@ -1,0 +1,10 @@
+chains:
+  - name: Ronin
+    chainId: 2020
+    environments:
+      - production
+  - name: Saigon Testnet
+    chainId: 2021
+    environments:
+      - development
+      - staging

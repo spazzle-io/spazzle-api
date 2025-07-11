@@ -196,7 +196,7 @@ func TestIsEthereumSignatureValid(t *testing.T) {
 			message, signature := tc.generateMessageAndSignature()
 			isSignatureValid, err := IsEthereumSignatureValid(tc.generateWalletAddressHex(), message, signature)
 
-			if isSignatureValid {
+			if tc.isSignatureValid {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
