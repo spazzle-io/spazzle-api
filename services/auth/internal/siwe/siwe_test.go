@@ -19,7 +19,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 		name          string
 		domain        string
 		uri           string
-		chainId       int32
+		chainId       uint32
 		walletAddress string
 		environment   string
 		buildStubs    func(cache *mockcache.MockCache)

@@ -12,7 +12,7 @@ var defaultSIWEConfigYAML []byte
 
 type Chain struct {
 	Name         string   `yaml:"name"`
-	ChainId      int32    `yaml:"chainId"`
+	ChainId      uint32   `yaml:"chainId"`
 	Environments []string `yaml:"environments"`
 }
 
@@ -20,7 +20,7 @@ type Config struct {
 	Chains []Chain `yaml:"chains"`
 }
 
-func (c *Config) getChain(chainId int32, environment string) *Chain {
+func (c *Config) getChain(chainId uint32, environment string) *Chain {
 	for _, chain := range c.Chains {
 		if chain.ChainId == chainId && isEnvironmentValid(environment, chain.Environments) {
 			return &chain

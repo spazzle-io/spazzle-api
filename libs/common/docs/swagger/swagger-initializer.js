@@ -5,7 +5,7 @@ window.onload = function() {
   window.ui = SwaggerUIBundle({
     // Service API definition objects.
     urls: [
-      { url: "auth.swagger.json", name: "Auth Service" }
+      { url: "auth/auth.swagger.json", name: "Auth Service" }
     ],
     "urls.primaryName": "Auth Service",
     dom_id: '#swagger-ui',

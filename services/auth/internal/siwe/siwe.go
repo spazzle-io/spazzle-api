@@ -3,6 +3,7 @@ package siwe
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -36,14 +37,17 @@ Nonce: %s
 Issued At: %s
 Expiration Time: %s`
 
-var siweConfig *Config
+var (
+	siweConfig      *Config
+	ErrInvalidInput = errors.New("invalid input")
+)
 
 type Payload struct {
 	Nonce         string
 	Message       string
-	IssuedAt      string
-	ExpiresAt     string
 	WalletAddress string
+	IssuedAt      time.Time
+	ExpiresAt     time.Time
 }
 
 func init() {
@@ -60,36 +64,36 @@ func GenerateSIWEPayload(
 	cache commonCache.Cache,
 	domain string,
 	uri string,
-	chainId int32,
+	chainId uint32,
 	walletAddress string,
 ) (*Payload, error) {
 	walletAddress = commonUtil.NormalizeHexString(walletAddress)
 	if !common.IsHexAddress(walletAddress) {
-		return nil, fmt.Errorf("invalid wallet address: %s", walletAddress)
+		return nil, fmt.Errorf("%w: invalid wallet address: %s", ErrInvalidInput, walletAddress)
 	}
 
 	isDomainAllowed := isDomainAllowed(domain, config.AllowedOrigins)
 	if !isDomainAllowed {
-		return nil, fmt.Errorf("domain %s is not allowed", domain)
+		return nil, fmt.Errorf("%w: domain %s is not allowed", ErrInvalidInput, domain)
 	}
 
 	chain := siweConfig.getChain(chainId, string(config.Environment))
 	if chain == nil {
-		return nil, fmt.Errorf("chain %d is not supported", chainId)
+		return nil, fmt.Errorf("%w: chain %d is not supported", ErrInvalidInput, chainId)
 	}
 
 	parsedUri, err := url.ParseRequestURI(strings.TrimSpace(uri))
 	if err != nil {
-		return nil, fmt.Errorf("could not parse uri %s", uri)
+		return nil, fmt.Errorf("%w: could not parse uri %s", ErrInvalidInput, uri)
 	}
 
 	uriHostName := strings.TrimPrefix(parsedUri.Hostname(), "www.")
 	if uriHostName != domain {
-		return nil, fmt.Errorf("uri: %s hostname: %s does not match provided domain: %s", uri, uriHostName, domain)
+		return nil, fmt.Errorf("%w: uri hostname: %s does not match provided domain: %s", ErrInvalidInput, uriHostName, domain)
 	}
 
 	if parsedUri.Scheme != "https" && config.Environment != util.Development {
-		return nil, fmt.Errorf("uri %s is using an unsupported scheme %s", uri, parsedUri.Scheme)
+		return nil, fmt.Errorf("%w: uri %s is using an unsupported scheme %s", ErrInvalidInput, uri, parsedUri.Scheme)
 	}
 
 	// Remove uri parameters and fragments
@@ -101,11 +105,15 @@ func GenerateSIWEPayload(
 		return nil, fmt.Errorf("could not generate nonce: %w", err)
 	}
 
-	issuedAt := time.Now().UTC().Format("2006-01-02T15:04:05Z")
-	expirationTime := time.Now().UTC().Add(expiration).Format("2006-01-02T15:04:05Z")
+	issuedAt := time.Now().UTC()
+	expirationTime := issuedAt.UTC().Add(expiration)
+
+	issuedAtFormatted := issuedAt.Format("2006-01-02T15:04:05Z")
+	expirationTimeFormatted := expirationTime.Format("2006-01-02T15:04:05Z")
 
 	message := fmt.Sprintf(
-		template, domain, walletAddress, domain, parsedUri.String(), version, chainId, nonce, issuedAt, expirationTime,
+		template,
+		domain, walletAddress, domain, parsedUri.String(), version, chainId, nonce, issuedAtFormatted, expirationTimeFormatted,
 	)
 
 	cacheKey := fmt.Sprintf("%s-%s:%s", config.ServiceName, prefix, walletAddress)

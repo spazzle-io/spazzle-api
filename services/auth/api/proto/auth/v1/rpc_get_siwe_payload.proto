@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package auth.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/auth/pb";
+
+message GetSIWEPayloadRequest {
+  string wallet_address = 1 [(buf.validate.field).required = true];
+  string domain = 2 [(buf.validate.field).required = true];
+  string uri = 3 [(buf.validate.field).required = true];
+  uint32 chain_id = 4 [(buf.validate.field).required = true];
+}
+
+message GetSIWEPayloadResponse {
+  string message = 1;
+  string nonce = 2;
+  string wallet_address = 3;
+  google.protobuf.Timestamp issued_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+}

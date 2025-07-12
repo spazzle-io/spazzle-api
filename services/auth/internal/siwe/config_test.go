@@ -9,7 +9,7 @@ import (
 func TestGetChain(t *testing.T) {
 	testCases := []struct {
 		name         string
-		chainId      int32
+		chainId      uint32
 		environment  string
 		config       Config
 		isChainFound bool
