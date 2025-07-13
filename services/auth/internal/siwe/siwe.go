@@ -141,7 +141,7 @@ func FetchSIWEMessage(
 ) (string, error) {
 	walletAddress = commonUtil.NormalizeHexString(walletAddress)
 	if !common.IsHexAddress(walletAddress) {
-		return "", fmt.Errorf("invalid wallet address: %s", walletAddress)
+		return "", fmt.Errorf("%w: invalid wallet address: %s", ErrInvalidInput, walletAddress)
 	}
 
 	cacheKey := fmt.Sprintf("%s-%s:%s", config.ServiceName, prefix, walletAddress)
@@ -151,9 +151,13 @@ func FetchSIWEMessage(
 		return "", fmt.Errorf("could not fetch SIWE message from cache: %w", err)
 	}
 
+	if res == nil {
+		return "", fmt.Errorf("SIWE message not found in cache")
+	}
+
 	message, ok := res.(string)
 	if !ok {
-		return "", fmt.Errorf("could not cast SIWE message to string")
+		return "", errors.New("could not cast SIWE message to string")
 	}
 
 	err = cache.Del(ctx, cacheKey)

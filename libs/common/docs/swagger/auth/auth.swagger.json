@@ -20,6 +20,41 @@
     "application/json"
   ],
   "paths": {
+    "/auth/authenticate": {
+      "post": {
+        "summary": "Authenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message",
+        "description": "Authenticate a user by verifying their Ethereum wallet address using a cryptographic signature",
+        "operationId": "AuthService_Authenticate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AuthenticateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AuthenticateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": []
+      }
+    },
     "/auth/siwe-payload": {
       "get": {
         "summary": "Generate SIWE message payload for EVM compatible chains",
@@ -102,6 +137,49 @@
         }
       }
     },
+    "v1AuthenticateRequest": {
+      "type": "object",
+      "properties": {
+        "walletAddress": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        }
+      }
+    },
+    "v1AuthenticateResponse": {
+      "type": "object",
+      "properties": {
+        "credential": {
+          "$ref": "#/definitions/v1Credential"
+        },
+        "session": {
+          "$ref": "#/definitions/v1Session"
+        }
+      }
+    },
+    "v1Credential": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "walletAddress": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "v1GetSIWEPayloadResponse": {
       "type": "object",
       "properties": {
@@ -121,6 +199,31 @@
         "expiresAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1Session": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "accessTokenExpiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "refreshTokenExpiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tokenType": {
+          "type": "string"
         }
       }
     }
