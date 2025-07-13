@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -68,22 +70,20 @@ func SignMessageEthereum(privateKeyHex string, message string) (string, error) {
 	return signatureHex, nil
 }
 
-func IsEthereumSignatureValid(walletAddressHex string, message string, signature string) (bool, error) {
-	if !strings.HasPrefix(walletAddressHex, "0x") {
-		walletAddressHex = fmt.Sprintf("0x%s", walletAddressHex)
+func IsEthereumSignatureValid(walletAddress string, message string, signature string) (bool, error) {
+	walletAddress = NormalizeHexString(walletAddress)
+	if !common.IsHexAddress(walletAddress) {
+		return false, fmt.Errorf("invalid wallet address: %s", walletAddress)
 	}
 
-	if !strings.HasPrefix(signature, "0x") {
-		signature = fmt.Sprintf("0x%s", signature)
-	}
-
-	if len(signature) != 132 {
-		return false, fmt.Errorf("invalid signature length: %d", len(signature))
-	}
-
+	signature = NormalizeHexString(signature)
 	signatureBytes, err := hexutil.Decode(signature)
 	if err != nil {
 		return false, fmt.Errorf("could not decode signature: %w", err)
+	}
+
+	if len(signatureBytes) != 65 {
+		return false, fmt.Errorf("invalid signature byte length: %d", len(signatureBytes))
 	}
 
 	messageHash := accounts.TextHash([]byte(message))
@@ -98,9 +98,9 @@ func IsEthereumSignatureValid(walletAddressHex string, message string, signature
 
 	recoveredWalletAddress := crypto.PubkeyToAddress(*recoveredPublicKey)
 
-	if !strings.EqualFold(walletAddressHex, recoveredWalletAddress.Hex()) {
+	if !strings.EqualFold(walletAddress, recoveredWalletAddress.Hex()) {
 		return false, fmt.Errorf("signature verification failed: address mismatch: "+
-			"initial: %s recovered: %s", walletAddressHex, recoveredWalletAddress)
+			"initial: %s recovered: %s", walletAddress, recoveredWalletAddress)
 	}
 
 	return true, nil

@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 
@@ -24,7 +26,6 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/api/server"
 	db "github.com/spazzle-io/spazzle-api/services/auth/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/util"
-	pb "github.com/spazzle-io/spazzle-api/services/proto/auth"
 	"google.golang.org/grpc"
 )
 
@@ -101,7 +102,7 @@ func runGRPCServer(
 		},
 		[]commonServer.GrpcServiceRegistrar{
 			func(grpcServer *grpc.Server) {
-				pb.RegisterAuthServer(grpcServer, s)
+				pb.RegisterAuthServiceServer(grpcServer, s)
 			},
 		},
 	)
@@ -127,7 +128,7 @@ func runGatewayServer(
 		config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterAuthHandlerServer(ctx, mux, s)
+				return pb.RegisterAuthServiceHandlerServer(ctx, mux, s)
 			},
 		},
 		[]commonServer.HttpRouteRegistrar{},

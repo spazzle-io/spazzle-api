@@ -128,14 +128,10 @@ server:
 	cd ./$(module) && go run ./cmd/$(notdir $(module))
 
 proto:
-	@rm -f ./services/proto/$(notdir $(module))/*.go
 	@rm -f ./libs/common/docs/swagger/$(notdir $(module)).swagger.json
+	@rm -rf ./services/proto/$(notdir $(module))
 	@rm -rf ./libs/common/docs/statik
-	@protoc --proto_path=./$(module)/api/proto --go_out=./services/proto/$(notdir $(module)) --go_opt=paths=source_relative \
-	--go-grpc_out=./services/proto/$(notdir $(module)) --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=./services/proto/$(notdir $(module)) --grpc-gateway_opt=paths=source_relative \
-	--openapiv2_out=./libs/common/docs/swagger --openapiv2_opt=allow_merge=true,merge_file_name=$(notdir $(module)) \
-	./$(module)/api/proto/*.proto
+	@cd ./$(module)/api && buf build && buf lint && buf dep update && buf generate
 	@statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
 	@cd ./services/proto && go install tool && go mod tidy
 
