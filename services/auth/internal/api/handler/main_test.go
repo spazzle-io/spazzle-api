@@ -1,7 +1,13 @@
 package handler
 
 import (
+	"context"
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
@@ -31,6 +37,29 @@ func newTestHandler(t *testing.T, store db.Store, cache commonCache.Cache) *Hand
 	require.NotEmpty(t, tokenMaker)
 
 	return New(config, store, cache, tokenMaker)
+}
+
+func newContextWithBearerToken(
+	t *testing.T,
+	userId uuid.UUID,
+	walletAddress string,
+	role token.Role,
+	tokenType token.Type,
+	duration time.Duration,
+	tokenMaker token.Maker,
+) context.Context {
+	tk, _, err := tokenMaker.CreateToken(userId, walletAddress, role, tokenType, duration)
+	require.NoError(t, err)
+	require.NotEmpty(t, tk)
+
+	bearerToken := fmt.Sprintf("%s %s", authorizationBearer, tk)
+	md := metadata.MD{
+		authorizationHeader: []string{
+			bearerToken,
+		},
+	}
+
+	return metadata.NewIncomingContext(context.Background(), md)
 }
 
 func checkInvalidRequestParams(t *testing.T, err error, expectedFieldViolations []string) {

@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_GetSIWEPayload_FullMethodName = "/auth.v1.AuthService/GetSIWEPayload"
-	AuthService_Authenticate_FullMethodName   = "/auth.v1.AuthService/Authenticate"
+	AuthService_GetSIWEPayload_FullMethodName    = "/auth.v1.AuthService/GetSIWEPayload"
+	AuthService_Authenticate_FullMethodName      = "/auth.v1.AuthService/Authenticate"
+	AuthService_VerifyAccessToken_FullMethodName = "/auth.v1.AuthService/VerifyAccessToken"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -29,6 +30,7 @@ const (
 type AuthServiceClient interface {
 	GetSIWEPayload(ctx context.Context, in *GetSIWEPayloadRequest, opts ...grpc.CallOption) (*GetSIWEPayloadResponse, error)
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
+	VerifyAccessToken(ctx context.Context, in *VerifyAccessTokenRequest, opts ...grpc.CallOption) (*VerifyAccessTokenResponse, error)
 }
 
 type authServiceClient struct {
@@ -59,12 +61,23 @@ func (c *authServiceClient) Authenticate(ctx context.Context, in *AuthenticateRe
 	return out, nil
 }
 
+func (c *authServiceClient) VerifyAccessToken(ctx context.Context, in *VerifyAccessTokenRequest, opts ...grpc.CallOption) (*VerifyAccessTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VerifyAccessTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_VerifyAccessToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
 	GetSIWEPayload(context.Context, *GetSIWEPayloadRequest) (*GetSIWEPayloadResponse, error)
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
+	VerifyAccessToken(context.Context, *VerifyAccessTokenRequest) (*VerifyAccessTokenResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedAuthServiceServer) GetSIWEPayload(context.Context, *GetSIWEPa
 }
 func (UnimplementedAuthServiceServer) Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
+}
+func (UnimplementedAuthServiceServer) VerifyAccessToken(context.Context, *VerifyAccessTokenRequest) (*VerifyAccessTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyAccessToken not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -138,6 +154,24 @@ func _AuthService_Authenticate_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_VerifyAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyAccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).VerifyAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_VerifyAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).VerifyAccessToken(ctx, req.(*VerifyAccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authenticate",
 			Handler:    _AuthService_Authenticate_Handler,
+		},
+		{
+			MethodName: "VerifyAccessToken",
+			Handler:    _AuthService_VerifyAccessToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
