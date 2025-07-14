@@ -14,6 +14,7 @@ const (
 	InternalServerError        string = "An unexpected error occurred while processing your request"
 	SignatureVerificationError string = "Signature verification failed"
 	UnauthorizedAccessError    string = "Authorization failed. Please verify your credentials and try again"
+	InvalidUserIdError         string = "User id is invalid"
 )
 
 func protovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {

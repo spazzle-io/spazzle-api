@@ -26,10 +26,14 @@ var File_auth_v1_service_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xce\x04\n" +
+	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xb9\x06\n" +
 	"\vAuthService\x12\x93\x02\n" +
 	"\x0eGetSIWEPayload\x12\x1e.auth.v1.GetSIWEPayloadRequest\x1a\x1f.auth.v1.GetSIWEPayloadResponse\"\xbf\x01\x92A\xa1\x01\x127Generate SIWE message payload for EVM compatible chains\x1adGenerates a Sign-In With Ethereum (SIWE) message payload for the specified wallet address and domainb\x00\x82\xd3\xe4\x93\x02\x14\x12\x12/auth/siwe-payload\x12\xa8\x02\n" +
-	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xda\x01\x92A\xb9\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/authenticateB\xaf\x02\x92A\x9b\x01\x120\n" +
+	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xda\x01\x92A\xb9\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/authenticate\x12\xe8\x01\n" +
+	"\x11VerifyAccessToken\x12!.auth.v1.VerifyAccessTokenRequest\x1a\".auth.v1.VerifyAccessTokenResponse\"\x8b\x01\x92Ad\x12\x13Verify access token\x1a?Verify whether an access token is valid for a specified user idb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/auth/verify-access-tokenB\xaf\x02\x92A\x9b\x01\x120\n" +
 	"\fAuth Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -40,18 +44,22 @@ const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\vcom.auth.v1B\x10ServiceAuthProtoP\x01Z2github.com/spazzle-io/spazzle-api/services/auth/pb\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var file_auth_v1_service_auth_proto_goTypes = []any{
-	(*GetSIWEPayloadRequest)(nil),  // 0: auth.v1.GetSIWEPayloadRequest
-	(*AuthenticateRequest)(nil),    // 1: auth.v1.AuthenticateRequest
-	(*GetSIWEPayloadResponse)(nil), // 2: auth.v1.GetSIWEPayloadResponse
-	(*AuthenticateResponse)(nil),   // 3: auth.v1.AuthenticateResponse
+	(*GetSIWEPayloadRequest)(nil),     // 0: auth.v1.GetSIWEPayloadRequest
+	(*AuthenticateRequest)(nil),       // 1: auth.v1.AuthenticateRequest
+	(*VerifyAccessTokenRequest)(nil),  // 2: auth.v1.VerifyAccessTokenRequest
+	(*GetSIWEPayloadResponse)(nil),    // 3: auth.v1.GetSIWEPayloadResponse
+	(*AuthenticateResponse)(nil),      // 4: auth.v1.AuthenticateResponse
+	(*VerifyAccessTokenResponse)(nil), // 5: auth.v1.VerifyAccessTokenResponse
 }
 var file_auth_v1_service_auth_proto_depIdxs = []int32{
 	0, // 0: auth.v1.AuthService.GetSIWEPayload:input_type -> auth.v1.GetSIWEPayloadRequest
 	1, // 1: auth.v1.AuthService.Authenticate:input_type -> auth.v1.AuthenticateRequest
-	2, // 2: auth.v1.AuthService.GetSIWEPayload:output_type -> auth.v1.GetSIWEPayloadResponse
-	3, // 3: auth.v1.AuthService.Authenticate:output_type -> auth.v1.AuthenticateResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	2, // 2: auth.v1.AuthService.VerifyAccessToken:input_type -> auth.v1.VerifyAccessTokenRequest
+	3, // 3: auth.v1.AuthService.GetSIWEPayload:output_type -> auth.v1.GetSIWEPayloadResponse
+	4, // 4: auth.v1.AuthService.Authenticate:output_type -> auth.v1.AuthenticateResponse
+	5, // 5: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.VerifyAccessTokenResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -64,6 +72,7 @@ func file_auth_v1_service_auth_proto_init() {
 	}
 	file_auth_v1_rpc_get_siwe_payload_proto_init()
 	file_auth_v1_rpc_authenticate_proto_init()
+	file_auth_v1_rpc_verify_access_token_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

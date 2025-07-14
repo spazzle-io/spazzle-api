@@ -4,6 +4,7 @@ package auth.v1;
 
 import "auth/v1/rpc_get_siwe_payload.proto";
 import "auth/v1/rpc_authenticate.proto";
+import "auth/v1/rpc_verify_access_token.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -59,6 +60,23 @@ service AuthService {
       summary: "Authenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message";
       description: "Authenticate a user by verifying their Ethereum wallet address using a cryptographic signature";
       security: {};
+    };
+  }
+
+  rpc VerifyAccessToken(VerifyAccessTokenRequest) returns (VerifyAccessTokenResponse) {
+    option (google.api.http) = {
+      post: "/auth/verify-access-token"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Verify access token";
+      description: "Verify whether an access token is valid for a specified user id";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
     };
   }
 }

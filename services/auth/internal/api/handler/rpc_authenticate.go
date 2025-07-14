@@ -22,11 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	InvalidSIWEMessageError = "SIWE message is invalid"
-	InvalidUserIdError      = "UserId is invalid"
-	authorizationBearer     = "bearer"
-)
+const InvalidSIWEMessageError = "SIWE message is invalid"
 
 var allowedServices = []commonMiddleware.Service{util.Users}
 
@@ -72,13 +68,23 @@ func (h *Handler) Authenticate(ctx context.Context, req *pb.AuthenticateRequest)
 		return nil, status.Error(codes.Internal, InternalServerError)
 	}
 
-	if credential == (db.Credential{}) {
-		userId, err := uuid.Parse(req.GetUserId())
-		if err != nil {
-			logger.Error().Err(err).Str("user_id", req.GetUserId()).Msg("could not parse user id")
-			return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
-		}
+	userId, err := uuid.Parse(req.GetUserId())
+	if err != nil {
+		logger.Error().Err(err).Str("user_id", req.GetUserId()).Msg("could not parse user id")
+		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
+	}
 
+	logger = log.With().Str("user_id", userId.String()).Logger()
+
+	if credential != (db.Credential{}) && credential.UserID != userId {
+		logger.Error().
+			Err(err).
+			Str("credential_user_id", credential.UserID.String()).
+			Msg("provided user id does not match credential")
+		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
+	}
+
+	if credential == (db.Credential{}) {
 		credential, err = h.store.CreateCredential(ctx, db.CreateCredentialParams{
 			WalletAddress: req.GetWalletAddress(),
 			UserID:        userId,
