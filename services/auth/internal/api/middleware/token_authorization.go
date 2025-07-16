@@ -54,11 +54,11 @@ func AuthorizeToken(
 		return nil, fmt.Errorf("token type mismatch: expected '%s', got '%s'", tokenType, payload.TokenType)
 	}
 
-	if !isAuthorizedRole(payload.Role, authorizedRoles) {
+	if authorizedRoles != nil && !isAuthorizedRole(payload.Role, authorizedRoles) {
 		return nil, fmt.Errorf("unauthorized role: role '%s' is not allowed", payload.Role)
 	}
 
-	if payload.Role != token.Admin && userId != payload.UserId {
+	if userId != payload.UserId {
 		return nil, fmt.Errorf("unauthorized access: user ID '%s' does not match token owner '%s'", userId, payload.UserId)
 	}
 

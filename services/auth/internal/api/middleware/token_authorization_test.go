@@ -70,6 +70,40 @@ func TestAuthorize(t *testing.T) {
 			},
 		},
 		{
+			name: "Success - no specified allowed roles - should allow all",
+			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
+				tk, _, err := tokenMaker.CreateToken(testUserId, testWalletAddress, token.User, token.AccessToken, 30*time.Second)
+				require.NoError(t, err)
+				require.NotEmpty(t, tk)
+
+				bearerToken := fmt.Sprintf("%s %s", authorizationBearer, tk)
+				md := metadata.MD{
+					authorizationHeader: []string{
+						bearerToken,
+					},
+				}
+
+				return metadata.NewIncomingContext(context.Background(), md)
+			},
+			userId:          testUserId,
+			tokenType:       token.AccessToken,
+			authorizedRoles: nil,
+			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, payload)
+
+				require.NotZero(t, payload.ID)
+
+				require.Equal(t, testUserId, payload.UserId)
+				require.Equal(t, testWalletAddress, payload.WalletAddress)
+				require.Equal(t, token.AccessToken, payload.TokenType)
+				require.Equal(t, token.User, payload.Role)
+
+				require.WithinDuration(t, time.Now().UTC(), payload.IssuedAt, time.Second)
+				require.WithinDuration(t, time.Now().UTC().Add(30*time.Second), payload.ExpiresAt, time.Second)
+			},
+		},
+		{
 			name: "Failure - missing metadata from incoming context",
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return context.Background()
@@ -184,7 +218,7 @@ func TestAuthorize(t *testing.T) {
 			},
 		},
 		{
-			name: "Failure - mismatch in user id for user role",
+			name: "Failure - mismatch in user id",
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				tk, _, err := tokenMaker.CreateToken(testUserId, testWalletAddress, token.User, token.AccessToken, 30*time.Second)
 				require.NoError(t, err)
@@ -225,28 +259,6 @@ func TestAuthorize(t *testing.T) {
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
 				require.Error(t, err)
 				require.Empty(t, payload)
-			},
-		},
-		{
-			name: "Success: admin privileged access",
-			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				tk, _, err := tokenMaker.CreateToken(testUserId, testWalletAddress, token.Admin, token.AccessToken, 30*time.Second)
-				require.NoError(t, err)
-
-				md := metadata.MD{
-					authorizationHeader: []string{
-						fmt.Sprintf("%s %s", authorizationBearer, tk),
-					},
-				}
-
-				return metadata.NewIncomingContext(context.Background(), md)
-			},
-			userId:          uuid.New(),
-			tokenType:       token.AccessToken,
-			authorizedRoles: []token.Role{token.User, token.Admin},
-			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
-				require.NoError(t, err)
-				require.NotEmpty(t, payload)
 			},
 		},
 	}
