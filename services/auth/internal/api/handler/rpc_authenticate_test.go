@@ -76,7 +76,7 @@ func TestAuthenticate(t *testing.T) {
 		checkResponse func(t *testing.T, res *pb.AuthenticateResponse, err error)
 	}{
 		{
-			name:     "success",
+			name:     "success - new credential",
 			req:      authenticateReqParams,
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
@@ -116,6 +116,48 @@ func TestAuthenticate(t *testing.T) {
 							Credential: credential,
 						}, nil
 					})
+
+				store.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Session{
+						ID: uuid.New(),
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, res)
+
+				require.Equal(t, authenticateReqParams.WalletAddress, res.GetCredential().GetWalletAddress())
+				require.Equal(t, authenticateReqParams.UserId, res.GetCredential().GetUserId())
+				require.Equal(t, "bearer", res.GetSession().GetTokenType())
+			},
+		},
+		{
+			name:     "success - existing credential",
+			req:      authenticateReqParams,
+			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
+			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(siwePayload.Message, nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				store.EXPECT().
+					GetCredentialByWalletAddress(gomock.Any(), siwePayload.WalletAddress).
+					Times(1).
+					Return(db.Credential{
+						ID:            uuid.New(),
+						UserID:        userId,
+						WalletAddress: siwePayload.WalletAddress,
+						Role:          db.Role(token.User),
+						CreatedAt:     time.Now().UTC(),
+					}, nil)
 
 				store.EXPECT().
 					CreateSession(gomock.Any(), gomock.Any()).
@@ -271,7 +313,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			name:     "could not create session",
+			name:     "could not create session for new credential",
 			req:      authenticateReqParams,
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
@@ -311,6 +353,75 @@ func TestAuthenticate(t *testing.T) {
 							Credential: credential,
 						}, nil
 					})
+
+				store.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Session{}, errors.New("some db error"))
+			},
+			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, InternalServerError)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name:     "provided user id does not match credential",
+			req:      authenticateReqParams,
+			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
+			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(siwePayload.Message, nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				store.EXPECT().
+					GetCredentialByWalletAddress(gomock.Any(), siwePayload.WalletAddress).
+					Times(1).
+					Return(db.Credential{
+						ID:            uuid.New(),
+						UserID:        uuid.New(),
+						WalletAddress: siwePayload.WalletAddress,
+						Role:          db.Role(token.User),
+						CreatedAt:     time.Now().UTC(),
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, UnauthorizedAccessError)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name:     "could not create session for existing credential",
+			req:      authenticateReqParams,
+			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
+			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(siwePayload.Message, nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				store.EXPECT().
+					GetCredentialByWalletAddress(gomock.Any(), siwePayload.WalletAddress).
+					Times(1).
+					Return(db.Credential{
+						ID:            uuid.New(),
+						UserID:        userId,
+						WalletAddress: siwePayload.WalletAddress,
+						Role:          db.Role(token.User),
+						CreatedAt:     time.Now().UTC(),
+					}, nil)
 
 				store.EXPECT().
 					CreateSession(gomock.Any(), gomock.Any()).

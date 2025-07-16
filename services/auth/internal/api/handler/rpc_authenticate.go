@@ -123,7 +123,7 @@ func (h *Handler) handleExistingCredential(
 		logger.Error().
 			Str("credential_user_id", credential.UserID.String()).
 			Msg("provided user id does not match credential")
-		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
+		return nil, status.Error(codes.PermissionDenied, UnauthorizedAccessError)
 	}
 
 	session, err := NewSession(
