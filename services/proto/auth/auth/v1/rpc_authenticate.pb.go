@@ -203,95 +203,11 @@ func (x *Credential) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type Session struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	SessionId             string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	AccessToken           string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	RefreshToken          string                 `protobuf:"bytes,3,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	AccessTokenExpiresAt  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=access_token_expires_at,json=accessTokenExpiresAt,proto3" json:"access_token_expires_at,omitempty"`
-	RefreshTokenExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=refresh_token_expires_at,json=refreshTokenExpiresAt,proto3" json:"refresh_token_expires_at,omitempty"`
-	TokenType             string                 `protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
-}
-
-func (x *Session) Reset() {
-	*x = Session{}
-	mi := &file_auth_v1_rpc_authenticate_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Session) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Session) ProtoMessage() {}
-
-func (x *Session) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_v1_rpc_authenticate_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Session.ProtoReflect.Descriptor instead.
-func (*Session) Descriptor() ([]byte, []int) {
-	return file_auth_v1_rpc_authenticate_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *Session) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *Session) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *Session) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-func (x *Session) GetAccessTokenExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.AccessTokenExpiresAt
-	}
-	return nil
-}
-
-func (x *Session) GetRefreshTokenExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.RefreshTokenExpiresAt
-	}
-	return nil
-}
-
-func (x *Session) GetTokenType() string {
-	if x != nil {
-		return x.TokenType
-	}
-	return ""
-}
-
 var File_auth_v1_rpc_authenticate_proto protoreflect.FileDescriptor
 
 const file_auth_v1_rpc_authenticate_proto_rawDesc = "" +
 	"\n" +
-	"\x1eauth/v1/rpc_authenticate.proto\x12\aauth.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x01\n" +
+	"\x1eauth/v1/rpc_authenticate.proto\x12\aauth.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14auth/v1/common.proto\"\x90\x01\n" +
 	"\x13AuthenticateRequest\x12-\n" +
 	"\x0ewallet_address\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rwalletAddress\x12$\n" +
 	"\auser_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12$\n" +
@@ -307,16 +223,7 @@ const file_auth_v1_rpc_authenticate_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12%\n" +
 	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xb7\x02\n" +
-	"\aSession\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +
-	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\x12Q\n" +
-	"\x17access_token_expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x14accessTokenExpiresAt\x12S\n" +
-	"\x18refresh_token_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiresAt\x12\x1d\n" +
-	"\n" +
-	"token_type\x18\x06 \x01(\tR\ttokenTypeB\x94\x01\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\x94\x01\n" +
 	"\vcom.auth.v1B\x14RpcAuthenticateProtoP\x01Z2github.com/spazzle-io/spazzle-api/services/auth/pb\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var (
@@ -331,7 +238,7 @@ func file_auth_v1_rpc_authenticate_proto_rawDescGZIP() []byte {
 	return file_auth_v1_rpc_authenticate_proto_rawDescData
 }
 
-var file_auth_v1_rpc_authenticate_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_auth_v1_rpc_authenticate_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_auth_v1_rpc_authenticate_proto_goTypes = []any{
 	(*AuthenticateRequest)(nil),   // 0: auth.v1.AuthenticateRequest
 	(*AuthenticateResponse)(nil),  // 1: auth.v1.AuthenticateResponse
@@ -343,13 +250,11 @@ var file_auth_v1_rpc_authenticate_proto_depIdxs = []int32{
 	2, // 0: auth.v1.AuthenticateResponse.credential:type_name -> auth.v1.Credential
 	3, // 1: auth.v1.AuthenticateResponse.session:type_name -> auth.v1.Session
 	4, // 2: auth.v1.Credential.created_at:type_name -> google.protobuf.Timestamp
-	4, // 3: auth.v1.Session.access_token_expires_at:type_name -> google.protobuf.Timestamp
-	4, // 4: auth.v1.Session.refresh_token_expires_at:type_name -> google.protobuf.Timestamp
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_auth_v1_rpc_authenticate_proto_init() }
@@ -357,13 +262,14 @@ func file_auth_v1_rpc_authenticate_proto_init() {
 	if File_auth_v1_rpc_authenticate_proto != nil {
 		return
 	}
+	file_auth_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_v1_rpc_authenticate_proto_rawDesc), len(file_auth_v1_rpc_authenticate_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

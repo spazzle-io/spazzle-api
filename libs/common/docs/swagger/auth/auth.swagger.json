@@ -55,6 +55,43 @@
         "security": []
       }
     },
+    "/auth/refresh-access-token": {
+      "get": {
+        "summary": "Refresh access token",
+        "description": "Get a new access token using a valid refresh token",
+        "operationId": "AuthService_RefreshAccessToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RefreshAccessTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/auth/siwe-payload": {
       "get": {
         "summary": "Generate SIWE message payload for EVM compatible chains",
@@ -272,6 +309,14 @@
         "expiresAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1RefreshAccessTokenResponse": {
+      "type": "object",
+      "properties": {
+        "session": {
+          "$ref": "#/definitions/v1Session"
         }
       }
     },
