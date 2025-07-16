@@ -29,7 +29,7 @@ const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xb9\x06\n" +
 	"\vAuthService\x12\x93\x02\n" +
 	"\x0eGetSIWEPayload\x12\x1e.auth.v1.GetSIWEPayloadRequest\x1a\x1f.auth.v1.GetSIWEPayloadResponse\"\xbf\x01\x92A\xa1\x01\x127Generate SIWE message payload for EVM compatible chains\x1adGenerates a Sign-In With Ethereum (SIWE) message payload for the specified wallet address and domainb\x00\x82\xd3\xe4\x93\x02\x14\x12\x12/auth/siwe-payload\x12\xa8\x02\n" +
-	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xda\x01\x92A\xb9\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/authenticate\x12\xe8\x01\n" +
+	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xda\x01\x92A\xb9\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x17:\x01*\x1a\x12/auth/authenticate\x12\xe8\x01\n" +
 	"\x11VerifyAccessToken\x12!.auth.v1.VerifyAccessTokenRequest\x1a\".auth.v1.VerifyAccessTokenResponse\"\x8b\x01\x92Ad\x12\x13Verify access token\x1a?Verify whether an access token is valid for a specified user idb\f\n" +
 	"\n" +
 	"\n" +

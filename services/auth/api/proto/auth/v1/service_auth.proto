@@ -52,7 +52,7 @@ service AuthService {
 
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {
     option (google.api.http) = {
-      post: "/auth/authenticate"
+      put: "/auth/authenticate"
       body: "*"
     };
 
