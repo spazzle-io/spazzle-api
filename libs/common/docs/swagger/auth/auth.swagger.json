@@ -21,7 +21,7 @@
   ],
   "paths": {
     "/auth/authenticate": {
-      "post": {
+      "put": {
         "summary": "Authenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message",
         "description": "Authenticate a user by verifying their Ethereum wallet address using a cryptographic signature",
         "operationId": "AuthService_Authenticate",

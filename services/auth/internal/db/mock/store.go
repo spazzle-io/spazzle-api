@@ -58,6 +58,21 @@ func (mr *MockStoreMockRecorder) CreateCredential(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCredential", reflect.TypeOf((*MockStore)(nil).CreateCredential), ctx, arg)
 }
 
+// CreateCredentialTx mocks base method.
+func (m *MockStore) CreateCredentialTx(ctx context.Context, params db.CreateCredentialTxParams) (db.CreateCredentialTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCredentialTx", ctx, params)
+	ret0, _ := ret[0].(db.CreateCredentialTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCredentialTx indicates an expected call of CreateCredentialTx.
+func (mr *MockStoreMockRecorder) CreateCredentialTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCredentialTx", reflect.TypeOf((*MockStore)(nil).CreateCredentialTx), ctx, params)
+}
+
 // CreateSession mocks base method.
 func (m *MockStore) CreateSession(ctx context.Context, arg db.CreateSessionParams) (db.Session, error) {
 	m.ctrl.T.Helper()

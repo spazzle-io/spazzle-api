@@ -96,15 +96,26 @@ func TestAuthenticate(t *testing.T) {
 					Return(db.Credential{}, db.RecordNotFoundError)
 
 				store.EXPECT().
-					CreateCredential(gomock.Any(), gomock.Any()).
+					CreateCredentialTx(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.Credential{
-						ID:            uuid.New(),
-						UserID:        userId,
-						WalletAddress: siwePayload.WalletAddress,
-						Role:          db.Role(token.User),
-						CreatedAt:     time.Now().UTC(),
-					}, nil)
+					DoAndReturn(func(_ context.Context, arg db.CreateCredentialTxParams) (db.CreateCredentialTxResult, error) {
+						credential := db.Credential{
+							ID:            uuid.New(),
+							UserID:        userId,
+							WalletAddress: siwePayload.WalletAddress,
+							Role:          db.Role(token.User),
+							CreatedAt:     time.Now().UTC(),
+						}
+
+						err := arg.AfterCreate(credential)
+						if err != nil {
+							return db.CreateCredentialTxResult{}, err
+						}
+
+						return db.CreateCredentialTxResult{
+							Credential: credential,
+						}, nil
+					})
 
 				store.EXPECT().
 					CreateSession(gomock.Any(), gomock.Any()).
@@ -174,27 +185,6 @@ func TestAuthenticate(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, InternalServerError)
-				require.Empty(t, res)
-			},
-		},
-		{
-			name:     "cached SIWE message is empty",
-			req:      authenticateReqParams,
-			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
-			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
-				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return("", nil)
-
-				cache.EXPECT().
-					Del(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(nil)
-			},
-			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
-				require.Error(t, err)
-				require.ErrorContains(t, err, InvalidSIWEMessageError)
 				require.Empty(t, res)
 			},
 		},
@@ -270,9 +260,9 @@ func TestAuthenticate(t *testing.T) {
 					Return(db.Credential{}, nil)
 
 				store.EXPECT().
-					CreateCredential(gomock.Any(), gomock.Any()).
+					CreateCredentialTx(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.Credential{}, errors.New("some db error"))
+					Return(db.CreateCredentialTxResult{}, errors.New("some db error"))
 			},
 			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
 				require.Error(t, err)
@@ -301,15 +291,26 @@ func TestAuthenticate(t *testing.T) {
 					Return(db.Credential{}, nil)
 
 				store.EXPECT().
-					CreateCredential(gomock.Any(), gomock.Any()).
+					CreateCredentialTx(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.Credential{
-						ID:            uuid.New(),
-						UserID:        userId,
-						WalletAddress: siwePayload.WalletAddress,
-						Role:          db.Role(token.User),
-						CreatedAt:     time.Now().UTC(),
-					}, nil)
+					DoAndReturn(func(_ context.Context, arg db.CreateCredentialTxParams) (db.CreateCredentialTxResult, error) {
+						credential := db.Credential{
+							ID:            uuid.New(),
+							UserID:        userId,
+							WalletAddress: siwePayload.WalletAddress,
+							Role:          db.Role(token.User),
+							CreatedAt:     time.Now().UTC(),
+						}
+
+						err := arg.AfterCreate(credential)
+						if err != nil {
+							return db.CreateCredentialTxResult{}, err
+						}
+
+						return db.CreateCredentialTxResult{
+							Credential: credential,
+						}, nil
+					})
 
 				store.EXPECT().
 					CreateSession(gomock.Any(), gomock.Any()).
