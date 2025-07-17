@@ -33,7 +33,7 @@ func (h *Handler) VerifyAccessToken(
 		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
 	}
 
-	tkPayload, err := middleware.AuthorizeToken(ctx, userId, h.tokenMaker, token.AccessToken, []token.Role{token.User})
+	tkPayload, err := middleware.AuthorizeToken(ctx, userId, h.tokenMaker, token.AccessToken, nil)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not authorize token")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)

@@ -2,11 +2,12 @@ syntax = "proto3";
 
 package auth.v1;
 
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 import "auth/v1/rpc_get_siwe_payload.proto";
 import "auth/v1/rpc_authenticate.proto";
 import "auth/v1/rpc_verify_access_token.proto";
-import "google/api/annotations.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
+import "auth/v1/rpc_refresh_access_token.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/auth/pb";
 
@@ -72,6 +73,22 @@ service AuthService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Verify access token";
       description: "Verify whether an access token is valid for a specified user id";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc RefreshAccessToken(RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {
+    option (google.api.http) = {
+      get: "/auth/refresh-access-token"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Refresh access token";
+      description: "Get a new access token using a valid refresh token";
       security: {
         security_requirement: {
           key: "bearer"
