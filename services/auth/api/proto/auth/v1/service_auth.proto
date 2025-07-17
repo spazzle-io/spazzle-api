@@ -54,13 +54,19 @@ service AuthService {
 
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {
     option (google.api.http) = {
-      put: "/auth/authenticate"
+      post: "/auth/authenticate"
       body: "*"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Authenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message";
       description: "Authenticate a user by verifying their Ethereum wallet address using a cryptographic signature";
+      extensions: {
+        key: "x-internal",
+        value: {
+          bool_value: true
+        }
+      }
       security: {};
     };
   }
@@ -84,7 +90,7 @@ service AuthService {
 
   rpc RefreshAccessToken(RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {
     option (google.api.http) = {
-      get: "/auth/refresh-access-token"
+      post: "/auth/refresh-access-token"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -100,7 +106,7 @@ service AuthService {
 
   rpc RevokeRefreshTokens(RevokeRefreshTokensRequest) returns (RevokeRefreshTokensResponse) {
     option (google.api.http) = {
-      get: "/auth/revoke-refresh-tokens"
+      post: "/auth/revoke-refresh-tokens"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
