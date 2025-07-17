@@ -8,6 +8,7 @@ import "auth/v1/rpc_get_siwe_payload.proto";
 import "auth/v1/rpc_authenticate.proto";
 import "auth/v1/rpc_verify_access_token.proto";
 import "auth/v1/rpc_refresh_access_token.proto";
+import "auth/v1/rpc_revoke_refresh_tokens.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/auth/pb";
 
@@ -89,6 +90,22 @@ service AuthService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Refresh access token";
       description: "Get a new access token using a valid refresh token";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc RevokeRefreshTokens(RevokeRefreshTokensRequest) returns (RevokeRefreshTokensResponse) {
+    option (google.api.http) = {
+      get: "/auth/revoke-refresh-tokens"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Revoke refresh tokens";
+      description: "Revoke all refresh tokens associated with a user id";
       security: {
         security_requirement: {
           key: "bearer"

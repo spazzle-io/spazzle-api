@@ -118,17 +118,17 @@ func (mr *MockStoreMockRecorder) GetSessionById(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionById", reflect.TypeOf((*MockStore)(nil).GetSessionById), ctx, id)
 }
 
-// RevokeAccountSessions mocks base method.
-func (m *MockStore) RevokeAccountSessions(ctx context.Context, userID uuid.UUID) (pgconn.CommandTag, error) {
+// RevokeSessions mocks base method.
+func (m *MockStore) RevokeSessions(ctx context.Context, userID uuid.UUID) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevokeAccountSessions", ctx, userID)
+	ret := m.ctrl.Call(m, "RevokeSessions", ctx, userID)
 	ret0, _ := ret[0].(pgconn.CommandTag)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// RevokeAccountSessions indicates an expected call of RevokeAccountSessions.
-func (mr *MockStoreMockRecorder) RevokeAccountSessions(ctx, userID any) *gomock.Call {
+// RevokeSessions indicates an expected call of RevokeSessions.
+func (mr *MockStoreMockRecorder) RevokeSessions(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeAccountSessions", reflect.TypeOf((*MockStore)(nil).RevokeAccountSessions), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeSessions", reflect.TypeOf((*MockStore)(nil).RevokeSessions), ctx, userID)
 }

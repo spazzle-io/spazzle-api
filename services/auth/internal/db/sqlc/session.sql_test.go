@@ -126,7 +126,7 @@ func TestRevokeAccountSessions(t *testing.T) {
 		createdSessions = append(createdSessions, session)
 	}
 
-	commandTag, err := testStore.RevokeAccountSessions(context.Background(), userId)
+	commandTag, err := testStore.RevokeSessions(context.Background(), userId)
 	require.NoError(t, err)
 	require.NotEmpty(t, commandTag)
 	require.Equal(t, numCreatedSessions, int(commandTag.RowsAffected()))

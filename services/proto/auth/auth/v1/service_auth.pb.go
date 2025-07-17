@@ -26,7 +26,7 @@ var File_auth_v1_service_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a&auth/v1/rpc_refresh_access_token.proto2\x98\b\n" +
+	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a&auth/v1/rpc_refresh_access_token.proto\x1a'auth/v1/rpc_revoke_refresh_tokens.proto2\xfe\t\n" +
 	"\vAuthService\x12\x93\x02\n" +
 	"\x0eGetSIWEPayload\x12\x1e.auth.v1.GetSIWEPayloadRequest\x1a\x1f.auth.v1.GetSIWEPayloadResponse\"\xbf\x01\x92A\xa1\x01\x127Generate SIWE message payload for EVM compatible chains\x1adGenerates a Sign-In With Ethereum (SIWE) message payload for the specified wallet address and domainb\x00\x82\xd3\xe4\x93\x02\x14\x12\x12/auth/siwe-payload\x12\xa8\x02\n" +
 	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xda\x01\x92A\xb9\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x17:\x01*\x1a\x12/auth/authenticate\x12\xe8\x01\n" +
@@ -37,7 +37,11 @@ const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\x12RefreshAccessToken\x12\".auth.v1.RefreshAccessTokenRequest\x1a#.auth.v1.RefreshAccessTokenResponse\"}\x92AX\x12\x14Refresh access token\x1a2Get a new access token using a valid refresh tokenb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c\x12\x1a/auth/refresh-access-tokenB\xaf\x02\x92A\x9b\x01\x120\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c\x12\x1a/auth/refresh-access-token\x12\xe3\x01\n" +
+	"\x13RevokeRefreshTokens\x12#.auth.v1.RevokeRefreshTokensRequest\x1a$.auth.v1.RevokeRefreshTokensResponse\"\x80\x01\x92AZ\x12\x15Revoke refresh tokens\x1a3Revoke all refresh tokens associated with a user idb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1d\x12\x1b/auth/revoke-refresh-tokensB\xaf\x02\x92A\x9b\x01\x120\n" +
 	"\fAuth Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -48,26 +52,30 @@ const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\vcom.auth.v1B\x10ServiceAuthProtoP\x01Z2github.com/spazzle-io/spazzle-api/services/auth/pb\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var file_auth_v1_service_auth_proto_goTypes = []any{
-	(*GetSIWEPayloadRequest)(nil),      // 0: auth.v1.GetSIWEPayloadRequest
-	(*AuthenticateRequest)(nil),        // 1: auth.v1.AuthenticateRequest
-	(*VerifyAccessTokenRequest)(nil),   // 2: auth.v1.VerifyAccessTokenRequest
-	(*RefreshAccessTokenRequest)(nil),  // 3: auth.v1.RefreshAccessTokenRequest
-	(*GetSIWEPayloadResponse)(nil),     // 4: auth.v1.GetSIWEPayloadResponse
-	(*AuthenticateResponse)(nil),       // 5: auth.v1.AuthenticateResponse
-	(*VerifyAccessTokenResponse)(nil),  // 6: auth.v1.VerifyAccessTokenResponse
-	(*RefreshAccessTokenResponse)(nil), // 7: auth.v1.RefreshAccessTokenResponse
+	(*GetSIWEPayloadRequest)(nil),       // 0: auth.v1.GetSIWEPayloadRequest
+	(*AuthenticateRequest)(nil),         // 1: auth.v1.AuthenticateRequest
+	(*VerifyAccessTokenRequest)(nil),    // 2: auth.v1.VerifyAccessTokenRequest
+	(*RefreshAccessTokenRequest)(nil),   // 3: auth.v1.RefreshAccessTokenRequest
+	(*RevokeRefreshTokensRequest)(nil),  // 4: auth.v1.RevokeRefreshTokensRequest
+	(*GetSIWEPayloadResponse)(nil),      // 5: auth.v1.GetSIWEPayloadResponse
+	(*AuthenticateResponse)(nil),        // 6: auth.v1.AuthenticateResponse
+	(*VerifyAccessTokenResponse)(nil),   // 7: auth.v1.VerifyAccessTokenResponse
+	(*RefreshAccessTokenResponse)(nil),  // 8: auth.v1.RefreshAccessTokenResponse
+	(*RevokeRefreshTokensResponse)(nil), // 9: auth.v1.RevokeRefreshTokensResponse
 }
 var file_auth_v1_service_auth_proto_depIdxs = []int32{
 	0, // 0: auth.v1.AuthService.GetSIWEPayload:input_type -> auth.v1.GetSIWEPayloadRequest
 	1, // 1: auth.v1.AuthService.Authenticate:input_type -> auth.v1.AuthenticateRequest
 	2, // 2: auth.v1.AuthService.VerifyAccessToken:input_type -> auth.v1.VerifyAccessTokenRequest
 	3, // 3: auth.v1.AuthService.RefreshAccessToken:input_type -> auth.v1.RefreshAccessTokenRequest
-	4, // 4: auth.v1.AuthService.GetSIWEPayload:output_type -> auth.v1.GetSIWEPayloadResponse
-	5, // 5: auth.v1.AuthService.Authenticate:output_type -> auth.v1.AuthenticateResponse
-	6, // 6: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.VerifyAccessTokenResponse
-	7, // 7: auth.v1.AuthService.RefreshAccessToken:output_type -> auth.v1.RefreshAccessTokenResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	4, // 4: auth.v1.AuthService.RevokeRefreshTokens:input_type -> auth.v1.RevokeRefreshTokensRequest
+	5, // 5: auth.v1.AuthService.GetSIWEPayload:output_type -> auth.v1.GetSIWEPayloadResponse
+	6, // 6: auth.v1.AuthService.Authenticate:output_type -> auth.v1.AuthenticateResponse
+	7, // 7: auth.v1.AuthService.VerifyAccessToken:output_type -> auth.v1.VerifyAccessTokenResponse
+	8, // 8: auth.v1.AuthService.RefreshAccessToken:output_type -> auth.v1.RefreshAccessTokenResponse
+	9, // 9: auth.v1.AuthService.RevokeRefreshTokens:output_type -> auth.v1.RevokeRefreshTokensResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -82,6 +90,7 @@ func file_auth_v1_service_auth_proto_init() {
 	file_auth_v1_rpc_authenticate_proto_init()
 	file_auth_v1_rpc_verify_access_token_proto_init()
 	file_auth_v1_rpc_refresh_access_token_proto_init()
+	file_auth_v1_rpc_revoke_refresh_tokens_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

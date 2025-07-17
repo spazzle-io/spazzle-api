@@ -84,12 +84,12 @@ func (q *Queries) GetSessionById(ctx context.Context, id uuid.UUID) (Session, er
 	return i, err
 }
 
-const revokeAccountSessions = `-- name: RevokeAccountSessions :execresult
+const revokeSessions = `-- name: RevokeSessions :execresult
 UPDATE sessions
 SET is_revoked = true
 WHERE user_id = $1 AND is_revoked = false
 `
 
-func (q *Queries) RevokeAccountSessions(ctx context.Context, userID uuid.UUID) (pgconn.CommandTag, error) {
-	return q.db.Exec(ctx, revokeAccountSessions, userID)
+func (q *Queries) RevokeSessions(ctx context.Context, userID uuid.UUID) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, revokeSessions, userID)
 }

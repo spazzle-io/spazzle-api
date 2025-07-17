@@ -16,7 +16,7 @@ type Querier interface {
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	GetCredentialByWalletAddress(ctx context.Context, walletAddress string) (Credential, error)
 	GetSessionById(ctx context.Context, id uuid.UUID) (Session, error)
-	RevokeAccountSessions(ctx context.Context, userID uuid.UUID) (pgconn.CommandTag, error)
+	RevokeSessions(ctx context.Context, userID uuid.UUID) (pgconn.CommandTag, error)
 }
 
 var _ Querier = (*Queries)(nil)

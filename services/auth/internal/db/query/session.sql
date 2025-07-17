@@ -15,7 +15,7 @@ INSERT INTO sessions (
 SELECT * FROM sessions
 WHERE id = $1 LIMIT 1;
 
--- name: RevokeAccountSessions :execresult
+-- name: RevokeSessions :execresult
 UPDATE sessions
 SET is_revoked = true
 WHERE user_id = $1 AND is_revoked = false;

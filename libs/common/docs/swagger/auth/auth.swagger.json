@@ -98,6 +98,43 @@
         ]
       }
     },
+    "/auth/revoke-refresh-tokens": {
+      "get": {
+        "summary": "Revoke refresh tokens",
+        "description": "Revoke all refresh tokens associated with a user id",
+        "operationId": "AuthService_RevokeRefreshTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RevokeRefreshTokensResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuthService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/auth/siwe-payload": {
       "get": {
         "summary": "Generate SIWE message payload for EVM compatible chains",
@@ -323,6 +360,15 @@
       "properties": {
         "session": {
           "$ref": "#/definitions/v1Session"
+        }
+      }
+    },
+    "v1RevokeRefreshTokensResponse": {
+      "type": "object",
+      "properties": {
+        "numSessionsRevoked": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
