@@ -68,7 +68,7 @@ func (x *RevokeRefreshTokensRequest) GetUserId() string {
 
 type RevokeRefreshTokensResponse struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	NumSessionsRevoked int32                  `protobuf:"varint,1,opt,name=num_sessions_revoked,json=numSessionsRevoked,proto3" json:"num_sessions_revoked,omitempty"`
+	NumSessionsRevoked int64                  `protobuf:"varint,1,opt,name=num_sessions_revoked,json=numSessionsRevoked,proto3" json:"num_sessions_revoked,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -103,7 +103,7 @@ func (*RevokeRefreshTokensResponse) Descriptor() ([]byte, []int) {
 	return file_auth_v1_rpc_revoke_refresh_tokens_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *RevokeRefreshTokensResponse) GetNumSessionsRevoked() int32 {
+func (x *RevokeRefreshTokensResponse) GetNumSessionsRevoked() int64 {
 	if x != nil {
 		return x.NumSessionsRevoked
 	}
@@ -118,7 +118,7 @@ const file_auth_v1_rpc_revoke_refresh_tokens_proto_rawDesc = "" +
 	"\x1aRevokeRefreshTokensRequest\x12$\n" +
 	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\"O\n" +
 	"\x1bRevokeRefreshTokensResponse\x120\n" +
-	"\x14num_sessions_revoked\x18\x01 \x01(\x05R\x12numSessionsRevokedB\x9b\x01\n" +
+	"\x14num_sessions_revoked\x18\x01 \x01(\x03R\x12numSessionsRevokedB\x9b\x01\n" +
 	"\vcom.auth.v1B\x1bRpcRevokeRefreshTokensProtoP\x01Z2github.com/spazzle-io/spazzle-api/services/auth/pb\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"
 
 var (
