@@ -77,16 +77,12 @@
         },
         "parameters": [
           {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "walletAddress",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RefreshAccessTokenRequest"
+            }
           }
         ],
         "tags": [
@@ -120,10 +116,12 @@
         },
         "parameters": [
           {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RevokeRefreshTokensRequest"
+            }
           }
         ],
         "tags": [
@@ -356,11 +354,30 @@
         }
       }
     },
+    "v1RefreshAccessTokenRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "walletAddress": {
+          "type": "string"
+        }
+      }
+    },
     "v1RefreshAccessTokenResponse": {
       "type": "object",
       "properties": {
         "session": {
           "$ref": "#/definitions/v1Session"
+        }
+      }
+    },
+    "v1RevokeRefreshTokensRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
         }
       }
     },

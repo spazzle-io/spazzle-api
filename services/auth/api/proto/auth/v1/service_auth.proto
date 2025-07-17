@@ -91,6 +91,7 @@ service AuthService {
   rpc RefreshAccessToken(RefreshAccessTokenRequest) returns (RefreshAccessTokenResponse) {
     option (google.api.http) = {
       post: "/auth/refresh-access-token"
+      body: "*"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -107,6 +108,7 @@ service AuthService {
   rpc RevokeRefreshTokens(RevokeRefreshTokensRequest) returns (RevokeRefreshTokensResponse) {
     option (google.api.http) = {
       post: "/auth/revoke-refresh-tokens"
+      body: "*"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
