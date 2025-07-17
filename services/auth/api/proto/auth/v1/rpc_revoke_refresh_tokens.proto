@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package auth.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/auth/pb";
+
+message RevokeRefreshTokensRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message RevokeRefreshTokensResponse {
+  int32 num_sessions_revoked = 1;
+}
