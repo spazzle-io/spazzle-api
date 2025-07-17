@@ -25,6 +25,7 @@ const (
 type RefreshAccessTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	WalletAddress string                 `protobuf:"bytes,2,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,6 +63,13 @@ func (*RefreshAccessTokenRequest) Descriptor() ([]byte, []int) {
 func (x *RefreshAccessTokenRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *RefreshAccessTokenRequest) GetWalletAddress() string {
+	if x != nil {
+		return x.WalletAddress
 	}
 	return ""
 }
@@ -114,9 +122,10 @@ var File_auth_v1_rpc_refresh_access_token_proto protoreflect.FileDescriptor
 
 const file_auth_v1_rpc_refresh_access_token_proto_rawDesc = "" +
 	"\n" +
-	"&auth/v1/rpc_refresh_access_token.proto\x12\aauth.v1\x1a\x1bbuf/validate/validate.proto\x1a\x14auth/v1/common.proto\"A\n" +
+	"&auth/v1/rpc_refresh_access_token.proto\x12\aauth.v1\x1a\x1bbuf/validate/validate.proto\x1a\x14auth/v1/common.proto\"p\n" +
 	"\x19RefreshAccessTokenRequest\x12$\n" +
-	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\"H\n" +
+	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12-\n" +
+	"\x0ewallet_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rwalletAddress\"H\n" +
 	"\x1aRefreshAccessTokenResponse\x12*\n" +
 	"\asession\x18\x01 \x01(\v2\x10.auth.v1.SessionR\asessionB\x9a\x01\n" +
 	"\vcom.auth.v1B\x1aRpcRefreshAccessTokenProtoP\x01Z2github.com/spazzle-io/spazzle-api/services/auth/pb\xa2\x02\x03AXX\xaa\x02\aAuth.V1\xca\x02\aAuth\\V1\xe2\x02\x13Auth\\V1\\GPBMetadata\xea\x02\bAuth::V1b\x06proto3"

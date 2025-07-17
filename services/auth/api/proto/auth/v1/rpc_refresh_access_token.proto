@@ -9,6 +9,7 @@ option go_package = "github.com/spazzle-io/spazzle-api/services/auth/pb";
 
 message RefreshAccessTokenRequest {
   string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string wallet_address = 2 [(buf.validate.field).required = true];
 }
 
 message RefreshAccessTokenResponse {

@@ -80,6 +80,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "walletAddress",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
