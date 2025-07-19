@@ -21,7 +21,7 @@
   ],
   "paths": {
     "/auth/authenticate": {
-      "put": {
+      "post": {
         "summary": "Authenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message",
         "description": "Authenticate a user by verifying their Ethereum wallet address using a cryptographic signature",
         "operationId": "AuthService_Authenticate",
@@ -52,11 +52,12 @@
         "tags": [
           "AuthService"
         ],
-        "security": []
+        "security": [],
+        "x-internal": true
       }
     },
     "/auth/refresh-access-token": {
-      "get": {
+      "post": {
         "summary": "Refresh access token",
         "description": "Get a new access token using a valid refresh token",
         "operationId": "AuthService_RefreshAccessToken",
@@ -76,16 +77,12 @@
         },
         "parameters": [
           {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "walletAddress",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RefreshAccessTokenRequest"
+            }
           }
         ],
         "tags": [
@@ -99,7 +96,7 @@
       }
     },
     "/auth/revoke-refresh-tokens": {
-      "get": {
+      "post": {
         "summary": "Revoke refresh tokens",
         "description": "Revoke all refresh tokens associated with a user id",
         "operationId": "AuthService_RevokeRefreshTokens",
@@ -119,10 +116,12 @@
         },
         "parameters": [
           {
-            "name": "userId",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RevokeRefreshTokensRequest"
+            }
           }
         ],
         "tags": [
@@ -355,11 +354,30 @@
         }
       }
     },
+    "v1RefreshAccessTokenRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "walletAddress": {
+          "type": "string"
+        }
+      }
+    },
     "v1RefreshAccessTokenResponse": {
       "type": "object",
       "properties": {
         "session": {
           "$ref": "#/definitions/v1Session"
+        }
+      }
+    },
+    "v1RevokeRefreshTokensRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
         }
       }
     },

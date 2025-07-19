@@ -26,22 +26,25 @@ var File_auth_v1_service_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a&auth/v1/rpc_refresh_access_token.proto\x1a'auth/v1/rpc_revoke_refresh_tokens.proto2\xfe\t\n" +
+	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a&auth/v1/rpc_refresh_access_token.proto\x1a'auth/v1/rpc_revoke_refresh_tokens.proto2\x97\n" +
+	"\n" +
 	"\vAuthService\x12\x93\x02\n" +
-	"\x0eGetSIWEPayload\x12\x1e.auth.v1.GetSIWEPayloadRequest\x1a\x1f.auth.v1.GetSIWEPayloadResponse\"\xbf\x01\x92A\xa1\x01\x127Generate SIWE message payload for EVM compatible chains\x1adGenerates a Sign-In With Ethereum (SIWE) message payload for the specified wallet address and domainb\x00\x82\xd3\xe4\x93\x02\x14\x12\x12/auth/siwe-payload\x12\xa8\x02\n" +
-	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xda\x01\x92A\xb9\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x17:\x01*\x1a\x12/auth/authenticate\x12\xe8\x01\n" +
+	"\x0eGetSIWEPayload\x12\x1e.auth.v1.GetSIWEPayloadRequest\x1a\x1f.auth.v1.GetSIWEPayloadResponse\"\xbf\x01\x92A\xa1\x01\x127Generate SIWE message payload for EVM compatible chains\x1adGenerates a Sign-In With Ethereum (SIWE) message payload for the specified wallet address and domainb\x00\x82\xd3\xe4\x93\x02\x14\x12\x12/auth/siwe-payload\x12\xba\x02\n" +
+	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xec\x01\x92A\xcb\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00j\x10\n" +
+	"\n" +
+	"x-internal\x12\x02 \x01\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/authenticate\x12\xe8\x01\n" +
 	"\x11VerifyAccessToken\x12!.auth.v1.VerifyAccessTokenRequest\x1a\".auth.v1.VerifyAccessTokenResponse\"\x8b\x01\x92Ad\x12\x13Verify access token\x1a?Verify whether an access token is valid for a specified user idb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/auth/verify-access-token\x12\xdc\x01\n" +
-	"\x12RefreshAccessToken\x12\".auth.v1.RefreshAccessTokenRequest\x1a#.auth.v1.RefreshAccessTokenResponse\"}\x92AX\x12\x14Refresh access token\x1a2Get a new access token using a valid refresh tokenb\f\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/auth/verify-access-token\x12\xe0\x01\n" +
+	"\x12RefreshAccessToken\x12\".auth.v1.RefreshAccessTokenRequest\x1a#.auth.v1.RefreshAccessTokenResponse\"\x80\x01\x92AX\x12\x14Refresh access token\x1a2Get a new access token using a valid refresh tokenb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c\x12\x1a/auth/refresh-access-token\x12\xe3\x01\n" +
-	"\x13RevokeRefreshTokens\x12#.auth.v1.RevokeRefreshTokensRequest\x1a$.auth.v1.RevokeRefreshTokensResponse\"\x80\x01\x92AZ\x12\x15Revoke refresh tokens\x1a3Revoke all refresh tokens associated with a user idb\f\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/auth/refresh-access-token\x12\xe6\x01\n" +
+	"\x13RevokeRefreshTokens\x12#.auth.v1.RevokeRefreshTokensRequest\x1a$.auth.v1.RevokeRefreshTokensResponse\"\x83\x01\x92AZ\x12\x15Revoke refresh tokens\x1a3Revoke all refresh tokens associated with a user idb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1d\x12\x1b/auth/revoke-refresh-tokensB\xaf\x02\x92A\x9b\x01\x120\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/auth/revoke-refresh-tokensB\xaf\x02\x92A\x9b\x01\x120\n" +
 	"\fAuth Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
