@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/spazzle-io/spazzle-api/compare/v0.1.1...v0.1.2) (2025-07-19)
+
+
+### Features
+
+* **auth:** add rate limits ([#24](https://github.com/spazzle-io/spazzle-api/issues/24)) ([8f6960b](https://github.com/spazzle-io/spazzle-api/commit/8f6960bfb0e8de443fd96a16ef676fea578b46a8))
+
 ## [0.1.1](https://github.com/spazzle-io/spazzle-api/compare/v0.1.0...v0.1.1) (2025-07-17)
 
 
