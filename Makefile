@@ -40,7 +40,7 @@ tidy:
 	done
 
 db_schema:
-	dbml2sql --postgres -o ./$(module)/docs/db_schema.sql ./$(module)/docs/db.dbml
+	dbml2sql --postgres -o ./$(module)/docs/db/db_schema.sql ./$(module)/docs/db/db.dbml
 
 postgres:
 	docker run --name postgres$(POSTGRES_VERSION) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(DB_USER) -e POSTGRES_PASSWORD=$(DB_PASS) -d postgres:$(POSTGRES_VERSION)-alpine

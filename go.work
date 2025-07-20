@@ -4,4 +4,5 @@ use (
 	./libs/common
 	./services/auth
 	./services/proto
+	./services/users
 )

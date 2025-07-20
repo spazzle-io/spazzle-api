@@ -1,0 +1,13 @@
+Project users_service {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Users Service Database
+  '''
+}
+
+Table users {
+  id UUID [default: `gen_random_uuid()`, pk]
+  wallet_address varchar [unique, not null]
+  gamer_tag varchar [unique]
+  created_at timestamptz [not null, default: `now()`]
+}
