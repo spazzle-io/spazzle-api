@@ -39,7 +39,7 @@ func NewRedisTaskProcessor(redisOpt asynq.RedisConnOpt, config util.Config, cach
 			log.Error().Err(err).
 				Str("type", task.Type()).
 				Bytes("payload", task.Payload()).
-				Msg("process task failed")
+				Msg("async worker task failed")
 		}),
 		Logger: logger,
 	})
