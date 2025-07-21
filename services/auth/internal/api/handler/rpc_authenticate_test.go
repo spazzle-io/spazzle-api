@@ -313,6 +313,37 @@ func TestAuthenticate(t *testing.T) {
 			},
 		},
 		{
+			name:     "credential already exists",
+			req:      authenticateReqParams,
+			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
+			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(siwePayload.Message, nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				store.EXPECT().
+					GetCredentialByWalletAddress(gomock.Any(), siwePayload.WalletAddress).
+					Times(1).
+					Return(db.Credential{}, nil)
+
+				store.EXPECT().
+					CreateCredentialTx(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.CreateCredentialTxResult{}, db.ErrCredentialAlreadyExists)
+			},
+			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, credentialAlreadyExistsError)
+				require.Empty(t, res)
+			},
+		},
+		{
 			name:     "could not create session for new credential",
 			req:      authenticateReqParams,
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),

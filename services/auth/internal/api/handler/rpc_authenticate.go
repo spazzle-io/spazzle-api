@@ -24,6 +24,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const credentialAlreadyExistsError = "Account already exists"
+
 var allowedServices = []commonMiddleware.Service{util.Users}
 
 func (h *Handler) Authenticate(ctx context.Context, req *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error) {
@@ -165,6 +167,10 @@ func (h *Handler) createCredentialAndSession(
 	})
 	if err != nil {
 		logger.Error().Err(err).Msg("could not create credential")
+		if errors.Is(err, db.ErrCredentialAlreadyExists) {
+			return db.Credential{}, nil, status.Error(codes.AlreadyExists, credentialAlreadyExistsError)
+		}
+
 		return db.Credential{}, nil, status.Error(codes.Internal, InternalServerError)
 	}
 
