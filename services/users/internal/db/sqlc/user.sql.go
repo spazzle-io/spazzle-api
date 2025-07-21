@@ -17,7 +17,7 @@ INSERT INTO users (
     wallet_address, gamer_tag
 ) VALUES (
     $1, $2
-) RETURNING id, wallet_address, gamer_tag, created_at
+) RETURNING id, wallet_address, gamer_tag, ens_name, ens_avatar_uri, ens_image_url, ens_last_resolved_at, created_at
 `
 
 type CreateUserParams struct {
@@ -32,6 +32,10 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.ID,
 		&i.WalletAddress,
 		&i.GamerTag,
+		&i.EnsName,
+		&i.EnsAvatarUri,
+		&i.EnsImageUrl,
+		&i.EnsLastResolvedAt,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -49,7 +53,7 @@ func (q *Queries) GetTotalUserCount(ctx context.Context) (int64, error) {
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, wallet_address, gamer_tag, created_at FROM users
+SELECT id, wallet_address, gamer_tag, ens_name, ens_avatar_uri, ens_image_url, ens_last_resolved_at, created_at FROM users
 WHERE id = $1
 LIMIT 1
 `
@@ -61,13 +65,17 @@ func (q *Queries) GetUserById(ctx context.Context, userID uuid.UUID) (User, erro
 		&i.ID,
 		&i.WalletAddress,
 		&i.GamerTag,
+		&i.EnsName,
+		&i.EnsAvatarUri,
+		&i.EnsImageUrl,
+		&i.EnsLastResolvedAt,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, wallet_address, gamer_tag, created_at FROM users
+SELECT id, wallet_address, gamer_tag, ens_name, ens_avatar_uri, ens_image_url, ens_last_resolved_at, created_at FROM users
 ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2
@@ -91,6 +99,10 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.ID,
 			&i.WalletAddress,
 			&i.GamerTag,
+			&i.EnsName,
+			&i.EnsAvatarUri,
+			&i.EnsImageUrl,
+			&i.EnsLastResolvedAt,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -106,24 +118,43 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET
-    gamer_tag = COALESCE($1, gamer_tag)
+    gamer_tag = COALESCE($1, gamer_tag),
+    ens_name = COALESCE($2, ens_name),
+    ens_avatar_uri = COALESCE($3, ens_avatar_uri),
+    ens_image_url = COALESCE($4, ens_image_url),
+    ens_last_resolved_at = COALESCE($5, ens_last_resolved_at)
 WHERE
-    id = $2
-RETURNING id, wallet_address, gamer_tag, created_at
+    id = $6
+RETURNING id, wallet_address, gamer_tag, ens_name, ens_avatar_uri, ens_image_url, ens_last_resolved_at, created_at
 `
 
 type UpdateUserParams struct {
-	GamerTag pgtype.Text `json:"gamer_tag"`
-	UserID   uuid.UUID   `json:"user_id"`
+	GamerTag          pgtype.Text        `json:"gamer_tag"`
+	EnsName           pgtype.Text        `json:"ens_name"`
+	EnsAvatarUri      pgtype.Text        `json:"ens_avatar_uri"`
+	EnsImageUrl       pgtype.Text        `json:"ens_image_url"`
+	EnsLastResolvedAt pgtype.Timestamptz `json:"ens_last_resolved_at"`
+	UserID            uuid.UUID          `json:"user_id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser, arg.GamerTag, arg.UserID)
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.GamerTag,
+		arg.EnsName,
+		arg.EnsAvatarUri,
+		arg.EnsImageUrl,
+		arg.EnsLastResolvedAt,
+		arg.UserID,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.WalletAddress,
 		&i.GamerTag,
+		&i.EnsName,
+		&i.EnsAvatarUri,
+		&i.EnsImageUrl,
+		&i.EnsLastResolvedAt,
 		&i.CreatedAt,
 	)
 	return i, err

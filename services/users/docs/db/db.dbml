@@ -9,5 +9,9 @@ Table users {
   id UUID [default: `gen_random_uuid()`, pk]
   wallet_address varchar [unique, not null]
   gamer_tag varchar [unique]
+  ens_name varchar [unique]
+  ens_avatar_uri varchar
+  ens_image_url varchar
+  ens_last_resolved_at timestamptz
   created_at timestamptz [not null, default: `now()`]
 }
