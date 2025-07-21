@@ -3,7 +3,7 @@ module github.com/spazzle-io/spazzle-api/services/auth
 go 1.24.4
 
 require (
-	buf.build/go/protovalidate v0.13.1
+	buf.build/go/protovalidate v0.14.0
 	github.com/brianvoe/gofakeit/v7 v7.3.0
 	github.com/ethereum/go-ethereum v1.16.1
 	github.com/golang-migrate/migrate/v4 v4.18.3
@@ -26,7 +26,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250625184727-c923a0c2a132.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250717165733-d22d418d82d8.1 // indirect
 	cel.dev/expr v0.23.1 // indirect
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
 	github.com/aead/chacha20poly1305 v0.0.0-20201124145622-1a5aba2a8b29 // indirect
