@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/spazzle-io/spazzle-api/services/users/internal/worker"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	"github.com/spazzle-io/spazzle-api/services/users/internal/api/handler"
@@ -18,8 +20,8 @@ type Server struct {
 
 var once sync.Once
 
-func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
-	h := handler.New(config, store, cache)
+func New(config util.Config, store db.Store, cache commonCache.Cache, taskDistributor worker.TaskDistributor) (*Server, error) {
+	h := handler.New(config, store, cache, taskDistributor)
 
 	err := setupRateLimiter(config.ServiceName, config.RedisConnURL, h.RateLimits())
 	if err != nil {
