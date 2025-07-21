@@ -35,6 +35,11 @@ func createTestUser(t *testing.T) User {
 	require.WithinDuration(t, time.Now().UTC(), user.CreatedAt, time.Second)
 	require.NotZero(t, user.CreatedAt)
 
+	require.Empty(t, user.EnsName)
+	require.Empty(t, user.EnsAvatarUri)
+	require.Empty(t, user.EnsImageUrl)
+	require.Empty(t, user.EnsLastResolvedAt)
+
 	return user
 }
 
@@ -117,6 +122,11 @@ func TestUpdateUser(t *testing.T) {
 	user := createTestUser(t)
 	require.NotEmpty(t, user)
 
+	ensName := fmt.Sprintf("%s.eth", gofakeit.Gamertag())
+	ensAvatarUri := "eip155:1/erc721:0x4bb08998a697d0db666783ba5b56e85b33ba262f/7967"
+	ensImageUrl := "https://i2.seadn.io/ethereum/0x4bb08998a697d0db666783ba5b56e85b33ba262f/1d219876a9abcf6bb2020ea6dcf7ad6f.png"
+	ensLastResolvedAt := time.Now().UTC()
+
 	expectedUpdatedGamerTag := fmt.Sprintf("%s--updated", user.GamerTag.String)
 
 	params := UpdateUserParams{
@@ -125,6 +135,22 @@ func TestUpdateUser(t *testing.T) {
 			String: expectedUpdatedGamerTag,
 			Valid:  true,
 		},
+		EnsName: pgtype.Text{
+			String: ensName,
+			Valid:  true,
+		},
+		EnsAvatarUri: pgtype.Text{
+			String: ensAvatarUri,
+			Valid:  true,
+		},
+		EnsImageUrl: pgtype.Text{
+			String: ensImageUrl,
+			Valid:  true,
+		},
+		EnsLastResolvedAt: pgtype.Timestamptz{
+			Time:  ensLastResolvedAt,
+			Valid: true,
+		},
 	}
 	updatedUser, err := testStore.UpdateUser(context.Background(), params)
 	require.NoError(t, err)
@@ -132,5 +158,9 @@ func TestUpdateUser(t *testing.T) {
 
 	require.Equal(t, expectedUpdatedGamerTag, updatedUser.GamerTag.String)
 	require.Equal(t, user.WalletAddress, updatedUser.WalletAddress)
+	require.Equal(t, updatedUser.EnsName.String, ensName)
+	require.Equal(t, updatedUser.EnsAvatarUri.String, ensAvatarUri)
+	require.Equal(t, updatedUser.EnsImageUrl.String, ensImageUrl)
+	require.WithinDuration(t, updatedUser.EnsLastResolvedAt.Time, ensLastResolvedAt, time.Second)
 	require.WithinDuration(t, user.CreatedAt, updatedUser.CreatedAt, time.Second)
 }
