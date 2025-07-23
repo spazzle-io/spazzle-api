@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.3](https://github.com/spazzle-io/spazzle-api/compare/v0.1.2...v0.1.3) (2025-07-23)
+
+
+### Features
+
+* **auth:** report account already exists error on authenticate endpoint ([#29](https://github.com/spazzle-io/spazzle-api/issues/29)) ([81b62b4](https://github.com/spazzle-io/spazzle-api/commit/81b62b4e79f8653658dba89916aaff79c2264b5a))
+* **users:** add async background task processor ([#31](https://github.com/spazzle-io/spazzle-api/issues/31)) ([46fdec3](https://github.com/spazzle-io/spazzle-api/commit/46fdec37d14a16d8b7aeba22d1a2610d0f1e9eea))
+* **users:** add create user db tx ([#28](https://github.com/spazzle-io/spazzle-api/issues/28)) ([b4be3ce](https://github.com/spazzle-io/spazzle-api/commit/b4be3ce2dcee8678eabc3a99d5347d5dc0a8267f))
+* **users:** add ens fields to user table ([#30](https://github.com/spazzle-io/spazzle-api/issues/30)) ([d31b60b](https://github.com/spazzle-io/spazzle-api/commit/d31b60b64ea05c498d3cc890a497d585abbd550d))
+* **users:** add users service ([#26](https://github.com/spazzle-io/spazzle-api/issues/26)) ([75f532b](https://github.com/spazzle-io/spazzle-api/commit/75f532bf4f45d81bad286dbb92e589caea5da334))
+
 ## [0.1.2](https://github.com/spazzle-io/spazzle-api/compare/v0.1.1...v0.1.2) (2025-07-19)
 
 
