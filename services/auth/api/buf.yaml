@@ -11,4 +11,4 @@ breaking:
 deps:
   - buf.build/googleapis/googleapis:61b203b9a9164be9a834f58c37be6f62
   - buf.build/grpc-ecosystem/grpc-gateway:4c5ba75caaf84e928b7137ae5c18c26a
-  - buf.build/bufbuild/protovalidate:c923a0c2a1324d8b9db81effea973b9c
+  - buf.build/bufbuild/protovalidate:6c6e0d3c608e4549802254a2eee81bc8
