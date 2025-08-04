@@ -12,7 +12,17 @@ INSERT INTO sessions (
 ) RETURNING *;
 
 -- name: GetSessionById :one
-SELECT * FROM sessions
+SELECT
+    id,
+    user_id,
+    wallet_address,
+    refresh_token,
+    user_agent,
+    client_ip,
+    is_revoked,
+    expires_at,
+    created_at
+FROM sessions
 WHERE id = $1 LIMIT 1;
 
 -- name: RevokeSessions :execresult
