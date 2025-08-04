@@ -6,6 +6,12 @@ INSERT INTO credentials (
 ) RETURNING *;
 
 -- name: GetCredentialByWalletAddress :one
-SELECT * FROM credentials
+SELECT
+    id,
+    user_id,
+    wallet_address,
+    role,
+    created_at
+FROM credentials
 WHERE wallet_address = $1
 LIMIT 1;
