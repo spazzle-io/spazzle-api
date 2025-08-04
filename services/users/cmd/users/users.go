@@ -7,9 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hibiken/asynq"
-	"github.com/spazzle-io/spazzle-api/services/users/internal/worker"
-
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5"
@@ -52,13 +49,6 @@ func main() {
 
 	store := db.NewStore(connPool)
 
-	redisOpt, err := asynq.ParseRedisURI(config.RedisConnURL)
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not parse redis connection URL")
-	}
-
-	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
-
 	redisCache, err := commonCache.NewRedisCache(config.RedisConnURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create redis cache")
@@ -66,9 +56,8 @@ func main() {
 
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
-	runTaskProcessor(ctx, waitGroup, config, redisOpt, redisCache)
-	runGRPCServer(ctx, waitGroup, config, store, redisCache, taskDistributor)
-	runGatewayServer(ctx, waitGroup, config, store, redisCache, taskDistributor)
+	runGRPCServer(ctx, waitGroup, config, store, redisCache)
+	runGatewayServer(ctx, waitGroup, config, store, redisCache)
 
 	err = waitGroup.Wait()
 	if err != nil {
@@ -83,42 +72,14 @@ func main() {
 	}
 }
 
-func runTaskProcessor(
-	ctx context.Context,
-	waitGroup *errgroup.Group,
-	config util.Config,
-	redisOpt asynq.RedisConnOpt,
-	redisCache commonCache.Cache,
-) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, config, redisCache)
-
-	err := taskProcessor.Start()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to start task processor")
-	}
-
-	waitGroup.Go(func() error {
-		<-ctx.Done()
-		log.Info().Msg("shutting down task processor")
-
-		taskProcessor.Shutdown()
-		log.Info().Msg("task processor shut down")
-
-		return nil
-	})
-
-	log.Info().Msg("started task processor")
-}
-
 func runGRPCServer(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
 	config util.Config,
 	store db.Store,
 	cache commonCache.Cache,
-	taskDistributor worker.TaskDistributor,
 ) {
-	_, err := server.New(config, store, cache, taskDistributor)
+	_, err := server.New(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
@@ -145,9 +106,8 @@ func runGatewayServer(
 	config util.Config,
 	store db.Store,
 	cache commonCache.Cache,
-	taskDistributor worker.TaskDistributor,
 ) {
-	_, err := server.New(config, store, cache, taskDistributor)
+	_, err := server.New(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
