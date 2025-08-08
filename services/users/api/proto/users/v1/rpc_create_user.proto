@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
+
+message CreateUserRequest {
+  string wallet_address = 1 [(buf.validate.field).required = true];
+  string gamer_tag = 2;
+  string signature = 3 [(buf.validate.field).required = true];
+}
+
+message CreateUserResponse {
+  User user = 1;
+  Session session = 2;
+}
+
+message User {
+  string user_id = 1;
+  string wallet_address = 2;
+  string gamer_tag = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message Session {
+  string session_id = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  google.protobuf.Timestamp access_token_expires_at = 4;
+  google.protobuf.Timestamp refresh_token_expires_at = 5;
+  string token_type = 6;
+}

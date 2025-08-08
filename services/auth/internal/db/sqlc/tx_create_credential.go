@@ -11,7 +11,7 @@ var ErrCredentialAlreadyExists = errors.New("credential already exists")
 
 type CreateCredentialTxParams struct {
 	CreateCredentialParams
-	AfterCreate func(credential Credential) error
+	AfterCreate func(q Querier, credential Credential) error
 }
 
 type CreateCredentialTxResult struct {
@@ -44,7 +44,7 @@ func (store *SQLStore) CreateCredentialTx(
 			return err
 		}
 
-		return params.AfterCreate(result.Credential)
+		return params.AfterCreate(q, result.Credential)
 	})
 
 	return result, err

@@ -12,7 +12,7 @@ message VerifyAccessTokenRequest {
 }
 
 message VerifyAccessTokenResponse {
-  AccessTokenPayload access_token = 1;
+  AccessTokenPayload access_token_payload = 1;
 }
 
 message AccessTokenPayload {

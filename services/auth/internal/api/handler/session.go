@@ -23,12 +23,12 @@ type Session struct {
 
 func NewSession(
 	ctx context.Context,
+	q db.Querier,
 	userId uuid.UUID,
 	walletAddress string,
 	role token.Role,
 	config util.Config,
 	tokenMaker token.Maker,
-	store db.Store,
 ) (*Session, error) {
 	accessToken, accessTokenPayload, err := tokenMaker.CreateToken(
 		userId, walletAddress, role, token.AccessToken, config.AccessTokenDuration,
@@ -54,7 +54,7 @@ func NewSession(
 		userAgent = "unknown"
 	}
 
-	session, err := store.CreateSession(ctx, db.CreateSessionParams{
+	session, err := q.CreateSession(ctx, db.CreateSessionParams{
 		ID:            refreshTokenPayload.ID,
 		UserID:        userId,
 		WalletAddress: walletAddress,

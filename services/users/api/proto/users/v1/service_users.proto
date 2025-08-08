@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "users/v1/rpc_create_user.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Users Service";
+    version: "0";
+    contact: {
+      name: "Spazzle";
+      url: "https://spazzle.io";
+    };
+  };
+  security_definitions: {
+    security: {
+      key: "bearer"
+      value: {
+        type: TYPE_API_KEY
+        in: IN_HEADER
+        name: "Authorization"
+        description: "Authentication token, prefixed by Bearer: bearer <token>"
+      }
+    }
+  };
+  security: {
+    security_requirement: {
+      key: "bearer"
+    }
+  };
+};
+
+service UsersService {
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/users",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create a user";
+      description: "Create a new user";
+      security: {};
+    };
+  }
+}

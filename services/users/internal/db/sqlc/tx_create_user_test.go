@@ -42,7 +42,7 @@ func TestCreateUserTx(t *testing.T) {
 							Valid:  true,
 						},
 					},
-					AfterCreate: func() error {
+					AfterCreate: func(user User) error {
 						*isAfterCreateCalled = true
 						return nil
 					},
@@ -80,7 +80,7 @@ func TestCreateUserTx(t *testing.T) {
 							Valid:  true,
 						},
 					},
-					AfterCreate: func() error {
+					AfterCreate: func(user User) error {
 						*isAfterCreateCalled = true
 						return nil
 					},
@@ -119,7 +119,7 @@ func TestCreateUserTx(t *testing.T) {
 							Valid:  true,
 						},
 					},
-					AfterCreate: func() error {
+					AfterCreate: func(user User) error {
 						*isAfterCreateCalled = true
 						return nil
 					},

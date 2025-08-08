@@ -131,7 +131,7 @@ proto:
 	@rm -f ./libs/common/docs/swagger/$(notdir $(module)).swagger.json
 	@rm -rf ./services/proto/$(notdir $(module))
 	@rm -rf ./libs/common/docs/statik
-	@cd ./$(module)/api && buf build && buf lint && buf dep update && buf generate
+	@cd ./$(module)/api && buf dep update && buf build && buf lint && buf generate
 	@statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
 	@cd ./services/proto && go install tool && go mod tidy
 

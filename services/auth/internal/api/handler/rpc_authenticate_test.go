@@ -107,7 +107,7 @@ func TestAuthenticate(t *testing.T) {
 							CreatedAt:     time.Now().UTC(),
 						}
 
-						err := arg.AfterCreate(credential)
+						err := arg.AfterCreate(store, credential)
 						if err != nil {
 							return db.CreateCredentialTxResult{}, err
 						}
@@ -193,7 +193,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			name:       "request not made by an authenticated service",
+			name:       "request not made by an authorized service",
 			req:        authenticateReqParams,
 			inputCtx:   context.Background(),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {},
@@ -375,7 +375,7 @@ func TestAuthenticate(t *testing.T) {
 							CreatedAt:     time.Now().UTC(),
 						}
 
-						err := arg.AfterCreate(credential)
+						err := arg.AfterCreate(store, credential)
 						if err != nil {
 							return db.CreateCredentialTxResult{}, err
 						}

@@ -117,10 +117,10 @@ func (x *VerifyAccessTokenRequest) GetUserId() string {
 }
 
 type VerifyAccessTokenResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   *AccessTokenPayload    `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	AccessTokenPayload *AccessTokenPayload    `protobuf:"bytes,1,opt,name=access_token_payload,json=accessTokenPayload,proto3" json:"access_token_payload,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *VerifyAccessTokenResponse) Reset() {
@@ -153,9 +153,9 @@ func (*VerifyAccessTokenResponse) Descriptor() ([]byte, []int) {
 	return file_auth_v1_rpc_verify_access_token_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *VerifyAccessTokenResponse) GetAccessToken() *AccessTokenPayload {
+func (x *VerifyAccessTokenResponse) GetAccessTokenPayload() *AccessTokenPayload {
 	if x != nil {
-		return x.AccessToken
+		return x.AccessTokenPayload
 	}
 	return nil
 }
@@ -250,9 +250,9 @@ const file_auth_v1_rpc_verify_access_token_proto_rawDesc = "" +
 	"\n" +
 	"%auth/v1/rpc_verify_access_token.proto\x12\aauth.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"@\n" +
 	"\x18VerifyAccessTokenRequest\x12$\n" +
-	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\"[\n" +
-	"\x19VerifyAccessTokenResponse\x12>\n" +
-	"\faccess_token\x18\x01 \x01(\v2\x1b.auth.v1.AccessTokenPayloadR\vaccessToken\"\xcb\x02\n" +
+	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\"j\n" +
+	"\x19VerifyAccessTokenResponse\x12M\n" +
+	"\x14access_token_payload\x18\x01 \x01(\v2\x1b.auth.v1.AccessTokenPayloadR\x12accessTokenPayload\"\xcb\x02\n" +
 	"\x12AccessTokenPayload\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12%\n" +
@@ -290,7 +290,7 @@ var file_auth_v1_rpc_verify_access_token_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),     // 4: google.protobuf.Timestamp
 }
 var file_auth_v1_rpc_verify_access_token_proto_depIdxs = []int32{
-	3, // 0: auth.v1.VerifyAccessTokenResponse.access_token:type_name -> auth.v1.AccessTokenPayload
+	3, // 0: auth.v1.VerifyAccessTokenResponse.access_token_payload:type_name -> auth.v1.AccessTokenPayload
 	0, // 1: auth.v1.AccessTokenPayload.role:type_name -> auth.v1.AccessTokenPayload.Role
 	4, // 2: auth.v1.AccessTokenPayload.issued_at:type_name -> google.protobuf.Timestamp
 	4, // 3: auth.v1.AccessTokenPayload.expires_at:type_name -> google.protobuf.Timestamp

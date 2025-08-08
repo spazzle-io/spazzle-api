@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"os"
+	"reflect"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/rs/zerolog"
@@ -22,13 +23,37 @@ func LoadConfig[T any](path string, configName string) (config T, err error) {
 	viper.AutomaticEnv()
 	viper.SetTypeByDefaultValue(true)
 
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
+	if err = viper.ReadInConfig(); err != nil {
+		var configFileNotFound viper.ConfigFileNotFoundError
+		if !errors.As(err, &configFileNotFound) {
+			return
+		}
 	}
+
+	bindEnvs[T]()
 
 	err = viper.Unmarshal(&config)
 	return
+}
+
+func bindEnvs[T any]() {
+	var t T
+
+	val := reflect.TypeOf(t)
+	if val.Kind() == reflect.Pointer {
+		val = val.Elem()
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		tag := field.Tag.Get("mapstructure")
+		if tag != "" {
+			err := viper.BindEnv(tag)
+			if err != nil {
+				log.Warn().Err(err).Str("tag", tag).Msg("could not bind env var")
+			}
+		}
+	}
 }
 
 // SetupLogger configures the default service logger

@@ -44,13 +44,11 @@ func (h *Handler) Authenticate(ctx context.Context, req *pb.AuthenticateRequest)
 
 	logger = log.With().Str("user_id", userId.String()).Logger()
 
-	authenticatedService, err := commonMiddleware.AuthorizeService(ctx, allowedServices)
+	_, err = commonMiddleware.AuthorizeService(ctx, allowedServices)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to authorize service")
 		return nil, status.Error(codes.PermissionDenied, UnauthorizedAccessError)
 	}
-
-	logger = log.With().Str("authenticated_service", string(authenticatedService)).Logger()
 
 	cachedSIWEMessage, err := siwe.FetchSIWEMessage(ctx, h.config, h.cache, req.GetWalletAddress())
 	if err != nil {
@@ -129,7 +127,7 @@ func (h *Handler) handleExistingCredential(
 	}
 
 	session, err := NewSession(
-		ctx, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.config, h.tokenMaker, h.store,
+		ctx, h.store, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.config, h.tokenMaker,
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not create session")
@@ -152,9 +150,9 @@ func (h *Handler) createCredentialAndSession(
 			WalletAddress: walletAddress,
 			UserID:        userId,
 		},
-		AfterCreate: func(credential db.Credential) error {
+		AfterCreate: func(q db.Querier, credential db.Credential) error {
 			s, err := NewSession(
-				ctx, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.config, h.tokenMaker, h.store,
+				ctx, q, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.config, h.tokenMaker,
 			)
 			if err != nil {
 				logger.Error().Err(err).Msg("could not create session")

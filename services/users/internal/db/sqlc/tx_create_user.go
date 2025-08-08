@@ -14,7 +14,7 @@ var (
 
 type CreateUserTxParams struct {
 	CreateUserParams
-	AfterCreate func() error
+	AfterCreate func(user User) error
 }
 
 type CreateUserTxResult struct {
@@ -44,7 +44,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, params CreateUserTxPara
 			return err
 		}
 
-		return params.AfterCreate()
+		return params.AfterCreate(result.User)
 	})
 
 	return result, err
