@@ -5,6 +5,7 @@ package users.v1;
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "users/v1/rpc_create_user.proto";
+import "users/v1/rpc_authenticate_user.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
@@ -45,6 +46,19 @@ service UsersService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create a user";
       description: "Create a new user";
+      security: {};
+    };
+  }
+
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse) {
+    option (google.api.http) = {
+      post: "/users/authenticate",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Authenticate user";
+      description: "Authenticate a user";
       security: {};
     };
   }

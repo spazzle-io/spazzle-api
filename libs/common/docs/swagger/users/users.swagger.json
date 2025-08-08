@@ -54,6 +54,41 @@
         ],
         "security": []
       }
+    },
+    "/users/authenticate": {
+      "post": {
+        "summary": "Authenticate user",
+        "description": "Authenticate a user",
+        "operationId": "UsersService_AuthenticateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AuthenticateUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AuthenticateUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "UsersService"
+        ],
+        "security": []
+      }
     }
   },
   "definitions": {
@@ -82,6 +117,28 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "v1AuthenticateUserRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        }
+      }
+    },
+    "v1AuthenticateUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/v1User"
+        },
+        "session": {
+          "$ref": "#/definitions/v1Session"
         }
       }
     },
