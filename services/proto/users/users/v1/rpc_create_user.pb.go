@@ -10,7 +10,6 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -135,185 +134,18 @@ func (x *CreateUserResponse) GetSession() *Session {
 	return nil
 }
 
-type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	WalletAddress string                 `protobuf:"bytes,2,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
-	GamerTag      string                 `protobuf:"bytes,3,opt,name=gamer_tag,json=gamerTag,proto3" json:"gamer_tag,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *User) Reset() {
-	*x = User{}
-	mi := &file_users_v1_rpc_create_user_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *User) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*User) ProtoMessage() {}
-
-func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_rpc_create_user_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use User.ProtoReflect.Descriptor instead.
-func (*User) Descriptor() ([]byte, []int) {
-	return file_users_v1_rpc_create_user_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *User) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *User) GetWalletAddress() string {
-	if x != nil {
-		return x.WalletAddress
-	}
-	return ""
-}
-
-func (x *User) GetGamerTag() string {
-	if x != nil {
-		return x.GamerTag
-	}
-	return ""
-}
-
-func (x *User) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-type Session struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	SessionId             string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	AccessToken           string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	RefreshToken          string                 `protobuf:"bytes,3,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	AccessTokenExpiresAt  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=access_token_expires_at,json=accessTokenExpiresAt,proto3" json:"access_token_expires_at,omitempty"`
-	RefreshTokenExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=refresh_token_expires_at,json=refreshTokenExpiresAt,proto3" json:"refresh_token_expires_at,omitempty"`
-	TokenType             string                 `protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
-}
-
-func (x *Session) Reset() {
-	*x = Session{}
-	mi := &file_users_v1_rpc_create_user_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Session) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Session) ProtoMessage() {}
-
-func (x *Session) ProtoReflect() protoreflect.Message {
-	mi := &file_users_v1_rpc_create_user_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Session.ProtoReflect.Descriptor instead.
-func (*Session) Descriptor() ([]byte, []int) {
-	return file_users_v1_rpc_create_user_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *Session) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *Session) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *Session) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-func (x *Session) GetAccessTokenExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.AccessTokenExpiresAt
-	}
-	return nil
-}
-
-func (x *Session) GetRefreshTokenExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.RefreshTokenExpiresAt
-	}
-	return nil
-}
-
-func (x *Session) GetTokenType() string {
-	if x != nil {
-		return x.TokenType
-	}
-	return ""
-}
-
 var File_users_v1_rpc_create_user_proto protoreflect.FileDescriptor
 
 const file_users_v1_rpc_create_user_proto_rawDesc = "" +
 	"\n" +
-	"\x1eusers/v1/rpc_create_user.proto\x12\busers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x85\x01\n" +
+	"\x1eusers/v1/rpc_create_user.proto\x12\busers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15users/v1/common.proto\"\x85\x01\n" +
 	"\x11CreateUserRequest\x12-\n" +
 	"\x0ewallet_address\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rwalletAddress\x12\x1b\n" +
 	"\tgamer_tag\x18\x02 \x01(\tR\bgamerTag\x12$\n" +
 	"\tsignature\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsignature\"e\n" +
 	"\x12CreateUserResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04user\x12+\n" +
-	"\asession\x18\x02 \x01(\v2\x11.users.v1.SessionR\asession\"\x9e\x01\n" +
-	"\x04User\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12%\n" +
-	"\x0ewallet_address\x18\x02 \x01(\tR\rwalletAddress\x12\x1b\n" +
-	"\tgamer_tag\x18\x03 \x01(\tR\bgamerTag\x129\n" +
-	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xb7\x02\n" +
-	"\aSession\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +
-	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\x12Q\n" +
-	"\x17access_token_expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x14accessTokenExpiresAt\x12S\n" +
-	"\x18refresh_token_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiresAt\x12\x1d\n" +
-	"\n" +
-	"token_type\x18\x06 \x01(\tR\ttokenTypeB\x98\x01\n" +
+	"\asession\x18\x02 \x01(\v2\x11.users.v1.SessionR\asessionB\x98\x01\n" +
 	"\fcom.users.v1B\x12RpcCreateUserProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 
 var (
@@ -328,25 +160,21 @@ func file_users_v1_rpc_create_user_proto_rawDescGZIP() []byte {
 	return file_users_v1_rpc_create_user_proto_rawDescData
 }
 
-var file_users_v1_rpc_create_user_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_users_v1_rpc_create_user_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_users_v1_rpc_create_user_proto_goTypes = []any{
-	(*CreateUserRequest)(nil),     // 0: users.v1.CreateUserRequest
-	(*CreateUserResponse)(nil),    // 1: users.v1.CreateUserResponse
-	(*User)(nil),                  // 2: users.v1.User
-	(*Session)(nil),               // 3: users.v1.Session
-	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(*CreateUserRequest)(nil),  // 0: users.v1.CreateUserRequest
+	(*CreateUserResponse)(nil), // 1: users.v1.CreateUserResponse
+	(*User)(nil),               // 2: users.v1.User
+	(*Session)(nil),            // 3: users.v1.Session
 }
 var file_users_v1_rpc_create_user_proto_depIdxs = []int32{
 	2, // 0: users.v1.CreateUserResponse.user:type_name -> users.v1.User
 	3, // 1: users.v1.CreateUserResponse.session:type_name -> users.v1.Session
-	4, // 2: users.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	4, // 3: users.v1.Session.access_token_expires_at:type_name -> google.protobuf.Timestamp
-	4, // 4: users.v1.Session.refresh_token_expires_at:type_name -> google.protobuf.Timestamp
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_users_v1_rpc_create_user_proto_init() }
@@ -354,13 +182,14 @@ func file_users_v1_rpc_create_user_proto_init() {
 	if File_users_v1_rpc_create_user_proto != nil {
 		return
 	}
+	file_users_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_v1_rpc_create_user_proto_rawDesc), len(file_users_v1_rpc_create_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
