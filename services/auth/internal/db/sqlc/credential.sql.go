@@ -38,7 +38,13 @@ func (q *Queries) CreateCredential(ctx context.Context, arg CreateCredentialPara
 }
 
 const getCredentialByWalletAddress = `-- name: GetCredentialByWalletAddress :one
-SELECT id, user_id, wallet_address, role, created_at FROM credentials
+SELECT
+    id,
+    user_id,
+    wallet_address,
+    role,
+    created_at
+FROM credentials
 WHERE wallet_address = $1
 LIMIT 1
 `

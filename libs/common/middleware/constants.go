@@ -2,12 +2,14 @@ package middleware
 
 // Headers
 const (
-	userAgentHeader              = "user-agent"
+	AuthorizationHeader          = "authorization"
+	AuthorizationBearer          = "bearer"
+	UserAgentHeader              = "user-agent"
 	contentTypeHeader            = "Content-Type"
 	applicationJSONValue         = "application/json"
-	xForwardedForHeader          = "x-forwarded-for"
+	XForwardedForHeader          = "x-forwarded-for"
 	grpcGatewayUserAgentHeader   = "grpcgateway-user-agent"
-	xServiceAuthenticationHeader = "x-service-authentication"
+	XServiceAuthenticationHeader = "x-service-authentication"
 	xRateLimitLimitHeader        = "x-ratelimit-limit"
 	xRateLimitRemainingHeader    = "x-ratelimit-remaining"
 	xRateLimitResetHeader        = "x-ratelimit-reset"

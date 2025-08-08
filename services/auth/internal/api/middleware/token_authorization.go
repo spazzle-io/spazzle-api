@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
 	"google.golang.org/grpc/metadata"
-)
-
-const (
-	authorizationHeader = "authorization"
-	authorizationBearer = "bearer"
 )
 
 func AuthorizeToken(
@@ -28,7 +25,7 @@ func AuthorizeToken(
 		return nil, errors.New("could not get metadata from incoming context")
 	}
 
-	authValues := mtdt.Get(authorizationHeader)
+	authValues := mtdt.Get(commonMiddleware.AuthorizationHeader)
 	if len(authValues) == 0 {
 		return nil, errors.New("missing authorization header")
 	}
@@ -40,7 +37,7 @@ func AuthorizeToken(
 	}
 
 	authType := fields[0]
-	if !strings.EqualFold(authorizationBearer, authType) {
+	if !strings.EqualFold(commonMiddleware.AuthorizationBearer, authType) {
 		return nil, fmt.Errorf("unsupported authorization type: %s", authType)
 	}
 

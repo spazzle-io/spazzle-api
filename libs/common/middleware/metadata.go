@@ -16,7 +16,7 @@ func GrpcExtractMetadata(
 ) (resp interface{}, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		userAgents := md.Get(userAgentHeader)
+		userAgents := md.Get(UserAgentHeader)
 		if len(userAgents) > 0 {
 			ctx = context.WithValue(ctx, UserAgent, userAgents[0])
 		}
@@ -26,12 +26,12 @@ func GrpcExtractMetadata(
 			ctx = context.WithValue(ctx, UserAgent, userAgents[0])
 		}
 
-		clientIPs := md.Get(xForwardedForHeader)
+		clientIPs := md.Get(XForwardedForHeader)
 		if len(clientIPs) > 0 {
 			ctx = context.WithValue(ctx, ClientIP, clientIPs[0])
 		}
 
-		serviceAuthentications := md.Get(xServiceAuthenticationHeader)
+		serviceAuthentications := md.Get(XServiceAuthenticationHeader)
 		if len(serviceAuthentications) > 0 {
 			ctx = context.WithValue(ctx, ServiceAuthentication, serviceAuthentications[0])
 		}
@@ -44,15 +44,15 @@ func GrpcExtractMetadata(
 
 func HTTPExtractMetadata(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if userAgentHeaderVal := req.Header.Get(userAgentHeader); userAgentHeaderVal != "" {
+		if userAgentHeaderVal := req.Header.Get(UserAgentHeader); userAgentHeaderVal != "" {
 			req = req.WithContext(context.WithValue(req.Context(), UserAgent, userAgentHeaderVal))
 		}
 
-		if xForwardedForHeaderVal := req.Header.Get(xForwardedForHeader); xForwardedForHeaderVal != "" {
+		if xForwardedForHeaderVal := req.Header.Get(XForwardedForHeader); xForwardedForHeaderVal != "" {
 			req = req.WithContext(context.WithValue(req.Context(), ClientIP, xForwardedForHeaderVal))
 		}
 
-		if xServiceAuthenticationHeaderVal := req.Header.Get(xServiceAuthenticationHeader); xServiceAuthenticationHeaderVal != "" {
+		if xServiceAuthenticationHeaderVal := req.Header.Get(XServiceAuthenticationHeader); xServiceAuthenticationHeaderVal != "" {
 			req = req.WithContext(context.WithValue(req.Context(), ServiceAuthentication, xServiceAuthenticationHeaderVal))
 		}
 

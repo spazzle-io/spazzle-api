@@ -28,7 +28,9 @@ type AuthenticateServiceConfig struct {
 	Cache cache.Cache
 }
 
-var getViperStringSlice = viper.GetStringSlice
+var getViperStringSlice = func(key string) []string {
+	return strings.Split(viper.GetString(key), ",")
+}
 
 func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) context.Context {
 	serviceAuthenticationVal, ok := ctx.Value(ServiceAuthentication).(string)
@@ -88,16 +90,20 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	}
 
 	for _, publicKeyStr := range authenticatingServicePubKeys {
+		if isSignatureValid {
+			continue
+		}
+
 		publicKey, err := util.ParsePublicKeyFromPEM(publicKeyStr)
 		if err != nil {
 			logger.Warn().Str("pem", publicKeyStr).Msg("could not parse public key from PEM")
-			return ctx
+			continue
 		}
 
 		isSignatureValid, err = util.ECDSAVerify([]byte(payloadVerificationMsg), publicKey, signature)
 		if err != nil {
 			logger.Warn().Err(err).Str("pem", publicKeyStr).Msg("could not verify service authentication signature")
-			return ctx
+			continue
 		}
 	}
 

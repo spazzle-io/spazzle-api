@@ -63,7 +63,17 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 }
 
 const getSessionById = `-- name: GetSessionById :one
-SELECT id, user_id, wallet_address, refresh_token, user_agent, client_ip, is_revoked, expires_at, created_at FROM sessions
+SELECT
+    id,
+    user_id,
+    wallet_address,
+    refresh_token,
+    user_agent,
+    client_ip,
+    is_revoked,
+    expires_at,
+    created_at
+FROM sessions
 WHERE id = $1 LIMIT 1
 `
 

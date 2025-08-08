@@ -48,7 +48,7 @@ func (h *Handler) VerifyAccessToken(
 	}
 
 	res := &pb.VerifyAccessTokenResponse{
-		AccessToken: &pb.AccessTokenPayload{
+		AccessTokenPayload: &pb.AccessTokenPayload{
 			Id:            tkPayload.ID.String(),
 			UserId:        tkPayload.UserId.String(),
 			WalletAddress: tkPayload.WalletAddress,

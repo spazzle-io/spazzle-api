@@ -7,6 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
+
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5"
@@ -79,7 +82,7 @@ func runGRPCServer(
 	store db.Store,
 	cache commonCache.Cache,
 ) {
-	_, err := server.New(config, store, cache)
+	s, err := server.New(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
@@ -96,7 +99,11 @@ func runGRPCServer(
 				return config.AuthenticateServiceGrpc
 			},
 		},
-		[]commonServer.GrpcServiceRegistrar{},
+		[]commonServer.GrpcServiceRegistrar{
+			func(grpcServer *grpc.Server) {
+				pb.RegisterUsersServiceServer(grpcServer, s)
+			},
+		},
 	)
 }
 
@@ -107,7 +114,7 @@ func runGatewayServer(
 	store db.Store,
 	cache commonCache.Cache,
 ) {
-	_, err := server.New(config, store, cache)
+	s, err := server.New(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
@@ -118,7 +125,11 @@ func runGatewayServer(
 		config.HTTPServerAddress,
 		config.IsDevelopmentEnvironment(),
 		config.AllowedOrigins,
-		[]commonServer.GatewayRouteRegistrar{},
+		[]commonServer.GatewayRouteRegistrar{
+			func(ctx context.Context, mux *runtime.ServeMux) error {
+				return pb.RegisterUsersServiceHandlerServer(ctx, mux, s)
+			},
+		},
 		[]commonServer.HttpRouteRegistrar{},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{

@@ -28,7 +28,7 @@ func TestCreateCredentialTx(t *testing.T) {
 						UserID:        userId,
 						WalletAddress: wallet.Address,
 					},
-					AfterCreate: func(credential Credential) error {
+					AfterCreate: func(q Querier, credential Credential) error {
 						*isAfterCreateCalled = true
 						return nil
 					},
@@ -66,7 +66,7 @@ func TestCreateCredentialTx(t *testing.T) {
 						UserID:        userId,
 						WalletAddress: wallet.Address,
 					},
-					AfterCreate: func(credential Credential) error {
+					AfterCreate: func(q Querier, credential Credential) error {
 						*isAfterCreateCalled = true
 						return nil
 					},
@@ -97,7 +97,7 @@ func TestCreateCredentialTx(t *testing.T) {
 						UserID:        userId,
 						WalletAddress: wallet.Address,
 					},
-					AfterCreate: func(credential Credential) error {
+					AfterCreate: func(q Querier, credential Credential) error {
 						*isAfterCreateCalled = true
 						return nil
 					},

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
+
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -17,6 +19,39 @@ const (
 	testServicePublicKeyPEM  = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEkcpsUaeko+BLe9sutR3FRCIQPBwlRU9UN2/69Q4RLb8upVzVcK+22dEJtvVzhu3bl1hgPk3HLIYPrtuLqKOQbw=="
 	testServicePrivateKeyPEM = "MHcCAQEEINIZr7eRHNKIo+kqyLU5j8Y3mRmfn+5k2OY685DzM1MOoAoGCCqGSM49AwEHoUQDQgAEkcpsUaeko+BLe9sutR3FRCIQPBwlRU9UN2/69Q4RLb8upVzVcK+22dEJtvVzhu3bl1hgPk3HLIYPrtuLqKOQbw=="
 )
+
+func TestGetViperSlice(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    string
+		expected []string
+	}{
+		{
+			name:     "no item in slice",
+			value:    "",
+			expected: []string{""},
+		},
+		{
+			name:     "one item in slice",
+			value:    "val1",
+			expected: []string{"val1"},
+		},
+		{
+			name:     "multiple items in slice",
+			value:    "val1,val2",
+			expected: []string{"val1", "val2"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key := "TEST_KEY"
+			viper.Set(key, tc.value)
+
+			require.Equal(t, tc.expected, getViperStringSlice(key))
+		})
+	}
+}
 
 func TestAuthenticateService(t *testing.T) {
 	oneMinuteAgo := time.Now().UTC().Add(-1 * serviceAuthenticationPayloadDuration)

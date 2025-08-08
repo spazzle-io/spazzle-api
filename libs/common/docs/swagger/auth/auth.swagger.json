@@ -426,7 +426,7 @@
     "v1VerifyAccessTokenResponse": {
       "type": "object",
       "properties": {
-        "accessToken": {
+        "accessTokenPayload": {
           "$ref": "#/definitions/v1AccessTokenPayload"
         }
       }

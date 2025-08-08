@@ -19,7 +19,7 @@ func TestGrpcExtractMetadata(t *testing.T) {
 	}{
 		{
 			name:        "set user-agent header",
-			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(userAgentHeader, "testUserAgent")),
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(UserAgentHeader, "testUserAgent")),
 			ctxKey:      UserAgent,
 			expectedCtx: context.WithValue(context.Background(), UserAgent, "testUserAgent"),
 		},
@@ -31,13 +31,13 @@ func TestGrpcExtractMetadata(t *testing.T) {
 		},
 		{
 			name:        "set x-forwarded-for header",
-			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(xForwardedForHeader, "testClientIP")),
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(XForwardedForHeader, "testClientIP")),
 			ctxKey:      ClientIP,
 			expectedCtx: context.WithValue(context.Background(), ClientIP, "testClientIP"),
 		},
 		{
 			name:        "set x-service-authentication header",
-			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(xServiceAuthenticationHeader, "some service auth header")),
+			ctx:         metadata.NewIncomingContext(context.Background(), metadata.Pairs(XServiceAuthenticationHeader, "some service auth header")),
 			ctxKey:      ServiceAuthentication,
 			expectedCtx: context.WithValue(context.Background(), ServiceAuthentication, "some service auth header"),
 		},
@@ -67,21 +67,21 @@ func TestHTTPExtractMetadata(t *testing.T) {
 		{
 			name: "set user-agent header",
 			headers: map[string]string{
-				userAgentHeader: "testUserAgent",
+				UserAgentHeader: "testUserAgent",
 			},
 			expectedUserAgent: "testUserAgent",
 		},
 		{
 			name: "set x-forwarded-for header",
 			headers: map[string]string{
-				xForwardedForHeader: "testClientIP",
+				XForwardedForHeader: "testClientIP",
 			},
 			expectedClientIP: "testClientIP",
 		},
 		{
 			name: "set x-service-authentication header",
 			headers: map[string]string{
-				xServiceAuthenticationHeader: "some service auth header",
+				XServiceAuthenticationHeader: "some service auth header",
 			},
 			expectedServiceAuthentication: "some service auth header",
 		},

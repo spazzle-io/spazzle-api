@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
@@ -42,9 +44,9 @@ func TestAuthorize(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEmpty(t, tk)
 
-				bearerToken := fmt.Sprintf("%s %s", authorizationBearer, tk)
+				bearerToken := fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk)
 				md := metadata.MD{
-					authorizationHeader: []string{
+					commonMiddleware.AuthorizationHeader: []string{
 						bearerToken,
 					},
 				}
@@ -76,9 +78,9 @@ func TestAuthorize(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEmpty(t, tk)
 
-				bearerToken := fmt.Sprintf("%s %s", authorizationBearer, tk)
+				bearerToken := fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk)
 				md := metadata.MD{
-					authorizationHeader: []string{
+					commonMiddleware.AuthorizationHeader: []string{
 						bearerToken,
 					},
 				}
@@ -139,7 +141,7 @@ func TestAuthorize(t *testing.T) {
 			name: "Failure - invalid authorization header format",
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				md := metadata.MD{
-					authorizationHeader: []string{
+					commonMiddleware.AuthorizationHeader: []string{
 						"some_value",
 					},
 				}
@@ -158,7 +160,7 @@ func TestAuthorize(t *testing.T) {
 			name: "Failure - unsupported authorization type",
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				md := metadata.MD{
-					authorizationHeader: []string{
+					commonMiddleware.AuthorizationHeader: []string{
 						fmt.Sprintf("%s %s", "unsupported_auth_type", "some_token"),
 					},
 				}
@@ -180,8 +182,8 @@ func TestAuthorize(t *testing.T) {
 				require.NoError(t, err)
 
 				md := metadata.MD{
-					authorizationHeader: []string{
-						fmt.Sprintf("%s %s", authorizationBearer, tk),
+					commonMiddleware.AuthorizationHeader: []string{
+						fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk),
 					},
 				}
 
@@ -202,8 +204,8 @@ func TestAuthorize(t *testing.T) {
 				require.NoError(t, err)
 
 				md := metadata.MD{
-					authorizationHeader: []string{
-						fmt.Sprintf("%s %s", authorizationBearer, tk),
+					commonMiddleware.AuthorizationHeader: []string{
+						fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk),
 					},
 				}
 
@@ -224,8 +226,8 @@ func TestAuthorize(t *testing.T) {
 				require.NoError(t, err)
 
 				md := metadata.MD{
-					authorizationHeader: []string{
-						fmt.Sprintf("%s %s", authorizationBearer, tk),
+					commonMiddleware.AuthorizationHeader: []string{
+						fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk),
 					},
 				}
 
@@ -246,8 +248,8 @@ func TestAuthorize(t *testing.T) {
 				require.NoError(t, err)
 
 				md := metadata.MD{
-					authorizationHeader: []string{
-						fmt.Sprintf("%s %s", authorizationBearer, tk),
+					commonMiddleware.AuthorizationHeader: []string{
+						fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk),
 					},
 				}
 

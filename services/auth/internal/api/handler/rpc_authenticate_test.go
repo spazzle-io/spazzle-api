@@ -107,7 +107,7 @@ func TestAuthenticate(t *testing.T) {
 							CreatedAt:     time.Now().UTC(),
 						}
 
-						err := arg.AfterCreate(credential)
+						err := arg.AfterCreate(store, credential)
 						if err != nil {
 							return db.CreateCredentialTxResult{}, err
 						}
@@ -375,7 +375,7 @@ func TestAuthenticate(t *testing.T) {
 							CreatedAt:     time.Now().UTC(),
 						}
 
-						err := arg.AfterCreate(credential)
+						err := arg.AfterCreate(store, credential)
 						if err != nil {
 							return db.CreateCredentialTxResult{}, err
 						}

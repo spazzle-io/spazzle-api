@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/spazzle-io/spazzle-api/services/users/internal/services"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	"github.com/spazzle-io/spazzle-api/services/users/internal/api/handler"
@@ -19,9 +21,14 @@ type Server struct {
 var once sync.Once
 
 func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
-	h := handler.New(config, store, cache)
+	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
+	if err != nil {
+		return nil, fmt.Errorf("could not create auth service gRPC client: %w", err)
+	}
 
-	err := setupRateLimiter(config.ServiceName, config.RedisConnURL, h.RateLimits())
+	h := handler.New(config, store, cache, authService)
+
+	err = setupRateLimiter(config.ServiceName, config.RedisConnURL, h.RateLimits())
 	if err != nil {
 		return nil, fmt.Errorf("cannot setup rate limiter: %w", err)
 	}

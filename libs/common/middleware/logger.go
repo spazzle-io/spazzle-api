@@ -18,8 +18,15 @@ func GrpcLogger(
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
 	startTime := time.Now()
+
 	result, err := handler(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("grpc call failed")
+	}
+
 	duration := time.Since(startTime)
+
+	logger := log.Info()
 
 	statusCode := codes.Unknown
 	st, ok := status.FromError(err)
@@ -27,14 +34,13 @@ func GrpcLogger(
 		statusCode = st.Code()
 	}
 
-	logger := log.Info()
-	if err != nil {
-		logger = log.Error().Err(err)
-	}
-
 	ip, ok := ctx.Value(ClientIP).(string)
 	if !ok {
 		ip = "unknown"
+	}
+
+	if authenticatedService, ok := ctx.Value(AuthenticatedService).(string); ok {
+		logger = logger.Str("authenticated_service", authenticatedService)
 	}
 
 	logger.Str("protocol", "grpc").
@@ -75,6 +81,7 @@ func HTTPLogger(handler http.Handler) http.Handler {
 		duration := time.Since(startTime)
 
 		logger := log.Info()
+
 		if rec.StatusCode >= 400 && rec.StatusCode < 600 {
 			logger = log.Error().Bytes("body", rec.Body)
 		}
@@ -82,6 +89,10 @@ func HTTPLogger(handler http.Handler) http.Handler {
 		ip, ok := req.Context().Value(ClientIP).(string)
 		if !ok {
 			ip = "unknown"
+		}
+
+		if authenticatedService, ok := req.Context().Value(AuthenticatedService).(string); ok {
+			logger = logger.Str("authenticated_service", authenticatedService)
 		}
 
 		logger.Str("protocol", "http").
