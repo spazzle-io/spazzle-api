@@ -193,7 +193,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 		},
 		{
-			name:       "request not made by an authorized service",
+			name:       "request not made by an authenticated service",
 			req:        authenticateReqParams,
 			inputCtx:   context.Background(),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {},
