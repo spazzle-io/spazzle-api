@@ -13,8 +13,8 @@ var (
 )
 
 type CreateUserTxParams struct {
-	CreateUserParams
-	AfterCreate func(user User) error
+	WalletAddress string
+	AfterCreate   func(user User) error
 }
 
 type CreateUserTxResult struct {
@@ -27,7 +27,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, params CreateUserTxPara
 	err := store.execTx(ctx, func(queries *Queries) error {
 		var err error
 
-		result.User, err = queries.CreateUser(ctx, params.CreateUserParams)
+		result.User, err = queries.CreateUser(ctx, params.WalletAddress)
 		if err != nil {
 			log.Error().Err(err).Msg("could not create user in db")
 			dbError := ParseError(err)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+
 	"github.com/jackc/pgx/v5/pgtype"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/stretchr/testify/require"
@@ -17,20 +18,11 @@ func createTestUser(t *testing.T) User {
 	require.NoError(t, err)
 	require.NotEmpty(t, wallet)
 
-	params := CreateUserParams{
-		WalletAddress: wallet.Address,
-		GamerTag: pgtype.Text{
-			String: gofakeit.Gamertag(),
-			Valid:  true,
-		},
-	}
-
-	user, err := testStore.CreateUser(context.Background(), params)
+	user, err := testStore.CreateUser(context.Background(), wallet.Address)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
-	require.Equal(t, params.WalletAddress, user.WalletAddress)
-	require.Equal(t, params.GamerTag, user.GamerTag)
+	require.Equal(t, wallet.Address, user.WalletAddress)
 	require.NotZero(t, user.ID)
 	require.WithinDuration(t, time.Now().UTC(), user.CreatedAt, time.Second)
 	require.NotZero(t, user.CreatedAt)
@@ -45,6 +37,19 @@ func TestCreateUser(t *testing.T) {
 
 	user := createTestUser(t)
 	require.NotEmpty(t, user)
+}
+
+func TestGetUserByWalletAddress(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	user := createTestUser(t)
+	require.NotEmpty(t, user)
+
+	fetchedUser, err := testStore.GetUserByWalletAddress(context.Background(), user.WalletAddress)
+	require.NoError(t, err)
+	require.Equal(t, user, fetchedUser)
 }
 
 func TestGetUserById(t *testing.T) {
@@ -117,7 +122,10 @@ func TestUpdateUser(t *testing.T) {
 	user := createTestUser(t)
 	require.NotEmpty(t, user)
 
-	expectedUpdatedGamerTag := fmt.Sprintf("%s--updated", user.GamerTag.String)
+	gamerTag := gofakeit.Gamertag()
+	require.NotEmpty(t, gamerTag)
+
+	expectedUpdatedGamerTag := fmt.Sprintf("%s--updated", gamerTag)
 
 	params := UpdateUserParams{
 		UserID: user.ID,

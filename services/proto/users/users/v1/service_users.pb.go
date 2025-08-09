@@ -26,11 +26,9 @@ var File_users_v1_service_users_proto protoreflect.FileDescriptor
 
 const file_users_v1_service_users_proto_rawDesc = "" +
 	"\n" +
-	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1eusers/v1/rpc_create_user.proto\x1a$users/v1/rpc_authenticate_user.proto2\xbb\x02\n" +
-	"\fUsersService\x12\x81\x01\n" +
-	"\n" +
-	"CreateUser\x12\x1b.users.v1.CreateUserRequest\x1a\x1c.users.v1.CreateUserResponse\"8\x92A$\x12\rCreate a user\x1a\x11Create a new userb\x00\x82\xd3\xe4\x93\x02\v:\x01*\"\x06/users\x12\xa6\x01\n" +
-	"\x10AuthenticateUser\x12!.users.v1.AuthenticateUserRequest\x1a\".users.v1.AuthenticateUserResponse\"K\x92A*\x12\x11Authenticate user\x1a\x13Authenticate a userb\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/users/authenticateB\xb7\x02\x92A\x9c\x01\x121\n" +
+	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$users/v1/rpc_authenticate_user.proto2\x94\x02\n" +
+	"\fUsersService\x12\x83\x02\n" +
+	"\x10AuthenticateUser\x12!.users.v1.AuthenticateUserRequest\x1a\".users.v1.AuthenticateUserResponse\"\xa7\x01\x92A\x85\x01\x12\x11Authenticate user\x1anAuthenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/users/authenticateB\xb7\x02\x92A\x9c\x01\x121\n" +
 	"\rUsers Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -41,18 +39,14 @@ const file_users_v1_service_users_proto_rawDesc = "" +
 	"\fcom.users.v1B\x11ServiceUsersProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 
 var file_users_v1_service_users_proto_goTypes = []any{
-	(*CreateUserRequest)(nil),        // 0: users.v1.CreateUserRequest
-	(*AuthenticateUserRequest)(nil),  // 1: users.v1.AuthenticateUserRequest
-	(*CreateUserResponse)(nil),       // 2: users.v1.CreateUserResponse
-	(*AuthenticateUserResponse)(nil), // 3: users.v1.AuthenticateUserResponse
+	(*AuthenticateUserRequest)(nil),  // 0: users.v1.AuthenticateUserRequest
+	(*AuthenticateUserResponse)(nil), // 1: users.v1.AuthenticateUserResponse
 }
 var file_users_v1_service_users_proto_depIdxs = []int32{
-	0, // 0: users.v1.UsersService.CreateUser:input_type -> users.v1.CreateUserRequest
-	1, // 1: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
-	2, // 2: users.v1.UsersService.CreateUser:output_type -> users.v1.CreateUserResponse
-	3, // 3: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	0, // 0: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
+	1, // 1: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -63,7 +57,6 @@ func file_users_v1_service_users_proto_init() {
 	if File_users_v1_service_users_proto != nil {
 		return
 	}
-	file_users_v1_rpc_create_user_proto_init()
 	file_users_v1_rpc_authenticate_user_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

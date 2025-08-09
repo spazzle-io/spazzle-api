@@ -20,45 +20,10 @@
     "application/json"
   ],
   "paths": {
-    "/users": {
-      "post": {
-        "summary": "Create a user",
-        "description": "Create a new user",
-        "operationId": "UsersService_CreateUser",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CreateUserResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CreateUserRequest"
-            }
-          }
-        ],
-        "tags": [
-          "UsersService"
-        ],
-        "security": []
-      }
-    },
     "/users/authenticate": {
       "post": {
         "summary": "Authenticate user",
-        "description": "Authenticate a user",
+        "description": "Authenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signature",
         "operationId": "UsersService_AuthenticateUser",
         "responses": {
           "200": {
@@ -123,7 +88,7 @@
     "v1AuthenticateUserRequest": {
       "type": "object",
       "properties": {
-        "userId": {
+        "walletAddress": {
           "type": "string"
         },
         "signature": {
@@ -132,31 +97,6 @@
       }
     },
     "v1AuthenticateUserResponse": {
-      "type": "object",
-      "properties": {
-        "user": {
-          "$ref": "#/definitions/v1User"
-        },
-        "session": {
-          "$ref": "#/definitions/v1Session"
-        }
-      }
-    },
-    "v1CreateUserRequest": {
-      "type": "object",
-      "properties": {
-        "walletAddress": {
-          "type": "string"
-        },
-        "gamerTag": {
-          "type": "string"
-        },
-        "signature": {
-          "type": "string"
-        }
-      }
-    },
-    "v1CreateUserResponse": {
       "type": "object",
       "properties": {
         "user": {
