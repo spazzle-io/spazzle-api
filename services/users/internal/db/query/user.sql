@@ -1,8 +1,8 @@
 -- name: CreateUser :one
 INSERT INTO users (
-    wallet_address, gamer_tag
+    wallet_address
 ) VALUES (
-    $1, $2
+    $1
 ) RETURNING *;
 
 -- name: GetUserById :one
@@ -11,6 +11,13 @@ SELECT
 FROM users
 WHERE id = sqlc.arg(user_id)
 LIMIT 1;
+
+-- name: GetUserByWalletAddress :one
+SELECT
+    id, wallet_address, gamer_tag, created_at
+FROM users
+WHERE wallet_address = sqlc.arg(wallet_address)
+    LIMIT 1;
 
 -- name: GetTotalUserCount :one
 SELECT COUNT(*) as total_users FROM users;

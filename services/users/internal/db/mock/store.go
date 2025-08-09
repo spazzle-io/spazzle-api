@@ -43,18 +43,18 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockStore) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
+func (m *MockStore) CreateUser(ctx context.Context, walletAddress string) (db.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", ctx, arg)
+	ret := m.ctrl.Call(m, "CreateUser", ctx, walletAddress)
 	ret0, _ := ret[0].(db.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateUser indicates an expected call of CreateUser.
-func (mr *MockStoreMockRecorder) CreateUser(ctx, arg any) *gomock.Call {
+func (mr *MockStoreMockRecorder) CreateUser(ctx, walletAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), ctx, walletAddress)
 }
 
 // CreateUserTx mocks base method.
@@ -100,6 +100,21 @@ func (m *MockStore) GetUserById(ctx context.Context, userID uuid.UUID) (db.User,
 func (mr *MockStoreMockRecorder) GetUserById(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserById", reflect.TypeOf((*MockStore)(nil).GetUserById), ctx, userID)
+}
+
+// GetUserByWalletAddress mocks base method.
+func (m *MockStore) GetUserByWalletAddress(ctx context.Context, walletAddress string) (db.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByWalletAddress", ctx, walletAddress)
+	ret0, _ := ret[0].(db.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByWalletAddress indicates an expected call of GetUserByWalletAddress.
+func (mr *MockStoreMockRecorder) GetUserByWalletAddress(ctx, walletAddress any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByWalletAddress", reflect.TypeOf((*MockStore)(nil).GetUserByWalletAddress), ctx, walletAddress)
 }
 
 // ListUsers mocks base method.

@@ -11,9 +11,10 @@ import (
 )
 
 type Querier interface {
-	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUser(ctx context.Context, walletAddress string) (User, error)
 	GetTotalUserCount(ctx context.Context) (int64, error)
 	GetUserById(ctx context.Context, userID uuid.UUID) (User, error)
+	GetUserByWalletAddress(ctx context.Context, walletAddress string) (User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

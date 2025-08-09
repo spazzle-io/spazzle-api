@@ -14,19 +14,14 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-    wallet_address, gamer_tag
+    wallet_address
 ) VALUES (
-    $1, $2
+    $1
 ) RETURNING id, wallet_address, gamer_tag, created_at
 `
 
-type CreateUserParams struct {
-	WalletAddress string      `json:"wallet_address"`
-	GamerTag      pgtype.Text `json:"gamer_tag"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.WalletAddress, arg.GamerTag)
+func (q *Queries) CreateUser(ctx context.Context, walletAddress string) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, walletAddress)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -58,6 +53,26 @@ LIMIT 1
 
 func (q *Queries) GetUserById(ctx context.Context, userID uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUserById, userID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.WalletAddress,
+		&i.GamerTag,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByWalletAddress = `-- name: GetUserByWalletAddress :one
+SELECT
+    id, wallet_address, gamer_tag, created_at
+FROM users
+WHERE wallet_address = $1
+    LIMIT 1
+`
+
+func (q *Queries) GetUserByWalletAddress(ctx context.Context, walletAddress string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByWalletAddress, walletAddress)
 	var i User
 	err := row.Scan(
 		&i.ID,
