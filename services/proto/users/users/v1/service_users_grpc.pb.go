@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	UsersService_GetUser_FullMethodName                = "/users.v1.UsersService/GetUser"
 	UsersService_GetUserByWalletAddress_FullMethodName = "/users.v1.UsersService/GetUserByWalletAddress"
+	UsersService_ListUsers_FullMethodName              = "/users.v1.UsersService/ListUsers"
 	UsersService_AuthenticateUser_FullMethodName       = "/users.v1.UsersService/AuthenticateUser"
 )
 
@@ -30,6 +31,7 @@ const (
 type UsersServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	GetUserByWalletAddress(ctx context.Context, in *GetUserByWalletAddressRequest, opts ...grpc.CallOption) (*GetUserByWalletAddressResponse, error)
+	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
 	AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*AuthenticateUserResponse, error)
 }
 
@@ -61,6 +63,16 @@ func (c *usersServiceClient) GetUserByWalletAddress(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *usersServiceClient) ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsersResponse)
+	err := c.cc.Invoke(ctx, UsersService_ListUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usersServiceClient) AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*AuthenticateUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthenticateUserResponse)
@@ -77,6 +89,7 @@ func (c *usersServiceClient) AuthenticateUser(ctx context.Context, in *Authentic
 type UsersServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	GetUserByWalletAddress(context.Context, *GetUserByWalletAddressRequest) (*GetUserByWalletAddressResponse, error)
+	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
 	AuthenticateUser(context.Context, *AuthenticateUserRequest) (*AuthenticateUserResponse, error)
 	mustEmbedUnimplementedUsersServiceServer()
 }
@@ -93,6 +106,9 @@ func (UnimplementedUsersServiceServer) GetUser(context.Context, *GetUserRequest)
 }
 func (UnimplementedUsersServiceServer) GetUserByWalletAddress(context.Context, *GetUserByWalletAddressRequest) (*GetUserByWalletAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByWalletAddress not implemented")
+}
+func (UnimplementedUsersServiceServer) ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
 }
 func (UnimplementedUsersServiceServer) AuthenticateUser(context.Context, *AuthenticateUserRequest) (*AuthenticateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUser not implemented")
@@ -154,6 +170,24 @@ func _UsersService_GetUserByWalletAddress_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersService_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersServiceServer).ListUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersService_ListUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersServiceServer).ListUsers(ctx, req.(*ListUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsersService_AuthenticateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AuthenticateUserRequest)
 	if err := dec(in); err != nil {
@@ -186,6 +220,10 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserByWalletAddress",
 			Handler:    _UsersService_GetUserByWalletAddress_Handler,
+		},
+		{
+			MethodName: "ListUsers",
+			Handler:    _UsersService_ListUsers_Handler,
 		},
 		{
 			MethodName: "AuthenticateUser",

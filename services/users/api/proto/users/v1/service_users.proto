@@ -7,6 +7,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "users/v1/rpc_authenticate_user.proto";
 import "users/v1/rpc_get_user.proto";
 import "users/v1/rpc_get_user_by_wallet_address.proto";
+import "users/v1/rpc_list_users.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
@@ -58,6 +59,18 @@ service UsersService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get user by wallet address";
       description: "Get user by Ethereum wallet address";
+      security: {};
+    };
+  }
+
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      get: "/users"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List users";
+      description: "List all users";
       security: {};
     };
   }
