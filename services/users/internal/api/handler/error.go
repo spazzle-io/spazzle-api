@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	InternalServerError string = "An unexpected error occurred while processing your request"
-	UserNotFoundError   string = "User not found"
-	InvalidUserIdError  string = "Invalid user id"
+	InternalServerError     string = "An unexpected error occurred while processing your request"
+	UnauthorizedAccessError string = "Authorization failed. Please verify your credentials and try again"
+	UserNotFoundError       string = "User not found"
+	InvalidUserIdError      string = "Invalid user id"
 )
 
 func protovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {
