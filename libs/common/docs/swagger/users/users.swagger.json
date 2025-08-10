@@ -160,10 +160,61 @@
           "UsersService"
         ],
         "security": []
+      },
+      "put": {
+        "summary": "Authenticate user",
+        "description": "Authenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signature",
+        "operationId": "UsersService_UpdateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UsersServiceUpdateUserBody"
+            }
+          }
+        ],
+        "tags": [
+          "UsersService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
       }
     }
   },
   "definitions": {
+    "UsersServiceUpdateUserBody": {
+      "type": "object",
+      "properties": {
+        "gamerTag": {
+          "type": "string"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -276,6 +327,14 @@
         },
         "tokenType": {
           "type": "string"
+        }
+      }
+    },
+    "v1UpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/v1User"
         }
       }
     },

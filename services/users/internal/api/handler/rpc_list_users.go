@@ -55,7 +55,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, InternalServerError)
 	}
 
-	response := pb.ListUsersResponse{
+	response := &pb.ListUsersResponse{
 		Page:          page,
 		PageSize:      limit,
 		NumTotalUsers: numTotalUsers,
@@ -64,7 +64,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 
 	log.Info().Msg("retrieved users successfully")
 
-	return &response, nil
+	return response, nil
 }
 
 func validateListUsersRequest(req *pb.ListUsersRequest) (violations []*errdetails.BadRequest_FieldViolation) {
