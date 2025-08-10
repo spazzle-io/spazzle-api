@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "buf/validate/validate.proto";
+import "users/v1/common.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
+
+message GetUserRequest {
+  string id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetUserResponse {
+  User user = 1;
+}

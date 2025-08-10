@@ -54,6 +54,72 @@
         ],
         "security": []
       }
+    },
+    "/users/by-wallet-address/{walletAddress}": {
+      "get": {
+        "summary": "Get user by wallet address",
+        "description": "Get user by Ethereum wallet address",
+        "operationId": "UsersService_GetUserByWalletAddress",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserByWalletAddressResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "walletAddress",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UsersService"
+        ],
+        "security": []
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get user",
+        "description": "Get user by id",
+        "operationId": "UsersService_GetUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UsersService"
+        ],
+        "security": []
+      }
     }
   },
   "definitions": {
@@ -104,6 +170,22 @@
         },
         "session": {
           "$ref": "#/definitions/v1Session"
+        }
+      }
+    },
+    "v1GetUserByWalletAddressResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/v1User"
+        }
+      }
+    },
+    "v1GetUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/v1User"
         }
       }
     },

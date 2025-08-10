@@ -26,8 +26,10 @@ var File_users_v1_service_users_proto protoreflect.FileDescriptor
 
 const file_users_v1_service_users_proto_rawDesc = "" +
 	"\n" +
-	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$users/v1/rpc_authenticate_user.proto2\x94\x02\n" +
-	"\fUsersService\x12\x83\x02\n" +
+	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$users/v1/rpc_authenticate_user.proto\x1a\x1busers/v1/rpc_get_user.proto\x1a-users/v1/rpc_get_user_by_wallet_address.proto2\xef\x04\n" +
+	"\fUsersService\x12r\n" +
+	"\aGetUser\x12\x18.users.v1.GetUserRequest\x1a\x19.users.v1.GetUserResponse\"2\x92A\x1c\x12\bGet user\x1a\x0eGet user by idb\x00\x82\xd3\xe4\x93\x02\r\x12\v/users/{id}\x12\xe4\x01\n" +
+	"\x16GetUserByWalletAddress\x12'.users.v1.GetUserByWalletAddressRequest\x1a(.users.v1.GetUserByWalletAddressResponse\"w\x92AC\x12\x1aGet user by wallet address\x1a#Get user by Ethereum wallet addressb\x00\x82\xd3\xe4\x93\x02+\x12)/users/by-wallet-address/{wallet_address}\x12\x83\x02\n" +
 	"\x10AuthenticateUser\x12!.users.v1.AuthenticateUserRequest\x1a\".users.v1.AuthenticateUserResponse\"\xa7\x01\x92A\x85\x01\x12\x11Authenticate user\x1anAuthenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/users/authenticateB\xb7\x02\x92A\x9c\x01\x121\n" +
 	"\rUsers Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
@@ -39,14 +41,22 @@ const file_users_v1_service_users_proto_rawDesc = "" +
 	"\fcom.users.v1B\x11ServiceUsersProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 
 var file_users_v1_service_users_proto_goTypes = []any{
-	(*AuthenticateUserRequest)(nil),  // 0: users.v1.AuthenticateUserRequest
-	(*AuthenticateUserResponse)(nil), // 1: users.v1.AuthenticateUserResponse
+	(*GetUserRequest)(nil),                 // 0: users.v1.GetUserRequest
+	(*GetUserByWalletAddressRequest)(nil),  // 1: users.v1.GetUserByWalletAddressRequest
+	(*AuthenticateUserRequest)(nil),        // 2: users.v1.AuthenticateUserRequest
+	(*GetUserResponse)(nil),                // 3: users.v1.GetUserResponse
+	(*GetUserByWalletAddressResponse)(nil), // 4: users.v1.GetUserByWalletAddressResponse
+	(*AuthenticateUserResponse)(nil),       // 5: users.v1.AuthenticateUserResponse
 }
 var file_users_v1_service_users_proto_depIdxs = []int32{
-	0, // 0: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
-	1, // 1: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // 0: users.v1.UsersService.GetUser:input_type -> users.v1.GetUserRequest
+	1, // 1: users.v1.UsersService.GetUserByWalletAddress:input_type -> users.v1.GetUserByWalletAddressRequest
+	2, // 2: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
+	3, // 3: users.v1.UsersService.GetUser:output_type -> users.v1.GetUserResponse
+	4, // 4: users.v1.UsersService.GetUserByWalletAddress:output_type -> users.v1.GetUserByWalletAddressResponse
+	5, // 5: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -58,6 +68,8 @@ func file_users_v1_service_users_proto_init() {
 		return
 	}
 	file_users_v1_rpc_authenticate_user_proto_init()
+	file_users_v1_rpc_get_user_proto_init()
+	file_users_v1_rpc_get_user_by_wallet_address_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
