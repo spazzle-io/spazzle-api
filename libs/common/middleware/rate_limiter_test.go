@@ -320,6 +320,71 @@ func TestGrpcRateLimiter(t *testing.T) {
 	}
 }
 
+func TestNormalizePath(t *testing.T) {
+	testCases := []struct {
+		name         string
+		path         string
+		expectedPath string
+	}{
+		{
+			name:         "matches uuid",
+			path:         "/users/17783b4e-454b-4c21-896e-823a250dd650",
+			expectedPath: "/users/{uuid}",
+		},
+		{
+			name:         "matches nested uuid",
+			path:         "/users/17783b4e-454b-4c21-896e-823a250dd650/query1/query2",
+			expectedPath: "/users/{uuid}/query1/query2",
+		},
+		{
+			name:         "matches id",
+			path:         "/users/177",
+			expectedPath: "/users/{id}",
+		},
+		{
+			name:         "matches nested id",
+			path:         "/users/17783/query1/query2",
+			expectedPath: "/users/{id}/query1/query2",
+		},
+		{
+			name:         "matches evm address",
+			path:         "/users/0x4DeCC727221f50D8B341297dF43a11756bb27977",
+			expectedPath: "/users/{evm_address}",
+		},
+		{
+			name:         "matches evm address no prefix",
+			path:         "/users/4DeCC727221f50D8B341297dF43a11756bb27977",
+			expectedPath: "/users/{evm_address}",
+		},
+		{
+			name:         "matches nested evm address",
+			path:         "/users/0x4DeCC727221f50D8B341297dF43a11756bb27977/query1/4DeCC727221f50D8B341297dF43a11756bb27977",
+			expectedPath: "/users/{evm_address}/query1/{evm_address}",
+		},
+		{
+			name:         "no match",
+			path:         "/users/17783b4e-123/query1/query2",
+			expectedPath: "/users/17783b4e-123/query1/query2",
+		},
+		{
+			name:         "no match",
+			path:         "/users/query1/query2",
+			expectedPath: "/users/query1/query2",
+		},
+		{
+			name:         "matches all",
+			path:         "/users/91/0x4DeCC727221f50D8B341297dF43a11756bb27977/17783b4e-454b-4c21-896e-823a250dd650/query",
+			expectedPath: "/users/{id}/{evm_address}/{uuid}/query",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expectedPath, normalizePath(tc.path))
+		})
+	}
+}
+
 func TestHTTPRateLimiter(t *testing.T) {
 	testCases := []struct {
 		name                 string
