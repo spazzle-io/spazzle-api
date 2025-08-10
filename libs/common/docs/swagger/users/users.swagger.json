@@ -45,14 +45,14 @@
             "in": "query",
             "required": false,
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           },
           {
             "name": "pageSize",
             "in": "query",
             "required": false,
             "type": "integer",
-            "format": "int64"
+            "format": "int32"
           }
         ],
         "tags": [
@@ -235,14 +235,14 @@
       "properties": {
         "page": {
           "type": "integer",
-          "format": "int64"
+          "format": "int32"
         },
         "pageSize": {
           "type": "integer",
-          "format": "int64"
+          "format": "int32"
         },
         "numTotalUsers": {
-          "type": "integer",
+          "type": "string",
           "format": "int64"
         },
         "users": {

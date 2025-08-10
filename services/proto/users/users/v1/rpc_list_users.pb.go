@@ -23,8 +23,8 @@ const (
 
 type ListUsersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Page          uint32                 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	Page          int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -59,14 +59,14 @@ func (*ListUsersRequest) Descriptor() ([]byte, []int) {
 	return file_users_v1_rpc_list_users_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ListUsersRequest) GetPage() uint32 {
+func (x *ListUsersRequest) GetPage() int32 {
 	if x != nil {
 		return x.Page
 	}
 	return 0
 }
 
-func (x *ListUsersRequest) GetPageSize() uint32 {
+func (x *ListUsersRequest) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
 	}
@@ -75,9 +75,9 @@ func (x *ListUsersRequest) GetPageSize() uint32 {
 
 type ListUsersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Page          uint32                 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      uint32                 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	NumTotalUsers uint32                 `protobuf:"varint,3,opt,name=num_total_users,json=numTotalUsers,proto3" json:"num_total_users,omitempty"`
+	Page          int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	NumTotalUsers int64                  `protobuf:"varint,3,opt,name=num_total_users,json=numTotalUsers,proto3" json:"num_total_users,omitempty"`
 	Users         []*User                `protobuf:"bytes,4,rep,name=users,proto3" json:"users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -113,21 +113,21 @@ func (*ListUsersResponse) Descriptor() ([]byte, []int) {
 	return file_users_v1_rpc_list_users_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListUsersResponse) GetPage() uint32 {
+func (x *ListUsersResponse) GetPage() int32 {
 	if x != nil {
 		return x.Page
 	}
 	return 0
 }
 
-func (x *ListUsersResponse) GetPageSize() uint32 {
+func (x *ListUsersResponse) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
 	}
 	return 0
 }
 
-func (x *ListUsersResponse) GetNumTotalUsers() uint32 {
+func (x *ListUsersResponse) GetNumTotalUsers() int64 {
 	if x != nil {
 		return x.NumTotalUsers
 	}
@@ -147,12 +147,12 @@ const file_users_v1_rpc_list_users_proto_rawDesc = "" +
 	"\n" +
 	"\x1dusers/v1/rpc_list_users.proto\x12\busers.v1\x1a\x15users/v1/common.proto\"C\n" +
 	"\x10ListUsersRequest\x12\x12\n" +
-	"\x04page\x18\x01 \x01(\rR\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x02 \x01(\rR\bpageSize\"\x92\x01\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"\x92\x01\n" +
 	"\x11ListUsersResponse\x12\x12\n" +
-	"\x04page\x18\x01 \x01(\rR\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x02 \x01(\rR\bpageSize\x12&\n" +
-	"\x0fnum_total_users\x18\x03 \x01(\rR\rnumTotalUsers\x12$\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12&\n" +
+	"\x0fnum_total_users\x18\x03 \x01(\x03R\rnumTotalUsers\x12$\n" +
 	"\x05users\x18\x04 \x03(\v2\x0e.users.v1.UserR\x05usersB\x97\x01\n" +
 	"\fcom.users.v1B\x11RpcListUsersProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 

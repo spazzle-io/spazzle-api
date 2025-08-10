@@ -1,9 +1,11 @@
 package handler
 
 import (
-	"buf.build/go/protovalidate"
 	"context"
 	"fmt"
+
+	"buf.build/go/protovalidate"
+
 	"github.com/rs/zerolog/log"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
 	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
@@ -14,8 +16,8 @@ import (
 )
 
 const (
-	defaultPageSize uint32 = 30
-	maxPageSize     uint32 = 100
+	defaultPageSize int32 = 30
+	maxPageSize     int32 = 100
 )
 
 func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
@@ -37,8 +39,8 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 	offset := (page - 1) * limit
 
 	params := db.ListUsersParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Limit:  limit,
+		Offset: offset,
 	}
 
 	users, err := h.store.ListUsers(ctx, params)
@@ -56,7 +58,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 	response := pb.ListUsersResponse{
 		Page:          page,
 		PageSize:      limit,
-		NumTotalUsers: uint32(numTotalUsers),
+		NumTotalUsers: numTotalUsers,
 		Users:         mapUsers(users),
 	}
 

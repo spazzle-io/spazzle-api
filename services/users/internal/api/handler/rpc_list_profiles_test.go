@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jackc/pgx/v5/pgtype"
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
@@ -13,7 +15,6 @@ import (
 	mockservices "github.com/spazzle-io/spazzle-api/services/users/internal/services/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func generateUsers(t *testing.T, numUsersToGenerate int) (dbUsers []db.User) {
