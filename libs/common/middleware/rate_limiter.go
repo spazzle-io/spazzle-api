@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -19,6 +21,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const DefaultRateLimitIdentifier = "default_rate_limit"
+
+var (
+	limiters          = make(map[string]*limiter.Limiter)
+	uuidPattern       = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	numPattern        = regexp.MustCompile(`^\d+$`)
+	evmAddressPattern = regexp.MustCompile(`^(?:0x)?[0-9a-fA-F]{40}$`)
+)
+
 type Rate struct {
 	Limit      int64
 	Period     time.Duration
@@ -26,15 +37,11 @@ type Rate struct {
 	Aliases    []string
 }
 
-const DefaultRateLimitIdentifier = "default_rate_limit"
-
 var activeRateLimits = map[string]Rate{
 	// default global rate limit:
 	// applies to all endpoints collectively when no specific rate limit is defined for an individual endpoint.
 	DefaultRateLimitIdentifier: {Limit: 1000, Period: time.Hour, Identifier: DefaultRateLimitIdentifier},
 }
-
-var limiters = make(map[string]*limiter.Limiter)
 
 func CreateLimiterRedisStore(serviceName string, redisConnURL string) (limiter.Store, error) {
 	opts, err := redis.ParseURL(redisConnURL)
@@ -199,6 +206,21 @@ func httpError(res http.ResponseWriter, grpcError error, httpStatusCode int) {
 	}
 }
 
+func normalizePath(path string) string {
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	for i, part := range parts {
+		switch {
+		case uuidPattern.MatchString(part):
+			parts[i] = "{uuid}"
+		case numPattern.MatchString(part):
+			parts[i] = "{id}"
+		case evmAddressPattern.MatchString(part):
+			parts[i] = "{evm_address}"
+		}
+	}
+	return "/" + strings.Join(parts, "/")
+}
+
 func HTTPRateLimiter(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !shouldRateLimit(req.Context()) {
@@ -206,7 +228,7 @@ func HTTPRateLimiter(handler http.Handler) http.Handler {
 			return
 		}
 
-		endpoint := req.URL.Path
+		endpoint := normalizePath(req.URL.Path)
 		logger := log.With().Str("endpoint", endpoint).Logger()
 
 		rateLimit := getEndpointRateLimit(fmt.Sprintf("%s:%s", req.Method, endpoint))
