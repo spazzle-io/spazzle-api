@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "users/v1/common.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
+
+message ListUsersRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListUsersResponse {
+  int32 page = 1;
+  int32 page_size = 2;
+  int64 num_total_users = 3;
+  repeated User users = 4;
+}

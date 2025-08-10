@@ -20,6 +20,47 @@
     "application/json"
   ],
   "paths": {
+    "/users": {
+      "get": {
+        "summary": "List users",
+        "description": "List all users",
+        "operationId": "UsersService_ListUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListUsersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "UsersService"
+        ],
+        "security": []
+      }
+    },
     "/users/authenticate": {
       "post": {
         "summary": "Authenticate user",
@@ -186,6 +227,30 @@
       "properties": {
         "user": {
           "$ref": "#/definitions/v1User"
+        }
+      }
+    },
+    "v1ListUsersResponse": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numTotalUsers": {
+          "type": "string",
+          "format": "int64"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1User"
+          }
         }
       }
     },

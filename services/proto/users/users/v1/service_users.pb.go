@@ -26,10 +26,12 @@ var File_users_v1_service_users_proto protoreflect.FileDescriptor
 
 const file_users_v1_service_users_proto_rawDesc = "" +
 	"\n" +
-	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$users/v1/rpc_authenticate_user.proto\x1a\x1busers/v1/rpc_get_user.proto\x1a-users/v1/rpc_get_user_by_wallet_address.proto2\xef\x04\n" +
+	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$users/v1/rpc_authenticate_user.proto\x1a\x1busers/v1/rpc_get_user.proto\x1a-users/v1/rpc_get_user_by_wallet_address.proto\x1a\x1dusers/v1/rpc_list_users.proto2\xe6\x05\n" +
 	"\fUsersService\x12r\n" +
 	"\aGetUser\x12\x18.users.v1.GetUserRequest\x1a\x19.users.v1.GetUserResponse\"2\x92A\x1c\x12\bGet user\x1a\x0eGet user by idb\x00\x82\xd3\xe4\x93\x02\r\x12\v/users/{id}\x12\xe4\x01\n" +
-	"\x16GetUserByWalletAddress\x12'.users.v1.GetUserByWalletAddressRequest\x1a(.users.v1.GetUserByWalletAddressResponse\"w\x92AC\x12\x1aGet user by wallet address\x1a#Get user by Ethereum wallet addressb\x00\x82\xd3\xe4\x93\x02+\x12)/users/by-wallet-address/{wallet_address}\x12\x83\x02\n" +
+	"\x16GetUserByWalletAddress\x12'.users.v1.GetUserByWalletAddressRequest\x1a(.users.v1.GetUserByWalletAddressResponse\"w\x92AC\x12\x1aGet user by wallet address\x1a#Get user by Ethereum wallet addressb\x00\x82\xd3\xe4\x93\x02+\x12)/users/by-wallet-address/{wallet_address}\x12u\n" +
+	"\tListUsers\x12\x1a.users.v1.ListUsersRequest\x1a\x1b.users.v1.ListUsersResponse\"/\x92A\x1e\x12\n" +
+	"List users\x1a\x0eList all usersb\x00\x82\xd3\xe4\x93\x02\b\x12\x06/users\x12\x83\x02\n" +
 	"\x10AuthenticateUser\x12!.users.v1.AuthenticateUserRequest\x1a\".users.v1.AuthenticateUserResponse\"\xa7\x01\x92A\x85\x01\x12\x11Authenticate user\x1anAuthenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/users/authenticateB\xb7\x02\x92A\x9c\x01\x121\n" +
 	"\rUsers Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
@@ -43,20 +45,24 @@ const file_users_v1_service_users_proto_rawDesc = "" +
 var file_users_v1_service_users_proto_goTypes = []any{
 	(*GetUserRequest)(nil),                 // 0: users.v1.GetUserRequest
 	(*GetUserByWalletAddressRequest)(nil),  // 1: users.v1.GetUserByWalletAddressRequest
-	(*AuthenticateUserRequest)(nil),        // 2: users.v1.AuthenticateUserRequest
-	(*GetUserResponse)(nil),                // 3: users.v1.GetUserResponse
-	(*GetUserByWalletAddressResponse)(nil), // 4: users.v1.GetUserByWalletAddressResponse
-	(*AuthenticateUserResponse)(nil),       // 5: users.v1.AuthenticateUserResponse
+	(*ListUsersRequest)(nil),               // 2: users.v1.ListUsersRequest
+	(*AuthenticateUserRequest)(nil),        // 3: users.v1.AuthenticateUserRequest
+	(*GetUserResponse)(nil),                // 4: users.v1.GetUserResponse
+	(*GetUserByWalletAddressResponse)(nil), // 5: users.v1.GetUserByWalletAddressResponse
+	(*ListUsersResponse)(nil),              // 6: users.v1.ListUsersResponse
+	(*AuthenticateUserResponse)(nil),       // 7: users.v1.AuthenticateUserResponse
 }
 var file_users_v1_service_users_proto_depIdxs = []int32{
 	0, // 0: users.v1.UsersService.GetUser:input_type -> users.v1.GetUserRequest
 	1, // 1: users.v1.UsersService.GetUserByWalletAddress:input_type -> users.v1.GetUserByWalletAddressRequest
-	2, // 2: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
-	3, // 3: users.v1.UsersService.GetUser:output_type -> users.v1.GetUserResponse
-	4, // 4: users.v1.UsersService.GetUserByWalletAddress:output_type -> users.v1.GetUserByWalletAddressResponse
-	5, // 5: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	2, // 2: users.v1.UsersService.ListUsers:input_type -> users.v1.ListUsersRequest
+	3, // 3: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
+	4, // 4: users.v1.UsersService.GetUser:output_type -> users.v1.GetUserResponse
+	5, // 5: users.v1.UsersService.GetUserByWalletAddress:output_type -> users.v1.GetUserByWalletAddressResponse
+	6, // 6: users.v1.UsersService.ListUsers:output_type -> users.v1.ListUsersResponse
+	7, // 7: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -70,6 +76,7 @@ func file_users_v1_service_users_proto_init() {
 	file_users_v1_rpc_authenticate_user_proto_init()
 	file_users_v1_rpc_get_user_proto_init()
 	file_users_v1_rpc_get_user_by_wallet_address_proto_init()
+	file_users_v1_rpc_list_users_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
