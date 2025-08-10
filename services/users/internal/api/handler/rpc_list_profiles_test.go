@@ -61,9 +61,9 @@ func TestListProfiles(t *testing.T) {
 				require.NotEmpty(t, res)
 
 				require.Len(t, res.GetUsers(), 2)
-				require.Equal(t, uint32(2), res.GetNumTotalUsers())
-				require.Equal(t, uint32(1), res.GetPage())
-				require.Equal(t, uint32(30), res.GetPageSize())
+				require.Equal(t, int64(2), res.GetNumTotalUsers())
+				require.Equal(t, int32(1), res.GetPage())
+				require.Equal(t, int32(30), res.GetPageSize())
 			},
 		},
 		{
