@@ -4,6 +4,7 @@ package users.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "users/v1/common.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
@@ -15,13 +16,6 @@ message AuthenticateUserRequest {
 message AuthenticateUserResponse {
   User user = 1;
   Session session = 2;
-}
-
-message User {
-  string user_id = 1;
-  string wallet_address = 2;
-  string gamer_tag = 3;
-  google.protobuf.Timestamp created_at = 4;
 }
 
 message Session {
