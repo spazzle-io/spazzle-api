@@ -4,21 +4,21 @@ go 1.24.4
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.3.0
-	github.com/ethereum/go-ethereum v1.16.1
+	github.com/ethereum/go-ethereum v1.16.2
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/rakyll/statik v0.1.7
-	github.com/redis/go-redis/v9 v9.11.0
+	github.com/redis/go-redis/v9 v9.12.1
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/ulule/limiter/v3 v3.11.2
 	go.uber.org/mock v0.5.2
-	golang.org/x/crypto v0.40.0
+	golang.org/x/crypto v0.41.0
 	golang.org/x/sync v0.16.0
-	google.golang.org/grpc v1.73.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/grpc v1.74.2
+	google.golang.org/protobuf v1.36.7
 )
 
 require (
@@ -51,9 +51,9 @@ require (
 	github.com/supranational/blst v0.3.14 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
