@@ -18,6 +18,7 @@ type Server struct {
 	OwnerID           uuid.UUID      `json:"owner_id"`
 	NumAdmins         int32          `json:"num_admins"`
 	NumCustomWords    int32          `json:"num_custom_words"`
+	IsPubliclyVisible bool           `json:"is_publicly_visible"`
 	ServerAddress     string         `json:"server_address"`
 	StakePerGame      pgtype.Numeric `json:"stake_per_game"`
 	NumRoundsPerGame  int32          `json:"num_rounds_per_game"`

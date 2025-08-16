@@ -11,6 +11,7 @@ Table servers {
   owner_id UUID [not null]
   num_admins int [not null, default: 0]
   num_custom_words int [not null, default: 0]
+  is_publicly_visible boolean [not null, default: true]
   server_address varchar [not null]
   stake_per_game numeric [not null]
   num_rounds_per_game int [not null]

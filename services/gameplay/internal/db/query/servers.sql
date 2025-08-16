@@ -3,12 +3,13 @@ INSERT INTO servers (
     name,
     owner_id,
     server_address,
+    is_publicly_visible,
     stake_per_game,
     num_rounds_per_game,
     round_duration_secs,
     num_drawing_options
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
 -- name: GetServerById :one
@@ -18,6 +19,7 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
+    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -37,6 +39,7 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
+    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -78,6 +81,7 @@ SELECT
     s.owner_id,
     s.num_admins,
     s.num_custom_words,
+    s.is_publicly_visible,
     s.server_address,
     s.stake_per_game,
     s.num_rounds_per_game,
@@ -113,6 +117,7 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
+    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -136,6 +141,7 @@ SET
     owner_id = COALESCE(sqlc.narg(owner_id), owner_id),
     num_admins = COALESCE(sqlc.narg(num_admins), num_admins),
     num_custom_words = COALESCE(sqlc.narg(num_custom_words), num_custom_words),
+    is_publicly_visible = COALESCE(sqlc.narg(is_publicly_visible), is_publicly_visible),
     server_address = COALESCE(sqlc.narg(server_address), server_address),
     stake_per_game = COALESCE(sqlc.narg(stake_per_game), stake_per_game),
     num_rounds_per_game = COALESCE(sqlc.narg(num_rounds_per_game), num_rounds_per_game),

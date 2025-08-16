@@ -496,6 +496,10 @@ func TestUpdateServer(t *testing.T) {
 			Int32: int32(expectedUpdatedNumCustomWords),
 			Valid: true,
 		},
+		IsPubliclyVisible: pgtype.Bool{
+			Bool:  false,
+			Valid: true,
+		},
 		ServerAddress: pgtype.Text{
 			String: expectedUpdatedServerAddress,
 			Valid:  true,
@@ -546,6 +550,7 @@ func TestUpdateServer(t *testing.T) {
 	require.Equal(t, int32(expectedUpdatedNumRoundsPerGame), updatedServer.NumRoundsPerGame)
 	require.Equal(t, int32(expectedUpdatedRoundDurationSecs), updatedServer.RoundDurationSecs)
 	require.Equal(t, int32(expectedUpdatedNumDrawingOptions), updatedServer.NumDrawingOptions)
+	require.False(t, updatedServer.IsPubliclyVisible)
 	require.True(t, updatedServer.IsArchived)
 	require.WithinDuration(t, expectedUpdatedArchivedAt, updatedServer.ArchivedAt.Time, time.Second)
 }
