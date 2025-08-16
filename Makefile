@@ -31,6 +31,13 @@ else
 		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
 	done
 endif
+	@$(MAKE) merge-coverage
+
+merge-coverage:
+	@echo "Merging coverage reports..."
+	@echo "mode: atomic" > combined-coverage.out
+	@tail -q -n +2 *-coverage.out >> combined-coverage.out
+	@rm -f $(filter-out combined-coverage.out,$(wildcard *-coverage.out))
 
 tidy:
 	@echo "Running go mod tidy for all modules"
@@ -135,4 +142,4 @@ proto:
 	@statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
 	@cd ./services/proto && go install tool && go mod tidy
 
-.PHONY: test tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc proto
+.PHONY: test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc proto
