@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package gameplay.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
+
+message CreateServerRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).required = true];
+  string server_address = 3 [(buf.validate.field).required = true];
+  bool is_publicly_visible = 4;
+  string stake_per_game = 5 [(buf.validate.field).required = true];
+  int32 num_rounds_per_game = 6 [(buf.validate.field).required = true];
+  int32 round_duration_secs = 7 [(buf.validate.field).required = true];
+  int32 num_drawing_options = 8 [(buf.validate.field).required = true];
+}
+
+message CreateServerResponse {
+  Server server = 1;
+}
+
+message Server {
+  string id = 1;
+  string name = 2;
+  string owner_id = 3;
+  int32 num_admins = 4;
+  int32 num_custom_words = 5;
+  bool is_publicly_visible = 6;
+  string server_address = 7;
+  string stake_per_game = 8;
+  int32 num_rounds_per_game = 9;
+  int32 round_duration_secs = 10;
+  int32 num_drawing_options = 11;
+  bool is_archived = 12;
+  google.protobuf.Timestamp archived_at = 13;
+  google.protobuf.Timestamp created_at = 14;
+}

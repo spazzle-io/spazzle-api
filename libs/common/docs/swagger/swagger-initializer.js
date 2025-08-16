@@ -7,6 +7,7 @@ window.onload = function() {
     urls: [
       { url: "auth/auth.swagger.json", name: "Auth Service" },
       { url: "users/users.swagger.json", name: "Users Service" },
+      { url: "gameplay/gameplay.swagger.json", name: "Gameplay Service" },
     ],
     "urls.primaryName": "Auth Service",
     dom_id: '#swagger-ui',

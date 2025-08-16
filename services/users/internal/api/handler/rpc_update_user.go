@@ -36,7 +36,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 		UserId: req.GetId(),
 	})
 	if err != nil {
-		logger.Info().Err(err).Msg("access token verification failed")
+		logger.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
 	}
 

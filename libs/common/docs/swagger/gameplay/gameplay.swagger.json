@@ -1,0 +1,200 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Gameplay Service",
+    "version": "0",
+    "contact": {
+      "name": "Spazzle",
+      "url": "https://spazzle.io"
+    }
+  },
+  "tags": [
+    {
+      "name": "ServerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/server": {
+      "post": {
+        "summary": "Create server",
+        "description": "Create a new server",
+        "operationId": "ServerService_CreateServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateServerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateServerRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "serverAddress": {
+          "type": "string"
+        },
+        "isPubliclyVisible": {
+          "type": "boolean"
+        },
+        "stakePerGame": {
+          "type": "string"
+        },
+        "numRoundsPerGame": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "roundDurationSecs": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numDrawingOptions": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1CreateServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1Server": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "numAdmins": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numCustomWords": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isPubliclyVisible": {
+          "type": "boolean"
+        },
+        "serverAddress": {
+          "type": "string"
+        },
+        "stakePerGame": {
+          "type": "string"
+        },
+        "numRoundsPerGame": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "roundDurationSecs": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numDrawingOptions": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isArchived": {
+          "type": "boolean"
+        },
+        "archivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "bearer": {
+      "type": "apiKey",
+      "description": "Authentication token, prefixed by Bearer: bearer \u003ctoken\u003e",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}

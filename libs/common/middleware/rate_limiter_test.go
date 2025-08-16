@@ -53,6 +53,21 @@ func TestInitializeLimiters(t *testing.T) {
 	}
 }
 
+func TestMergeRateLimits(t *testing.T) {
+	rateLimitA := map[string]Rate{
+		"/pb.Auth/A": {Limit: 100, Period: time.Hour, Identifier: "A"},
+	}
+
+	rateLimitB := map[string]Rate{
+		"/pb.Auth/B": {Limit: 100, Period: time.Hour, Identifier: "B"},
+	}
+
+	mergedRateLimits := mergeRateLimits(rateLimitA, rateLimitB)
+	require.Len(t, mergedRateLimits, 2)
+	require.Equal(t, rateLimitA["/pb.Auth/A"], mergedRateLimits["/pb.Auth/A"])
+	require.Equal(t, rateLimitB["/pb.Auth/B"], mergedRateLimits["/pb.Auth/B"])
+}
+
 func TestGetEndpointRateLimit(t *testing.T) {
 	testRateLimit := Rate{Limit: 1000, Period: time.Hour, Identifier: "Test"}
 
