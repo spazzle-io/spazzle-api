@@ -57,10 +57,11 @@ jobs:
         run: make migrate_up
 
       - name: run-tests
-        run: make test short=false
+        run: make test short=false && make merge-coverage
 
       - name: upload-coverage-to-codecov
         uses: codecov/codecov-action@v5
         with:
+          files: combined-coverage.out
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
