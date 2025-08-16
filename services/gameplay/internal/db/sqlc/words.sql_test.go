@@ -19,7 +19,7 @@ func TestAddWordsToServer(t *testing.T) {
 	server := createTestServer(t, uuid.New())
 	require.NotEmpty(t, server)
 
-	words := []string{gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun()}
+	words := []string{gofakeit.Noun(), gofakeit.Name(), gofakeit.School(), gofakeit.PetName()}
 	params := AddWordsToServerParams{
 		ServerID: server.ID,
 		Words:    words,

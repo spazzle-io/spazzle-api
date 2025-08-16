@@ -31,11 +31,13 @@ else
 		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
 	done
 endif
+	@$(MAKE) merge-coverage
 
 merge-coverage:
 	@echo "Merging coverage reports..."
 	@echo "mode: atomic" > combined-coverage.out
 	@tail -q -n +2 *-coverage.out >> combined-coverage.out
+	@rm -f $(filter-out combined-coverage.out,$(wildcard *-coverage.out))
 
 tidy:
 	@echo "Running go mod tidy for all modules"
