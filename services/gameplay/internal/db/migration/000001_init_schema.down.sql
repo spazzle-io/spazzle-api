@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS words;
+DROP TABLE IF EXISTS server_admins;
+DROP TABLE IF EXISTS servers;

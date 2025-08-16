@@ -1,0 +1,56 @@
+Project gameplay_service {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Gameplay Service Database
+  '''
+}
+
+Table servers {
+  id UUID [pk, default: `gen_random_uuid()`]
+  name varchar [not null, note: 'a partial unique index on name and is_archived is added in a subsequent db migration']
+  owner_id UUID [not null]
+  num_admins int [not null, default: 0]
+  num_custom_words int [not null, default: 0]
+  server_address varchar [not null]
+  stake_per_game numeric [not null]
+  num_rounds_per_game int [not null]
+  round_duration_secs int [not null]
+  num_drawing_options int [not null, note: 'number of word options presented to a player before they select one to draw']
+  is_archived boolean [not null, default: false]
+  archived_at timestamptz
+  created_at timestamptz [not null, default: `now()`, note: 'an index on created_at DESC and id DESC is added in a subsequent db migration']
+
+  indexes {
+    name
+    owner_id
+  }
+}
+
+Table server_admins {
+  server_id UUID [not null]
+  user_id UUID [not null]
+  added_at timestamptz [not null, default: `now()`]
+
+  Ref: server_admins.server_id > servers.id [delete: cascade, update: no action]
+
+  indexes {
+    (server_id, user_id) [pk]
+    (user_id, server_id)
+  }
+}
+
+Table words {
+  id UUID [pk, default: `gen_random_uuid()`]
+  word_idx int [not null]
+  server_id UUID [not null]
+  word varchar [not null]
+  added_at timestamptz [not null, default: `now()`]
+
+  Ref: words.server_id > servers.id [delete: cascade, update: no action]
+
+  indexes {
+    server_id
+    (server_id, word_idx) [unique]
+    (server_id, word) [unique]
+  }
+}
