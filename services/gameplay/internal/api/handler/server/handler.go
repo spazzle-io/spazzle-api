@@ -1,6 +1,8 @@
 package server
 
 import (
+	"time"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
@@ -28,5 +30,7 @@ func New(config util.Config, store db.Store, cache commonCache.Cache, authServic
 }
 
 func (h *Handler) RateLimits() map[string]commonMiddleware.Rate {
-	return map[string]commonMiddleware.Rate{}
+	return map[string]commonMiddleware.Rate{
+		"/gameplay.v1.ServerService/CreateServer": {Aliases: []string{"POST:/server"}, Limit: 30, Period: time.Minute, Identifier: "CreateServer"},
+	}
 }

@@ -40,14 +40,14 @@ func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, 
 	return s, nil
 }
 
-func setupRateLimiter(serviceName string, redisConnURL string, rateLimits map[string]commonMiddleware.Rate) error {
+func setupRateLimiter(serviceName string, redisConnURL string, rateLimits ...map[string]commonMiddleware.Rate) error {
 	var store limiter.Store
 	var createLimiterRedisStoreErr, initializeLimitersErr error
 
 	once.Do(func() {
 		store, createLimiterRedisStoreErr = commonMiddleware.CreateLimiterRedisStore(serviceName, redisConnURL)
 		if createLimiterRedisStoreErr == nil {
-			initializeLimitersErr = commonMiddleware.InitializeLimiters(store, rateLimits)
+			initializeLimitersErr = commonMiddleware.InitializeLimiters(store, rateLimits...)
 		}
 	})
 

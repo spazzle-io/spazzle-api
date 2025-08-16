@@ -60,10 +60,23 @@ func CreateLimiterRedisStore(serviceName string, redisConnURL string) (limiter.S
 	return store, nil
 }
 
-func InitializeLimiters(store limiter.Store, rateLimits map[string]Rate) error {
-	limiters = make(map[string]*limiter.Limiter)
+func mergeRateLimits(rateLimits ...map[string]Rate) map[string]Rate {
+	mergedRateLimits := make(map[string]Rate)
 
-	for k, v := range rateLimits {
+	for _, rl := range rateLimits {
+		for k, v := range rl {
+			mergedRateLimits[k] = v
+		}
+	}
+
+	return mergedRateLimits
+}
+
+func InitializeLimiters(store limiter.Store, rateLimits ...map[string]Rate) error {
+	limiters = make(map[string]*limiter.Limiter)
+	mergedRateLimits := mergeRateLimits(rateLimits...)
+
+	for k, v := range mergedRateLimits {
 		activeRateLimits[k] = v
 		for _, alias := range v.Aliases {
 			activeRateLimits[alias] = Rate{
