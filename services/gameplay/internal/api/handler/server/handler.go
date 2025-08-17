@@ -32,5 +32,6 @@ func New(config util.Config, store db.Store, cache commonCache.Cache, authServic
 func (h *Handler) RateLimits() map[string]commonMiddleware.Rate {
 	return map[string]commonMiddleware.Rate{
 		"/gameplay.v1.ServerService/CreateServer": {Aliases: []string{"POST:/server"}, Limit: 30, Period: time.Minute, Identifier: "CreateServer"},
+		"/gameplay.v1.ServerService/GetServer":    {Aliases: []string{"GET:/server/{uuid}"}, Limit: 120, Period: time.Minute, Identifier: "GetServer"},
 	}
 }

@@ -26,12 +26,14 @@ var File_gameplay_v1_service_gameplay_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\n" +
-	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xae\x01\n" +
+	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xb4\x02\n" +
 	"\rServerService\x12\x9c\x01\n" +
 	"\fCreateServer\x12 .gameplay.v1.CreateServerRequest\x1a!.gameplay.v1.CreateServerResponse\"G\x92A2\x12\rCreate server\x1a\x13Create a new serverb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\f:\x01*\"\a/serverB\xcf\x02\x92A\x9f\x01\x124\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\f:\x01*\"\a/server\x12\x83\x01\n" +
+	"\tGetServer\x12\x1d.gameplay.v1.GetServerRequest\x1a\x1e.gameplay.v1.GetServerResponse\"7\x92A \x12\n" +
+	"Get server\x1a\x10Get server by idb\x00\x82\xd3\xe4\x93\x02\x0e\x12\f/server/{id}B\xcf\x02\x92A\x9f\x01\x124\n" +
 	"\x10Gameplay Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -43,13 +45,17 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 
 var file_gameplay_v1_service_gameplay_proto_goTypes = []any{
 	(*CreateServerRequest)(nil),  // 0: gameplay.v1.CreateServerRequest
-	(*CreateServerResponse)(nil), // 1: gameplay.v1.CreateServerResponse
+	(*GetServerRequest)(nil),     // 1: gameplay.v1.GetServerRequest
+	(*CreateServerResponse)(nil), // 2: gameplay.v1.CreateServerResponse
+	(*GetServerResponse)(nil),    // 3: gameplay.v1.GetServerResponse
 }
 var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	0, // 0: gameplay.v1.ServerService.CreateServer:input_type -> gameplay.v1.CreateServerRequest
-	1, // 1: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: gameplay.v1.ServerService.GetServer:input_type -> gameplay.v1.GetServerRequest
+	2, // 2: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
+	3, // 3: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

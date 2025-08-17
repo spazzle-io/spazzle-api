@@ -17,7 +17,6 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -72,29 +71,14 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		return nil, handleCreateServerError(err)
 	}
 
-	stakePerGameStr, err := db.ParseDBNumericWeiToStr(server.StakePerGame)
+	pbServer, err := mapDBServerToPb(&server)
 	if err != nil {
-		logger.Error().Err(err).Msg("invalid db stake per game")
+		logger.Error().Err(err).Msg("failed to map db server to pb")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
 	response := &pb.CreateServerResponse{
-		Server: &pb.Server{
-			Id:                server.ID.String(),
-			Name:              server.Name,
-			OwnerId:           server.OwnerID.String(),
-			NumAdmins:         server.NumAdmins,
-			NumCustomWords:    server.NumCustomWords,
-			IsPubliclyVisible: server.IsPubliclyVisible,
-			ServerAddress:     server.ServerAddress,
-			StakePerGame:      stakePerGameStr,
-			NumRoundsPerGame:  server.NumRoundsPerGame,
-			RoundDurationSecs: server.RoundDurationSecs,
-			NumDrawingOptions: server.NumDrawingOptions,
-			IsArchived:        server.IsArchived,
-			ArchivedAt:        timestamppb.New(server.ArchivedAt.Time),
-			CreatedAt:         timestamppb.New(server.CreatedAt),
-		},
+		Server: pbServer,
 	}
 
 	logger.Info().Msg("server created successfully")

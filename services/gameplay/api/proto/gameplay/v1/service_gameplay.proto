@@ -52,4 +52,16 @@ service ServerService {
       };
     };
   }
+
+  rpc GetServer(GetServerRequest) returns (GetServerResponse) {
+    option (google.api.http) = {
+      get: "/server/{id}"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get server";
+      description: "Get server by id";
+      security: {};
+    };
+  }
 }
