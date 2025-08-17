@@ -30,6 +30,25 @@ message GetServerResponse {
   Server server = 1;
 }
 
+message GetServerByNameRequest {
+  string name = 1 [(buf.validate.field).required = true];
+}
+
+message GetServerByNameResponse {
+  Server server = 1;
+}
+
+message ListServersRequest {
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3 [(buf.validate.field).required = true];
+}
+
+message ListServersResponse {
+  repeated Server servers = 1;
+  ListServersCursor cursor = 2;
+}
+
 message Server {
   string id = 1;
   string name = 2;
@@ -45,4 +64,10 @@ message Server {
   bool is_archived = 12;
   google.protobuf.Timestamp archived_at = 13;
   google.protobuf.Timestamp created_at = 14;
+}
+
+message ListServersCursor {
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
 }

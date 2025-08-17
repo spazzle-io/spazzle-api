@@ -64,4 +64,16 @@ service ServerService {
       security: {};
     };
   }
+
+  rpc GetServerByName(GetServerByNameRequest) returns (GetServerByNameResponse) {
+    option (google.api.http) = {
+      get: "/server/by-name/{name}"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get server by name";
+      description: "Get server by its name";
+      security: {};
+    };
+  }
 }

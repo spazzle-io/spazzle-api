@@ -59,6 +59,39 @@
         ]
       }
     },
+    "/server/by-name/{name}": {
+      "get": {
+        "summary": "Get server by name",
+        "description": "Get server by its name",
+        "operationId": "ServerService_GetServerByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetServerByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      }
+    },
     "/server/{id}": {
       "get": {
         "summary": "Get server",
@@ -155,6 +188,14 @@
       }
     },
     "v1CreateServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1GetServerByNameResponse": {
       "type": "object",
       "properties": {
         "server": {
