@@ -26,7 +26,7 @@ var File_gameplay_v1_service_gameplay_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\n" +
-	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xea\x04\n" +
+	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xbc\x06\n" +
 	"\rServerService\x12\x9d\x01\n" +
 	"\fCreateServer\x12 .gameplay.v1.CreateServerRequest\x1a!.gameplay.v1.CreateServerResponse\"H\x92A2\x12\rCreate server\x1a\x13Create a new serverb\f\n" +
 	"\n" +
@@ -36,7 +36,8 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"Get server\x1a\x10Get server by idb\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/servers/{id}\x12\xa7\x01\n" +
 	"\x0fGetServerByName\x12#.gameplay.v1.GetServerByNameRequest\x1a$.gameplay.v1.GetServerByNameResponse\"I\x92A'\x12\x12Get server by name\x1a\x0fGet server nameb\x00\x82\xd3\xe4\x93\x02\x19\x12\x17/servers/by-name/{name}\x12\x87\x01\n" +
 	"\vListServers\x12\x1f.gameplay.v1.ListServersRequest\x1a .gameplay.v1.ListServersResponse\"5\x92A\"\x12\fList servers\x1a\x10List all serversb\x00\x82\xd3\xe4\x93\x02\n" +
-	"\x12\b/serversB\xcf\x02\x92A\x9f\x01\x124\n" +
+	"\x12\b/servers\x12\xcf\x01\n" +
+	"\x0fListUserServers\x12#.gameplay.v1.ListUserServersRequest\x1a$.gameplay.v1.ListUserServersResponse\"q\x92AL\x12\x11List user servers\x1a5List servers for which a user has elevated privilegesb\x00\x82\xd3\xe4\x93\x02\x1c\x12\x1a/servers/by-user/{user_id}B\xcf\x02\x92A\x9f\x01\x124\n" +
 	"\x10Gameplay Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -51,22 +52,26 @@ var file_gameplay_v1_service_gameplay_proto_goTypes = []any{
 	(*GetServerRequest)(nil),        // 1: gameplay.v1.GetServerRequest
 	(*GetServerByNameRequest)(nil),  // 2: gameplay.v1.GetServerByNameRequest
 	(*ListServersRequest)(nil),      // 3: gameplay.v1.ListServersRequest
-	(*CreateServerResponse)(nil),    // 4: gameplay.v1.CreateServerResponse
-	(*GetServerResponse)(nil),       // 5: gameplay.v1.GetServerResponse
-	(*GetServerByNameResponse)(nil), // 6: gameplay.v1.GetServerByNameResponse
-	(*ListServersResponse)(nil),     // 7: gameplay.v1.ListServersResponse
+	(*ListUserServersRequest)(nil),  // 4: gameplay.v1.ListUserServersRequest
+	(*CreateServerResponse)(nil),    // 5: gameplay.v1.CreateServerResponse
+	(*GetServerResponse)(nil),       // 6: gameplay.v1.GetServerResponse
+	(*GetServerByNameResponse)(nil), // 7: gameplay.v1.GetServerByNameResponse
+	(*ListServersResponse)(nil),     // 8: gameplay.v1.ListServersResponse
+	(*ListUserServersResponse)(nil), // 9: gameplay.v1.ListUserServersResponse
 }
 var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	0, // 0: gameplay.v1.ServerService.CreateServer:input_type -> gameplay.v1.CreateServerRequest
 	1, // 1: gameplay.v1.ServerService.GetServer:input_type -> gameplay.v1.GetServerRequest
 	2, // 2: gameplay.v1.ServerService.GetServerByName:input_type -> gameplay.v1.GetServerByNameRequest
 	3, // 3: gameplay.v1.ServerService.ListServers:input_type -> gameplay.v1.ListServersRequest
-	4, // 4: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
-	5, // 5: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
-	6, // 6: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
-	7, // 7: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	4, // 4: gameplay.v1.ServerService.ListUserServers:input_type -> gameplay.v1.ListUserServersRequest
+	5, // 5: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
+	6, // 6: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
+	7, // 7: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
+	8, // 8: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
+	9, // 9: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

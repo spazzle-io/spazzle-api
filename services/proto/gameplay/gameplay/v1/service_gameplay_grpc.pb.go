@@ -23,6 +23,7 @@ const (
 	ServerService_GetServer_FullMethodName       = "/gameplay.v1.ServerService/GetServer"
 	ServerService_GetServerByName_FullMethodName = "/gameplay.v1.ServerService/GetServerByName"
 	ServerService_ListServers_FullMethodName     = "/gameplay.v1.ServerService/ListServers"
+	ServerService_ListUserServers_FullMethodName = "/gameplay.v1.ServerService/ListUserServers"
 )
 
 // ServerServiceClient is the client API for ServerService service.
@@ -33,6 +34,7 @@ type ServerServiceClient interface {
 	GetServer(ctx context.Context, in *GetServerRequest, opts ...grpc.CallOption) (*GetServerResponse, error)
 	GetServerByName(ctx context.Context, in *GetServerByNameRequest, opts ...grpc.CallOption) (*GetServerByNameResponse, error)
 	ListServers(ctx context.Context, in *ListServersRequest, opts ...grpc.CallOption) (*ListServersResponse, error)
+	ListUserServers(ctx context.Context, in *ListUserServersRequest, opts ...grpc.CallOption) (*ListUserServersResponse, error)
 }
 
 type serverServiceClient struct {
@@ -83,6 +85,16 @@ func (c *serverServiceClient) ListServers(ctx context.Context, in *ListServersRe
 	return out, nil
 }
 
+func (c *serverServiceClient) ListUserServers(ctx context.Context, in *ListUserServersRequest, opts ...grpc.CallOption) (*ListUserServersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUserServersResponse)
+	err := c.cc.Invoke(ctx, ServerService_ListUserServers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServerServiceServer is the server API for ServerService service.
 // All implementations must embed UnimplementedServerServiceServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type ServerServiceServer interface {
 	GetServer(context.Context, *GetServerRequest) (*GetServerResponse, error)
 	GetServerByName(context.Context, *GetServerByNameRequest) (*GetServerByNameResponse, error)
 	ListServers(context.Context, *ListServersRequest) (*ListServersResponse, error)
+	ListUserServers(context.Context, *ListUserServersRequest) (*ListUserServersResponse, error)
 	mustEmbedUnimplementedServerServiceServer()
 }
 
@@ -112,6 +125,9 @@ func (UnimplementedServerServiceServer) GetServerByName(context.Context, *GetSer
 }
 func (UnimplementedServerServiceServer) ListServers(context.Context, *ListServersRequest) (*ListServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListServers not implemented")
+}
+func (UnimplementedServerServiceServer) ListUserServers(context.Context, *ListUserServersRequest) (*ListUserServersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserServers not implemented")
 }
 func (UnimplementedServerServiceServer) mustEmbedUnimplementedServerServiceServer() {}
 func (UnimplementedServerServiceServer) testEmbeddedByValue()                       {}
@@ -206,6 +222,24 @@ func _ServerService_ListServers_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerService_ListUserServers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserServersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerServiceServer).ListUserServers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerService_ListUserServers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerServiceServer).ListUserServers(ctx, req.(*ListUserServersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServerService_ServiceDesc is the grpc.ServiceDesc for ServerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var ServerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListServers",
 			Handler:    _ServerService_ListServers_Handler,
+		},
+		{
+			MethodName: "ListUserServers",
+			Handler:    _ServerService_ListUserServers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

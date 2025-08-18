@@ -88,4 +88,16 @@ service ServerService {
       security: {};
     };
   }
+
+  rpc ListUserServers(ListUserServersRequest) returns (ListUserServersResponse) {
+    option (google.api.http) = {
+      get: "/servers/by-user/{user_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List user servers";
+      description: "List servers for which a user has elevated privileges";
+      security: {};
+    };
+  }
 }

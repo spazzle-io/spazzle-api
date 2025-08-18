@@ -35,5 +35,6 @@ func (h *Handler) RateLimits() map[string]commonMiddleware.Rate {
 		"/gameplay.v1.ServerService/GetServer":       {Aliases: []string{"GET:/servers/{uuid}"}, Limit: 120, Period: time.Minute, Identifier: "GetServer"},
 		"/gameplay.v1.ServerService/GetServerByName": {Aliases: []string{"GET:/servers/by-name/{string}"}, Limit: 120, Period: time.Minute, Identifier: "GetServerByName"},
 		"/gameplay.v1.ServerService/ListServers":     {Aliases: []string{"GET:/servers"}, Limit: 120, Period: time.Minute, Identifier: "ListServers"},
+		"/gameplay.v1.ServerService/ListUserServers": {Aliases: []string{"GET:/servers/by-user/{uuid}"}, Limit: 120, Period: time.Minute, Identifier: "ListUserServers"},
 	}
 }

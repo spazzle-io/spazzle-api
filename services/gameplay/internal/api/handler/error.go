@@ -19,6 +19,7 @@ const (
 	InvalidUserIdError      string = "Invalid user id"
 	InvalidServerIdError    string = "Invalid server id"
 	ServerNotFoundError     string = "Server not found"
+	InvalidAfterIdError     string = "invalid after id"
 )
 
 func ProtovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {

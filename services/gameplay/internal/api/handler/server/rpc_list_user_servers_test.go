@@ -19,23 +19,24 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestListServers(t *testing.T) {
+func TestListUserServers(t *testing.T) {
 	testCases := []struct {
 		name          string
-		req           *pb.ListServersRequest
+		req           *pb.ListUserServersRequest
 		buildStubs    func(store *mockdb.MockStore)
-		checkResponse func(t *testing.T, res *pb.ListServersResponse, err error)
+		checkResponse func(t *testing.T, res *pb.ListUserServersResponse, err error)
 	}{
 		{
 			name: "success",
-			req: &pb.ListServersRequest{
+			req: &pb.ListUserServersRequest{
+				UserId:   uuid.New().String(),
 				PageSize: handler.DefaultPageSize,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{
+					Return([]db.ListUserServersRow{
 						{
 							ID:        uuid.New(),
 							CreatedAt: time.Now().UTC(),
@@ -47,11 +48,11 @@ func TestListServers(t *testing.T) {
 					}, nil)
 
 				store.EXPECT().
-					GetTotalServerCount(gomock.Any()).
+					GetTotalUserServersCount(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(int64(1), nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.NoError(t, err)
 				require.NotEmpty(t, res)
 
@@ -61,15 +62,30 @@ func TestListServers(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid request parameters",
+			req: &pb.ListUserServersRequest{
+				UserId: "fake-id",
+			},
+			buildStubs: func(store *mockdb.MockStore) {},
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
+				require.Error(t, err)
+				require.Empty(t, res)
+
+				expectedViolations := []string{"userId"}
+				handler.CheckInvalidRequestParams(t, err, expectedViolations)
+			},
+		},
+		{
 			name: "page size is zero",
-			req: &pb.ListServersRequest{
+			req: &pb.ListUserServersRequest{
+				UserId:   uuid.New().String(),
 				PageSize: 0,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{
+					Return([]db.ListUserServersRow{
 						{
 							ID:        uuid.New(),
 							CreatedAt: time.Now().UTC(),
@@ -81,11 +97,11 @@ func TestListServers(t *testing.T) {
 					}, nil)
 
 				store.EXPECT().
-					GetTotalServerCount(gomock.Any()).
+					GetTotalUserServersCount(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(int64(1), nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Cursor.PageSize, handler.DefaultPageSize)
 				require.NotEmpty(t, res)
@@ -93,14 +109,15 @@ func TestListServers(t *testing.T) {
 		},
 		{
 			name: "page size is greater than allowed maximum",
-			req: &pb.ListServersRequest{
+			req: &pb.ListUserServersRequest{
+				UserId:   uuid.New().String(),
 				PageSize: handler.MaxPageSize + 1,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{
+					Return([]db.ListUserServersRow{
 						{
 							ID:        uuid.New(),
 							CreatedAt: time.Now().UTC(),
@@ -112,11 +129,11 @@ func TestListServers(t *testing.T) {
 					}, nil)
 
 				store.EXPECT().
-					GetTotalServerCount(gomock.Any()).
+					GetTotalUserServersCount(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(int64(1), nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Cursor.PageSize, handler.DefaultPageSize)
 				require.NotEmpty(t, res)
@@ -124,60 +141,67 @@ func TestListServers(t *testing.T) {
 		},
 		{
 			name: "invalid after id",
-			req: &pb.ListServersRequest{
+			req: &pb.ListUserServersRequest{
+				UserId:   uuid.New().String(),
 				PageSize: handler.DefaultPageSize,
 				AfterId:  "abc",
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.InvalidAfterIdError)
 				require.Empty(t, res)
 			},
 		},
 		{
-			name: "could not fetch servers from db",
-			req:  &pb.ListServersRequest{},
+			name: "could not fetch user servers from db",
+			req: &pb.ListUserServersRequest{
+				UserId: uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{}, errors.New("could not fetch servers"))
+					Return([]db.ListUserServersRow{}, errors.New("could not fetch user servers"))
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.InternalServerError)
 				require.Empty(t, res)
 			},
 		},
 		{
-			name: "could not fetch servers total count from db",
-			req:  &pb.ListServersRequest{},
+			name: "could not fetch user servers total count from db",
+			req: &pb.ListUserServersRequest{
+				UserId: uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{}, nil)
+					Return([]db.ListUserServersRow{}, nil)
 
 				store.EXPECT().
-					GetTotalServerCount(gomock.Any()).
+					GetTotalUserServersCount(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(int64(0), errors.New("could not fetch servers total count"))
+					Return(int64(0), errors.New("could not fetch user servers total count"))
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.InternalServerError)
 				require.Empty(t, res)
 			},
 		},
 		{
-			name: "could not map db servers to pb",
-			req:  &pb.ListServersRequest{},
+			name: "could not map db user servers to pb",
+			req: &pb.ListUserServersRequest{
+				UserId: uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{
+					Return([]db.ListUserServersRow{
 						{
 							ID:        uuid.New(),
 							CreatedAt: time.Now().UTC(),
@@ -188,31 +212,33 @@ func TestListServers(t *testing.T) {
 					}, nil)
 
 				store.EXPECT().
-					GetTotalServerCount(gomock.Any()).
+					GetTotalUserServersCount(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(int64(1), nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.InternalServerError)
 				require.Empty(t, res)
 			},
 		},
 		{
-			name: "empty server list from db",
-			req:  &pb.ListServersRequest{},
+			name: "empty user server list from db",
+			req: &pb.ListUserServersRequest{
+				UserId: uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListServers(gomock.Any(), gomock.Any()).
+					ListUserServers(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return([]db.Server{}, nil)
+					Return([]db.ListUserServersRow{}, nil)
 
 				store.EXPECT().
-					GetTotalServerCount(gomock.Any()).
+					GetTotalUserServersCount(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(int64(1), nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ListUserServersResponse, err error) {
 				require.NoError(t, err)
 				require.NotEmpty(t, res)
 
@@ -236,7 +262,7 @@ func TestListServers(t *testing.T) {
 
 			h := newTestHandler(store, cache, authService)
 
-			res, err := h.ListServers(context.Background(), tc.req)
+			res, err := h.ListUserServers(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

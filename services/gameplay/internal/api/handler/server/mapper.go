@@ -45,5 +45,49 @@ func mapDBServersToPb(servers []db.Server) (pbServers []*pb.Server, err error) {
 		pbServers = append(pbServers, pbServer)
 	}
 
-	return pbServers, nil
+	return
+}
+
+func mapDBUserServerToPb(userServer *db.ListUserServersRow) (*pb.UserServer, error) {
+	var archivedAt *timestamppb.Timestamp
+	if userServer.ArchivedAt.Valid {
+		archivedAt = timestamppb.New(userServer.ArchivedAt.Time)
+	}
+
+	stakePerGameStr, err := db.ParseDBNumericWeiToStr(userServer.StakePerGame)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.UserServer{
+		Id:                userServer.ID.String(),
+		Name:              userServer.Name,
+		OwnerId:           userServer.OwnerID.String(),
+		NumAdmins:         userServer.NumAdmins,
+		NumCustomWords:    userServer.NumCustomWords,
+		IsPubliclyVisible: userServer.IsPubliclyVisible,
+		ServerAddress:     userServer.ServerAddress,
+		StakePerGame:      stakePerGameStr,
+		NumRoundsPerGame:  userServer.NumRoundsPerGame,
+		RoundDurationSecs: userServer.RoundDurationSecs,
+		NumDrawingOptions: userServer.NumDrawingOptions,
+		IsAdmin:           userServer.IsAdmin,
+		IsOwner:           userServer.IsOwner,
+		IsArchived:        userServer.IsArchived,
+		ArchivedAt:        archivedAt,
+		CreatedAt:         timestamppb.New(userServer.CreatedAt),
+	}, nil
+}
+
+func mapDBUserServersToPb(userServers []db.ListUserServersRow) (pbUserServers []*pb.UserServer, err error) {
+	for i := range userServers {
+		pbUserServer, err := mapDBUserServerToPb(&userServers[i])
+		if err != nil {
+			return nil, err
+		}
+
+		pbUserServers = append(pbUserServers, pbUserServer)
+	}
+
+	return
 }
