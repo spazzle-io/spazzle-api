@@ -22,6 +22,59 @@ message CreateServerResponse {
   Server server = 1;
 }
 
+message GetServerRequest {
+  string id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetServerResponse {
+  Server server = 1;
+}
+
+message GetServerByNameRequest {
+  string name = 1 [(buf.validate.field).required = true];
+}
+
+message GetServerByNameResponse {
+  Server server = 1;
+}
+
+message ListServersRequest {
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
+}
+
+message ListServersResponse {
+  repeated Server servers = 1;
+  int64 total_count = 2;
+  ListServersCursor cursor = 3;
+}
+
+message ListUserServersRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.Timestamp after_created_at = 2;
+  string after_id = 3;
+  int32 page_size = 4;
+}
+
+message ListUserServersResponse {
+  string user_id = 1;
+  repeated UserServer servers = 2;
+  int64 total_count = 3;
+  ListServersCursor cursor = 4;
+}
+
+message GetUserServerPermissionsRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetUserServerPermissionsResponse {
+  bool is_owner = 1;
+  bool is_admin = 2;
+  bool has_elevated_permissions = 3;
+}
+
 message Server {
   string id = 1;
   string name = 2;
@@ -37,4 +90,29 @@ message Server {
   bool is_archived = 12;
   google.protobuf.Timestamp archived_at = 13;
   google.protobuf.Timestamp created_at = 14;
+}
+
+message UserServer {
+  string id = 1;
+  string name = 2;
+  string owner_id = 3;
+  int32 num_admins = 4;
+  int32 num_custom_words = 5;
+  bool is_publicly_visible = 6;
+  string server_address = 7;
+  string stake_per_game = 8;
+  int32 num_rounds_per_game = 9;
+  int32 round_duration_secs = 10;
+  int32 num_drawing_options = 11;
+  bool is_archived = 12;
+  bool is_owner = 13;
+  bool is_admin = 14;
+  google.protobuf.Timestamp archived_at = 15;
+  google.protobuf.Timestamp created_at = 16;
+}
+
+message ListServersCursor {
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
 }

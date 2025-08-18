@@ -229,6 +229,8 @@ func normalizePath(path string) string {
 			parts[i] = "{id}"
 		case evmAddressPattern.MatchString(part):
 			parts[i] = "{evm_address}"
+		case i > 0 && strings.HasPrefix(parts[i-1], "by-"):
+			parts[i] = "{string}"
 		}
 	}
 	return "/" + strings.Join(parts, "/")

@@ -377,6 +377,16 @@ func TestNormalizePath(t *testing.T) {
 			expectedPath: "/users/{evm_address}/query1/{evm_address}",
 		},
 		{
+			name:         "matches by-* prefix",
+			path:         "/users/by-name/some-name",
+			expectedPath: "/users/by-name/{string}",
+		},
+		{
+			name:         "matches only first by-* prefix",
+			path:         "/users/by-name/some-name/another-name/by-name/x/o",
+			expectedPath: "/users/by-name/{string}/another-name/by-name/{string}/o",
+		},
+		{
 			name:         "no match",
 			path:         "/users/17783b4e-123/query1/query2",
 			expectedPath: "/users/17783b4e-123/query1/query2",
@@ -388,8 +398,8 @@ func TestNormalizePath(t *testing.T) {
 		},
 		{
 			name:         "matches all",
-			path:         "/users/91/0x4DeCC727221f50D8B341297dF43a11756bb27977/17783b4e-454b-4c21-896e-823a250dd650/query",
-			expectedPath: "/users/{id}/{evm_address}/{uuid}/query",
+			path:         "/users/by-sth/91/by-sth/0x4DeCC727221f50D8B341297dF43a11756bb27977/by-sth/4DeCC727221f50D8B341297dF43a11756bb27977/by-sth/17783b4e-454b-4c21-896e-823a250dd650/query/by-sth/query/another-query",
+			expectedPath: "/users/by-sth/{id}/by-sth/{evm_address}/by-sth/{evm_address}/by-sth/{uuid}/query/by-sth/{string}/another-query",
 		},
 	}
 

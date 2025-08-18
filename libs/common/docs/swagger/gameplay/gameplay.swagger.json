@@ -20,7 +20,52 @@
     "application/json"
   ],
   "paths": {
-    "/server": {
+    "/servers": {
+      "get": {
+        "summary": "List servers",
+        "description": "List all servers",
+        "operationId": "ServerService_ListServers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListServersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "afterCreatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      },
       "post": {
         "summary": "Create server",
         "description": "Create a new server",
@@ -57,6 +102,164 @@
             "bearer": []
           }
         ]
+      }
+    },
+    "/servers/by-name/{name}": {
+      "get": {
+        "summary": "Get server by name",
+        "description": "Get server name",
+        "operationId": "ServerService_GetServerByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetServerByNameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      }
+    },
+    "/servers/by-user/{userId}": {
+      "get": {
+        "summary": "List user servers",
+        "description": "List servers for which a user has elevated privileges",
+        "operationId": "ServerService_ListUserServers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListUserServersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "afterCreatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      }
+    },
+    "/servers/{id}": {
+      "get": {
+        "summary": "Get server",
+        "description": "Get server by id",
+        "operationId": "ServerService_GetServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      }
+    },
+    "/servers/{serverId}/permissions/{userId}": {
+      "get": {
+        "summary": "Get a user's server permissions",
+        "description": "Check whether a user has elevated privileges on a server",
+        "operationId": "ServerService_GetUserServerPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserServerPermissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
       }
     }
   },
@@ -129,6 +332,93 @@
         }
       }
     },
+    "v1GetServerByNameResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1GetServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1GetUserServerPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "isOwner": {
+          "type": "boolean"
+        },
+        "isAdmin": {
+          "type": "boolean"
+        },
+        "hasElevatedPermissions": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1ListServersCursor": {
+      "type": "object",
+      "properties": {
+        "afterCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterId": {
+          "type": "string"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListServersResponse": {
+      "type": "object",
+      "properties": {
+        "servers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Server"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1ListServersCursor"
+        }
+      }
+    },
+    "v1ListUserServersResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "servers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserServer"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1ListServersCursor"
+        }
+      }
+    },
     "v1Server": {
       "type": "object",
       "properties": {
@@ -171,6 +461,66 @@
           "format": "int32"
         },
         "isArchived": {
+          "type": "boolean"
+        },
+        "archivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1UserServer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "ownerId": {
+          "type": "string"
+        },
+        "numAdmins": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numCustomWords": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isPubliclyVisible": {
+          "type": "boolean"
+        },
+        "serverAddress": {
+          "type": "string"
+        },
+        "stakePerGame": {
+          "type": "string"
+        },
+        "numRoundsPerGame": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "roundDurationSecs": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numDrawingOptions": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isArchived": {
+          "type": "boolean"
+        },
+        "isOwner": {
+          "type": "boolean"
+        },
+        "isAdmin": {
           "type": "boolean"
         },
         "archivedAt": {

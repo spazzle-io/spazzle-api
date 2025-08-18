@@ -43,7 +43,7 @@ func TestListWords(t *testing.T) {
 	}
 
 	lastSeenWordIdx := 0
-	words := []string{gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun()}
+	words := []string{gofakeit.Noun(), gofakeit.Name(), gofakeit.PetName(), gofakeit.School(), gofakeit.Breakfast()}
 
 	server := createTestServer(t, uuid.New())
 	require.NotEmpty(t, server)
@@ -109,19 +109,19 @@ func TestGetRandomWordsForServer(t *testing.T) {
 	}{
 		{
 			name:                    "exactly n words in db",
-			words:                   []string{gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun()},
+			words:                   []string{gofakeit.Word(), gofakeit.School(), gofakeit.PetName(), gofakeit.Noun(), gofakeit.Breakfast()},
 			numWordsToFetch:         5,
 			expectedNumFetchedWords: 5,
 		},
 		{
 			name:                    "more than n words in db",
-			words:                   []string{gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun()},
+			words:                   []string{gofakeit.Noun(), gofakeit.Breakfast(), gofakeit.PetName(), gofakeit.Name(), gofakeit.School(), gofakeit.City(), gofakeit.Company()},
 			numWordsToFetch:         3,
 			expectedNumFetchedWords: 3,
 		},
 		{
 			name:                    "less than n words in db",
-			words:                   []string{gofakeit.Noun(), gofakeit.Noun()},
+			words:                   []string{gofakeit.Noun(), gofakeit.PetName()},
 			numWordsToFetch:         5,
 			expectedNumFetchedWords: 2,
 		},
@@ -167,7 +167,7 @@ func TestRemoveWordsFromServer(t *testing.T) {
 	server := createTestServer(t, uuid.New())
 	require.NotEmpty(t, server)
 
-	words := []string{gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun()}
+	words := []string{gofakeit.Noun(), gofakeit.Name(), gofakeit.PetName(), gofakeit.School()}
 	addWordsParams := AddWordsToServerParams{
 		ServerID: server.ID,
 		Words:    words,
@@ -209,7 +209,7 @@ func TestRemoveAllWordsFromServer(t *testing.T) {
 	server := createTestServer(t, uuid.New())
 	require.NotEmpty(t, server)
 
-	words := []string{gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun(), gofakeit.Noun()}
+	words := []string{gofakeit.Noun(), gofakeit.Name(), gofakeit.PetName(), gofakeit.School()}
 	addWordsParams := AddWordsToServerParams{
 		ServerID: server.ID,
 		Words:    words,
