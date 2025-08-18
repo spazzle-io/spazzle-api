@@ -7,6 +7,11 @@ import (
 )
 
 func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
+	var archivedAt *timestamppb.Timestamp
+	if server.ArchivedAt.Valid {
+		archivedAt = timestamppb.New(server.ArchivedAt.Time)
+	}
+
 	stakePerGameStr, err := db.ParseDBNumericWeiToStr(server.StakePerGame)
 	if err != nil {
 		return nil, err
@@ -25,14 +30,14 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		RoundDurationSecs: server.RoundDurationSecs,
 		NumDrawingOptions: server.NumDrawingOptions,
 		IsArchived:        server.IsArchived,
-		ArchivedAt:        timestamppb.New(server.ArchivedAt.Time),
+		ArchivedAt:        archivedAt,
 		CreatedAt:         timestamppb.New(server.CreatedAt),
 	}, nil
 }
 
 func mapDBServersToPb(servers []db.Server) (pbServers []*pb.Server, err error) {
-	for _, server := range servers {
-		pbServer, err := mapDBServerToPb(&server)
+	for i := range servers {
+		pbServer, err := mapDBServerToPb(&servers[i])
 		if err != nil {
 			return nil, err
 		}
