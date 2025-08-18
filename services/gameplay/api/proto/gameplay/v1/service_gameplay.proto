@@ -100,4 +100,16 @@ service ServerService {
       security: {};
     };
   }
+
+  rpc GetUserServerPermissions(GetUserServerPermissionsRequest) returns (GetUserServerPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/permissions/{user_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get a user's server permissions";
+      description: "Check whether a user has elevated privileges on a server";
+      security: {};
+    };
+  }
 }

@@ -599,6 +599,118 @@ func (x *ListUserServersResponse) GetCursor() *ListServersCursor {
 	return nil
 }
 
+type GetUserServerPermissionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ServerId      string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserServerPermissionsRequest) Reset() {
+	*x = GetUserServerPermissionsRequest{}
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserServerPermissionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserServerPermissionsRequest) ProtoMessage() {}
+
+func (x *GetUserServerPermissionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserServerPermissionsRequest.ProtoReflect.Descriptor instead.
+func (*GetUserServerPermissionsRequest) Descriptor() ([]byte, []int) {
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetUserServerPermissionsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetUserServerPermissionsRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+type GetUserServerPermissionsResponse struct {
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	IsOwner                bool                   `protobuf:"varint,1,opt,name=is_owner,json=isOwner,proto3" json:"is_owner,omitempty"`
+	IsAdmin                bool                   `protobuf:"varint,2,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
+	HasElevatedPermissions bool                   `protobuf:"varint,3,opt,name=has_elevated_permissions,json=hasElevatedPermissions,proto3" json:"has_elevated_permissions,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *GetUserServerPermissionsResponse) Reset() {
+	*x = GetUserServerPermissionsResponse{}
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserServerPermissionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserServerPermissionsResponse) ProtoMessage() {}
+
+func (x *GetUserServerPermissionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserServerPermissionsResponse.ProtoReflect.Descriptor instead.
+func (*GetUserServerPermissionsResponse) Descriptor() ([]byte, []int) {
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetUserServerPermissionsResponse) GetIsOwner() bool {
+	if x != nil {
+		return x.IsOwner
+	}
+	return false
+}
+
+func (x *GetUserServerPermissionsResponse) GetIsAdmin() bool {
+	if x != nil {
+		return x.IsAdmin
+	}
+	return false
+}
+
+func (x *GetUserServerPermissionsResponse) GetHasElevatedPermissions() bool {
+	if x != nil {
+		return x.HasElevatedPermissions
+	}
+	return false
+}
+
 type Server struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -621,7 +733,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[10]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -633,7 +745,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[10]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -646,7 +758,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{10}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Server) GetId() string {
@@ -771,7 +883,7 @@ type UserServer struct {
 
 func (x *UserServer) Reset() {
 	*x = UserServer{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[11]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -783,7 +895,7 @@ func (x *UserServer) String() string {
 func (*UserServer) ProtoMessage() {}
 
 func (x *UserServer) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[11]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +908,7 @@ func (x *UserServer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserServer.ProtoReflect.Descriptor instead.
 func (*UserServer) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{11}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UserServer) GetId() string {
@@ -922,7 +1034,7 @@ type ListServersCursor struct {
 
 func (x *ListServersCursor) Reset() {
 	*x = ListServersCursor{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[12]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -934,7 +1046,7 @@ func (x *ListServersCursor) String() string {
 func (*ListServersCursor) ProtoMessage() {}
 
 func (x *ListServersCursor) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[12]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -947,7 +1059,7 @@ func (x *ListServersCursor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListServersCursor.ProtoReflect.Descriptor instead.
 func (*ListServersCursor) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{12}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListServersCursor) GetAfterCreatedAt() *timestamppb.Timestamp {
@@ -1014,7 +1126,14 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\aservers\x18\x02 \x03(\v2\x17.gameplay.v1.UserServerR\aservers\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x03R\n" +
 	"totalCount\x126\n" +
-	"\x06cursor\x18\x04 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"\xb5\x04\n" +
+	"\x06cursor\x18\x04 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"q\n" +
+	"\x1fGetUserServerPermissionsRequest\x12$\n" +
+	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12(\n" +
+	"\tserver_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"\x92\x01\n" +
+	" GetUserServerPermissionsResponse\x12\x19\n" +
+	"\bis_owner\x18\x01 \x01(\bR\aisOwner\x12\x19\n" +
+	"\bis_admin\x18\x02 \x01(\bR\aisAdmin\x128\n" +
+	"\x18has_elevated_permissions\x18\x03 \x01(\bR\x16hasElevatedPermissions\"\xb5\x04\n" +
 	"\x06Server\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
@@ -1076,38 +1195,40 @@ func file_gameplay_v1_rpc_server_service_proto_rawDescGZIP() []byte {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescData
 }
 
-var file_gameplay_v1_rpc_server_service_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_gameplay_v1_rpc_server_service_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_gameplay_v1_rpc_server_service_proto_goTypes = []any{
-	(*CreateServerRequest)(nil),     // 0: gameplay.v1.CreateServerRequest
-	(*CreateServerResponse)(nil),    // 1: gameplay.v1.CreateServerResponse
-	(*GetServerRequest)(nil),        // 2: gameplay.v1.GetServerRequest
-	(*GetServerResponse)(nil),       // 3: gameplay.v1.GetServerResponse
-	(*GetServerByNameRequest)(nil),  // 4: gameplay.v1.GetServerByNameRequest
-	(*GetServerByNameResponse)(nil), // 5: gameplay.v1.GetServerByNameResponse
-	(*ListServersRequest)(nil),      // 6: gameplay.v1.ListServersRequest
-	(*ListServersResponse)(nil),     // 7: gameplay.v1.ListServersResponse
-	(*ListUserServersRequest)(nil),  // 8: gameplay.v1.ListUserServersRequest
-	(*ListUserServersResponse)(nil), // 9: gameplay.v1.ListUserServersResponse
-	(*Server)(nil),                  // 10: gameplay.v1.Server
-	(*UserServer)(nil),              // 11: gameplay.v1.UserServer
-	(*ListServersCursor)(nil),       // 12: gameplay.v1.ListServersCursor
-	(*timestamppb.Timestamp)(nil),   // 13: google.protobuf.Timestamp
+	(*CreateServerRequest)(nil),              // 0: gameplay.v1.CreateServerRequest
+	(*CreateServerResponse)(nil),             // 1: gameplay.v1.CreateServerResponse
+	(*GetServerRequest)(nil),                 // 2: gameplay.v1.GetServerRequest
+	(*GetServerResponse)(nil),                // 3: gameplay.v1.GetServerResponse
+	(*GetServerByNameRequest)(nil),           // 4: gameplay.v1.GetServerByNameRequest
+	(*GetServerByNameResponse)(nil),          // 5: gameplay.v1.GetServerByNameResponse
+	(*ListServersRequest)(nil),               // 6: gameplay.v1.ListServersRequest
+	(*ListServersResponse)(nil),              // 7: gameplay.v1.ListServersResponse
+	(*ListUserServersRequest)(nil),           // 8: gameplay.v1.ListUserServersRequest
+	(*ListUserServersResponse)(nil),          // 9: gameplay.v1.ListUserServersResponse
+	(*GetUserServerPermissionsRequest)(nil),  // 10: gameplay.v1.GetUserServerPermissionsRequest
+	(*GetUserServerPermissionsResponse)(nil), // 11: gameplay.v1.GetUserServerPermissionsResponse
+	(*Server)(nil),                           // 12: gameplay.v1.Server
+	(*UserServer)(nil),                       // 13: gameplay.v1.UserServer
+	(*ListServersCursor)(nil),                // 14: gameplay.v1.ListServersCursor
+	(*timestamppb.Timestamp)(nil),            // 15: google.protobuf.Timestamp
 }
 var file_gameplay_v1_rpc_server_service_proto_depIdxs = []int32{
-	10, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
-	10, // 1: gameplay.v1.GetServerResponse.server:type_name -> gameplay.v1.Server
-	10, // 2: gameplay.v1.GetServerByNameResponse.server:type_name -> gameplay.v1.Server
-	13, // 3: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	10, // 4: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
-	12, // 5: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	13, // 6: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	11, // 7: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
-	12, // 8: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	13, // 9: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
-	13, // 10: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
-	13, // 11: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
-	13, // 12: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
-	13, // 13: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
+	12, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
+	12, // 1: gameplay.v1.GetServerResponse.server:type_name -> gameplay.v1.Server
+	12, // 2: gameplay.v1.GetServerByNameResponse.server:type_name -> gameplay.v1.Server
+	15, // 3: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	12, // 4: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
+	14, // 5: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	15, // 6: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	13, // 7: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
+	14, // 8: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	15, // 9: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
+	15, // 10: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
+	15, // 11: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
+	15, // 12: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
+	15, // 13: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
 	14, // [14:14] is the sub-list for method output_type
 	14, // [14:14] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
@@ -1126,7 +1247,7 @@ func file_gameplay_v1_rpc_server_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gameplay_v1_rpc_server_service_proto_rawDesc), len(file_gameplay_v1_rpc_server_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

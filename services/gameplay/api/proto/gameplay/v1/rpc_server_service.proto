@@ -64,6 +64,17 @@ message ListUserServersResponse {
   ListServersCursor cursor = 4;
 }
 
+message GetUserServerPermissionsRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetUserServerPermissionsResponse {
+  bool is_owner = 1;
+  bool is_admin = 2;
+  bool has_elevated_permissions = 3;
+}
+
 message Server {
   string id = 1;
   string name = 2;

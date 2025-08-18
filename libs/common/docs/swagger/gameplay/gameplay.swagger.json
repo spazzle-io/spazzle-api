@@ -222,6 +222,45 @@
         ],
         "security": []
       }
+    },
+    "/servers/{serverId}/permissions/{userId}": {
+      "get": {
+        "summary": "Get a user's server permissions",
+        "description": "Check whether a user has elevated privileges on a server",
+        "operationId": "ServerService_GetUserServerPermissions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserServerPermissionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      }
     }
   },
   "definitions": {
@@ -306,6 +345,20 @@
       "properties": {
         "server": {
           "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1GetUserServerPermissionsResponse": {
+      "type": "object",
+      "properties": {
+        "isOwner": {
+          "type": "boolean"
+        },
+        "isAdmin": {
+          "type": "boolean"
+        },
+        "hasElevatedPermissions": {
+          "type": "boolean"
         }
       }
     },
