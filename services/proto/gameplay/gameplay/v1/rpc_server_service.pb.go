@@ -686,11 +686,11 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\x16GetServerByNameRequest\x12\x1a\n" +
 	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"F\n" +
 	"\x17GetServerByNameResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\x9a\x01\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\x92\x01\n" +
 	"\x12ListServersRequest\x12D\n" +
 	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
-	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12#\n" +
-	"\tpage_size\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\bpageSize\"|\n" +
+	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"|\n" +
 	"\x13ListServersResponse\x12-\n" +
 	"\aservers\x18\x01 \x03(\v2\x13.gameplay.v1.ServerR\aservers\x126\n" +
 	"\x06cursor\x18\x02 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"\xb5\x04\n" +

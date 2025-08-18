@@ -38,7 +38,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 service ServerService {
   rpc CreateServer(CreateServerRequest) returns (CreateServerResponse) {
     option (google.api.http) = {
-      post: "/server",
+      post: "/servers",
       body: "*"
     };
 
@@ -55,7 +55,7 @@ service ServerService {
 
   rpc GetServer(GetServerRequest) returns (GetServerResponse) {
     option (google.api.http) = {
-      get: "/server/{id}"
+      get: "/servers/{id}"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -67,12 +67,24 @@ service ServerService {
 
   rpc GetServerByName(GetServerByNameRequest) returns (GetServerByNameResponse) {
     option (google.api.http) = {
-      get: "/server/by-name/{name}"
+      get: "/servers/by-name/{name}"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get server by name";
-      description: "Get server by its name";
+      description: "Get server name";
+      security: {};
+    };
+  }
+
+  rpc ListServers(ListServersRequest) returns (ListServersResponse) {
+    option (google.api.http) = {
+      get: "/servers"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List servers";
+      description: "List all servers";
       security: {};
     };
   }

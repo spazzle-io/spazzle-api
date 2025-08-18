@@ -20,7 +20,52 @@
     "application/json"
   ],
   "paths": {
-    "/server": {
+    "/servers": {
+      "get": {
+        "summary": "List servers",
+        "description": "List all servers",
+        "operationId": "ServerService_ListServers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListServersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "afterCreatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      },
       "post": {
         "summary": "Create server",
         "description": "Create a new server",
@@ -59,10 +104,10 @@
         ]
       }
     },
-    "/server/by-name/{name}": {
+    "/servers/by-name/{name}": {
       "get": {
         "summary": "Get server by name",
-        "description": "Get server by its name",
+        "description": "Get server name",
         "operationId": "ServerService_GetServerByName",
         "responses": {
           "200": {
@@ -92,7 +137,7 @@
         "security": []
       }
     },
-    "/server/{id}": {
+    "/servers/{id}": {
       "get": {
         "summary": "Get server",
         "description": "Get server by id",
@@ -208,6 +253,37 @@
       "properties": {
         "server": {
           "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1ListServersCursor": {
+      "type": "object",
+      "properties": {
+        "afterCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterId": {
+          "type": "string"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListServersResponse": {
+      "type": "object",
+      "properties": {
+        "servers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Server"
+          }
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1ListServersCursor"
         }
       }
     },

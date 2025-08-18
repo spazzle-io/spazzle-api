@@ -29,3 +29,16 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		CreatedAt:         timestamppb.New(server.CreatedAt),
 	}, nil
 }
+
+func mapDBServersToPb(servers []db.Server) (pbServers []*pb.Server, err error) {
+	for _, server := range servers {
+		pbServer, err := mapDBServerToPb(&server)
+		if err != nil {
+			return nil, err
+		}
+
+		pbServers = append(pbServers, pbServer)
+	}
+
+	return pbServers, nil
+}
