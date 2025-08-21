@@ -112,4 +112,21 @@ service ServerService {
       security: {};
     };
   }
+
+  rpc UpdateServer(UpdateServerRequest) returns (UpdateServerResponse) {
+    option (google.api.http) = {
+      patch: "/servers/{server_id}",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update server";
+      description: "Update server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
 }

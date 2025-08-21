@@ -127,7 +127,7 @@ func TestCreateServer(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
 				require.Error(t, err)
-				require.ErrorContains(t, err, InvalidStakePerGameError)
+				require.ErrorContains(t, err, handler.InvalidStakePerGameError)
 				require.Empty(t, res)
 			},
 		},
@@ -150,7 +150,7 @@ func TestCreateServer(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
 				require.Error(t, err)
-				require.ErrorContains(t, err, NameInUseError)
+				require.ErrorContains(t, err, handler.ServerNameInUseError)
 				require.Empty(t, res)
 			},
 		},

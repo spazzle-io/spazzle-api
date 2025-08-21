@@ -223,6 +223,51 @@
         "security": []
       }
     },
+    "/servers/{serverId}": {
+      "patch": {
+        "summary": "Update server",
+        "description": "Update server",
+        "operationId": "ServerService_UpdateServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ServerServiceUpdateServerBody"
+            }
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/servers/{serverId}/permissions/{userId}": {
       "get": {
         "summary": "Get a user's server permissions",
@@ -264,6 +309,35 @@
     }
   },
   "definitions": {
+    "ServerServiceUpdateServerBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "isPubliclyVisible": {
+          "type": "boolean"
+        },
+        "stakePerGame": {
+          "type": "string"
+        },
+        "numRoundsPerGame": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "roundDurationSecs": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numDrawingOptions": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -470,6 +544,14 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "v1UpdateServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
         }
       }
     },

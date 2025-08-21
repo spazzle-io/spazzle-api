@@ -26,7 +26,7 @@ var File_gameplay_v1_service_gameplay_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\n" +
-	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xcb\b\n" +
+	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xf1\t\n" +
 	"\rServerService\x12\x9d\x01\n" +
 	"\fCreateServer\x12 .gameplay.v1.CreateServerRequest\x1a!.gameplay.v1.CreateServerResponse\"H\x92A2\x12\rCreate server\x1a\x13Create a new serverb\f\n" +
 	"\n" +
@@ -38,7 +38,11 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\vListServers\x12\x1f.gameplay.v1.ListServersRequest\x1a .gameplay.v1.ListServersResponse\"5\x92A\"\x12\fList servers\x1a\x10List all serversb\x00\x82\xd3\xe4\x93\x02\n" +
 	"\x12\b/servers\x12\xcf\x01\n" +
 	"\x0fListUserServers\x12#.gameplay.v1.ListUserServersRequest\x1a$.gameplay.v1.ListUserServersResponse\"q\x92AL\x12\x11List user servers\x1a5List servers for which a user has elevated privilegesb\x00\x82\xd3\xe4\x93\x02\x1c\x12\x1a/servers/by-user/{user_id}\x12\x8c\x02\n" +
-	"\x18GetUserServerPermissions\x12,.gameplay.v1.GetUserServerPermissionsRequest\x1a-.gameplay.v1.GetUserServerPermissionsResponse\"\x92\x01\x92A]\x12\x1fGet a user's server permissions\x1a8Check whether a user has elevated privileges on a serverb\x00\x82\xd3\xe4\x93\x02,\x12*/servers/{server_id}/permissions/{user_id}B\xcf\x02\x92A\x9f\x01\x124\n" +
+	"\x18GetUserServerPermissions\x12,.gameplay.v1.GetUserServerPermissionsRequest\x1a-.gameplay.v1.GetUserServerPermissionsResponse\"\x92\x01\x92A]\x12\x1fGet a user's server permissions\x1a8Check whether a user has elevated privileges on a serverb\x00\x82\xd3\xe4\x93\x02,\x12*/servers/{server_id}/permissions/{user_id}\x12\xa3\x01\n" +
+	"\fUpdateServer\x12 .gameplay.v1.UpdateServerRequest\x1a!.gameplay.v1.UpdateServerResponse\"N\x92A,\x12\rUpdate server\x1a\rUpdate serverb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/servers/{server_id}B\xcf\x02\x92A\x9f\x01\x124\n" +
 	"\x10Gameplay Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -55,12 +59,14 @@ var file_gameplay_v1_service_gameplay_proto_goTypes = []any{
 	(*ListServersRequest)(nil),               // 3: gameplay.v1.ListServersRequest
 	(*ListUserServersRequest)(nil),           // 4: gameplay.v1.ListUserServersRequest
 	(*GetUserServerPermissionsRequest)(nil),  // 5: gameplay.v1.GetUserServerPermissionsRequest
-	(*CreateServerResponse)(nil),             // 6: gameplay.v1.CreateServerResponse
-	(*GetServerResponse)(nil),                // 7: gameplay.v1.GetServerResponse
-	(*GetServerByNameResponse)(nil),          // 8: gameplay.v1.GetServerByNameResponse
-	(*ListServersResponse)(nil),              // 9: gameplay.v1.ListServersResponse
-	(*ListUserServersResponse)(nil),          // 10: gameplay.v1.ListUserServersResponse
-	(*GetUserServerPermissionsResponse)(nil), // 11: gameplay.v1.GetUserServerPermissionsResponse
+	(*UpdateServerRequest)(nil),              // 6: gameplay.v1.UpdateServerRequest
+	(*CreateServerResponse)(nil),             // 7: gameplay.v1.CreateServerResponse
+	(*GetServerResponse)(nil),                // 8: gameplay.v1.GetServerResponse
+	(*GetServerByNameResponse)(nil),          // 9: gameplay.v1.GetServerByNameResponse
+	(*ListServersResponse)(nil),              // 10: gameplay.v1.ListServersResponse
+	(*ListUserServersResponse)(nil),          // 11: gameplay.v1.ListUserServersResponse
+	(*GetUserServerPermissionsResponse)(nil), // 12: gameplay.v1.GetUserServerPermissionsResponse
+	(*UpdateServerResponse)(nil),             // 13: gameplay.v1.UpdateServerResponse
 }
 var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	0,  // 0: gameplay.v1.ServerService.CreateServer:input_type -> gameplay.v1.CreateServerRequest
@@ -69,14 +75,16 @@ var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	3,  // 3: gameplay.v1.ServerService.ListServers:input_type -> gameplay.v1.ListServersRequest
 	4,  // 4: gameplay.v1.ServerService.ListUserServers:input_type -> gameplay.v1.ListUserServersRequest
 	5,  // 5: gameplay.v1.ServerService.GetUserServerPermissions:input_type -> gameplay.v1.GetUserServerPermissionsRequest
-	6,  // 6: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
-	7,  // 7: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
-	8,  // 8: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
-	9,  // 9: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
-	10, // 10: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
-	11, // 11: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
-	6,  // [6:12] is the sub-list for method output_type
-	0,  // [0:6] is the sub-list for method input_type
+	6,  // 6: gameplay.v1.ServerService.UpdateServer:input_type -> gameplay.v1.UpdateServerRequest
+	7,  // 7: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
+	8,  // 8: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
+	9,  // 9: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
+	10, // 10: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
+	11, // 11: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
+	12, // 12: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
+	13, // 13: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

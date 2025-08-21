@@ -14,12 +14,14 @@ import (
 )
 
 const (
-	InternalServerError     string = "An unexpected error occurred while processing your request"
-	UnauthorizedAccessError string = "Authorization failed. Please verify your credentials and try again"
-	InvalidUserIdError      string = "Invalid user id"
-	InvalidServerIdError    string = "Invalid server id"
-	ServerNotFoundError     string = "Server not found"
-	InvalidAfterIdError     string = "invalid after id"
+	InternalServerError      string = "An unexpected error occurred while processing your request"
+	UnauthorizedAccessError  string = "Authorization failed. Please verify your credentials and try again"
+	InvalidUserIdError       string = "Invalid user id"
+	InvalidServerIdError     string = "Invalid server id"
+	ServerNotFoundError      string = "Server not found"
+	InvalidAfterIdError      string = "Invalid after id"
+	ServerNameInUseError     string = "Server name already in use"
+	InvalidStakePerGameError string = "Invalid stake per game"
 )
 
 func ProtovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {
