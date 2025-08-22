@@ -10,6 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -23,10 +24,10 @@ const (
 )
 
 type ListUsersRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	AfterCreatedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        string                 `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	state          protoimpl.MessageState  `protogen:"open.v1"`
+	AfterCreatedAt *timestamppb.Timestamp  `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
+	AfterId        *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize       *wrapperspb.Int32Value  `protobuf:"bytes,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -68,18 +69,18 @@ func (x *ListUsersRequest) GetAfterCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ListUsersRequest) GetAfterId() string {
+func (x *ListUsersRequest) GetAfterId() *wrapperspb.StringValue {
 	if x != nil {
 		return x.AfterId
 	}
-	return ""
+	return nil
 }
 
-func (x *ListUsersRequest) GetPageSize() int32 {
+func (x *ListUsersRequest) GetPageSize() *wrapperspb.Int32Value {
 	if x != nil {
 		return x.PageSize
 	}
-	return 0
+	return nil
 }
 
 type ListUsersResponse struct {
@@ -206,11 +207,11 @@ var File_users_v1_rpc_list_users_proto protoreflect.FileDescriptor
 
 const file_users_v1_rpc_list_users_proto_rawDesc = "" +
 	"\n" +
-	"\x1dusers/v1/rpc_list_users.proto\x12\busers.v1\x1a\x15users/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x01\n" +
+	"\x1dusers/v1/rpc_list_users.proto\x12\busers.v1\x1a\x15users/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\xcb\x01\n" +
 	"\x10ListUsersRequest\x12D\n" +
-	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
-	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\x8d\x01\n" +
+	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x127\n" +
+	"\bafter_id\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\aafterId\x128\n" +
+	"\tpage_size\x18\x03 \x01(\v2\x1b.google.protobuf.Int32ValueR\bpageSize\"\x8d\x01\n" +
 	"\x11ListUsersResponse\x12$\n" +
 	"\x05users\x18\x01 \x03(\v2\x0e.users.v1.UserR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
@@ -236,22 +237,26 @@ func file_users_v1_rpc_list_users_proto_rawDescGZIP() []byte {
 
 var file_users_v1_rpc_list_users_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_users_v1_rpc_list_users_proto_goTypes = []any{
-	(*ListUsersRequest)(nil),      // 0: users.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),     // 1: users.v1.ListUsersResponse
-	(*ListUsersCursor)(nil),       // 2: users.v1.ListUsersCursor
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
-	(*User)(nil),                  // 4: users.v1.User
+	(*ListUsersRequest)(nil),       // 0: users.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),      // 1: users.v1.ListUsersResponse
+	(*ListUsersCursor)(nil),        // 2: users.v1.ListUsersCursor
+	(*timestamppb.Timestamp)(nil),  // 3: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil), // 4: google.protobuf.StringValue
+	(*wrapperspb.Int32Value)(nil),  // 5: google.protobuf.Int32Value
+	(*User)(nil),                   // 6: users.v1.User
 }
 var file_users_v1_rpc_list_users_proto_depIdxs = []int32{
 	3, // 0: users.v1.ListUsersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	4, // 1: users.v1.ListUsersResponse.users:type_name -> users.v1.User
-	2, // 2: users.v1.ListUsersResponse.cursor:type_name -> users.v1.ListUsersCursor
-	3, // 3: users.v1.ListUsersCursor.after_created_at:type_name -> google.protobuf.Timestamp
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 1: users.v1.ListUsersRequest.after_id:type_name -> google.protobuf.StringValue
+	5, // 2: users.v1.ListUsersRequest.page_size:type_name -> google.protobuf.Int32Value
+	6, // 3: users.v1.ListUsersResponse.users:type_name -> users.v1.User
+	2, // 4: users.v1.ListUsersResponse.cursor:type_name -> users.v1.ListUsersCursor
+	3, // 5: users.v1.ListUsersCursor.after_created_at:type_name -> google.protobuf.Timestamp
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_users_v1_rpc_list_users_proto_init() }

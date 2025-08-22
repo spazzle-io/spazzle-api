@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"strings"
 
 	"buf.build/go/protovalidate"
 
@@ -43,8 +42,8 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 	params := db.UpdateUserParams{
 		UserID: userId,
 		GamerTag: pgtype.Text{
-			String: req.GetGamerTag(),
-			Valid:  strings.TrimSpace(req.GetGamerTag()) != "",
+			String: req.GetGamerTag().GetValue(),
+			Valid:  req.GetGamerTag() != nil,
 		},
 	}
 	user, err := h.store.UpdateUser(ctx, params)

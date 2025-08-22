@@ -345,10 +345,10 @@ func (x *GetServerByNameResponse) GetServer() *Server {
 }
 
 type ListServersRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	AfterCreatedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        string                 `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	state          protoimpl.MessageState  `protogen:"open.v1"`
+	AfterCreatedAt *timestamppb.Timestamp  `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
+	AfterId        *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize       *wrapperspb.Int32Value  `protobuf:"bytes,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -390,18 +390,18 @@ func (x *ListServersRequest) GetAfterCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ListServersRequest) GetAfterId() string {
+func (x *ListServersRequest) GetAfterId() *wrapperspb.StringValue {
 	if x != nil {
 		return x.AfterId
 	}
-	return ""
+	return nil
 }
 
-func (x *ListServersRequest) GetPageSize() int32 {
+func (x *ListServersRequest) GetPageSize() *wrapperspb.Int32Value {
 	if x != nil {
 		return x.PageSize
 	}
-	return 0
+	return nil
 }
 
 type ListServersResponse struct {
@@ -465,11 +465,11 @@ func (x *ListServersResponse) GetCursor() *ListServersCursor {
 }
 
 type ListUserServersRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	UserId         string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	AfterCreatedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        string                 `protobuf:"bytes,3,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	state          protoimpl.MessageState  `protogen:"open.v1"`
+	UserId         string                  `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AfterCreatedAt *timestamppb.Timestamp  `protobuf:"bytes,2,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
+	AfterId        *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize       *wrapperspb.Int32Value  `protobuf:"bytes,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -518,18 +518,18 @@ func (x *ListUserServersRequest) GetAfterCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ListUserServersRequest) GetAfterId() string {
+func (x *ListUserServersRequest) GetAfterId() *wrapperspb.StringValue {
 	if x != nil {
 		return x.AfterId
 	}
-	return ""
+	return nil
 }
 
-func (x *ListUserServersRequest) GetPageSize() int32 {
+func (x *ListUserServersRequest) GetPageSize() *wrapperspb.Int32Value {
 	if x != nil {
 		return x.PageSize
 	}
-	return 0
+	return nil
 }
 
 type ListUserServersResponse struct {
@@ -1347,21 +1347,21 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\x16GetServerByNameRequest\x12\x1a\n" +
 	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"F\n" +
 	"\x17GetServerByNameResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\x92\x01\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\xcd\x01\n" +
 	"\x12ListServersRequest\x12D\n" +
-	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
-	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\x9d\x01\n" +
+	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x127\n" +
+	"\bafter_id\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\aafterId\x128\n" +
+	"\tpage_size\x18\x03 \x01(\v2\x1b.google.protobuf.Int32ValueR\bpageSize\"\x9d\x01\n" +
 	"\x13ListServersResponse\x12-\n" +
 	"\aservers\x18\x01 \x03(\v2\x13.gameplay.v1.ServerR\aservers\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
 	"totalCount\x126\n" +
-	"\x06cursor\x18\x03 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"\xbc\x01\n" +
+	"\x06cursor\x18\x03 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"\xf7\x01\n" +
 	"\x16ListUserServersRequest\x12$\n" +
 	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12D\n" +
-	"\x10after_created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
-	"\bafter_id\x18\x03 \x01(\tR\aafterId\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\xbe\x01\n" +
+	"\x10after_created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x127\n" +
+	"\bafter_id\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueR\aafterId\x128\n" +
+	"\tpage_size\x18\x04 \x01(\v2\x1b.google.protobuf.Int32ValueR\bpageSize\"\xbe\x01\n" +
 	"\x17ListUserServersResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x121\n" +
 	"\aservers\x18\x02 \x03(\v2\x17.gameplay.v1.UserServerR\aservers\x12\x1f\n" +
@@ -1475,37 +1475,41 @@ var file_gameplay_v1_rpc_server_service_proto_goTypes = []any{
 	(*ListServersCursor)(nil),                // 18: gameplay.v1.ListServersCursor
 	(*timestamppb.Timestamp)(nil),            // 19: google.protobuf.Timestamp
 	(*wrapperspb.StringValue)(nil),           // 20: google.protobuf.StringValue
-	(*wrapperspb.BoolValue)(nil),             // 21: google.protobuf.BoolValue
-	(*wrapperspb.Int32Value)(nil),            // 22: google.protobuf.Int32Value
+	(*wrapperspb.Int32Value)(nil),            // 21: google.protobuf.Int32Value
+	(*wrapperspb.BoolValue)(nil),             // 22: google.protobuf.BoolValue
 }
 var file_gameplay_v1_rpc_server_service_proto_depIdxs = []int32{
 	16, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
 	16, // 1: gameplay.v1.GetServerResponse.server:type_name -> gameplay.v1.Server
 	16, // 2: gameplay.v1.GetServerByNameResponse.server:type_name -> gameplay.v1.Server
 	19, // 3: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	16, // 4: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
-	18, // 5: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	19, // 6: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	17, // 7: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
-	18, // 8: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	20, // 9: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
-	21, // 10: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
-	20, // 11: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
-	22, // 12: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
-	22, // 13: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
-	22, // 14: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
-	16, // 15: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
-	16, // 16: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
-	19, // 17: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
-	19, // 18: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
-	19, // 19: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
-	19, // 20: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
-	19, // 21: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	20, // 4: gameplay.v1.ListServersRequest.after_id:type_name -> google.protobuf.StringValue
+	21, // 5: gameplay.v1.ListServersRequest.page_size:type_name -> google.protobuf.Int32Value
+	16, // 6: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
+	18, // 7: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	19, // 8: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	20, // 9: gameplay.v1.ListUserServersRequest.after_id:type_name -> google.protobuf.StringValue
+	21, // 10: gameplay.v1.ListUserServersRequest.page_size:type_name -> google.protobuf.Int32Value
+	17, // 11: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
+	18, // 12: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	20, // 13: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
+	22, // 14: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
+	20, // 15: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
+	21, // 16: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
+	21, // 17: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
+	21, // 18: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
+	16, // 19: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
+	16, // 20: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
+	19, // 21: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
+	19, // 22: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
+	19, // 23: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
+	19, // 24: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
+	19, // 25: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_gameplay_v1_rpc_server_service_proto_init() }

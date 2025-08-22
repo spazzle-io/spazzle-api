@@ -4,12 +4,13 @@ package users.v1;
 
 import "buf/validate/validate.proto";
 import "users/v1/common.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
 message UpdateUserRequest {
   string id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  string gamer_tag = 2;
+  google.protobuf.StringValue gamer_tag = 2;
 }
 
 message UpdateUserResponse {

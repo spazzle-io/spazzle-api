@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
@@ -29,7 +31,9 @@ func TestListServers(t *testing.T) {
 		{
 			name: "success",
 			req: &pb.ListServersRequest{
-				PageSize: handler.DefaultPageSize,
+				PageSize: &wrapperspb.Int32Value{
+					Value: handler.DefaultPageSize,
+				},
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -63,7 +67,9 @@ func TestListServers(t *testing.T) {
 		{
 			name: "page size is zero",
 			req: &pb.ListServersRequest{
-				PageSize: 0,
+				PageSize: &wrapperspb.Int32Value{
+					Value: 0,
+				},
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -94,7 +100,9 @@ func TestListServers(t *testing.T) {
 		{
 			name: "page size is greater than allowed maximum",
 			req: &pb.ListServersRequest{
-				PageSize: handler.MaxPageSize + 1,
+				PageSize: &wrapperspb.Int32Value{
+					Value: handler.MaxPageSize + 1,
+				},
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -125,8 +133,12 @@ func TestListServers(t *testing.T) {
 		{
 			name: "invalid after id",
 			req: &pb.ListServersRequest{
-				PageSize: handler.DefaultPageSize,
-				AfterId:  "abc",
+				PageSize: &wrapperspb.Int32Value{
+					Value: handler.DefaultPageSize,
+				},
+				AfterId: &wrapperspb.StringValue{
+					Value: "abc",
+				},
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
 			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
