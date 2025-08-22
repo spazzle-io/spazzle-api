@@ -35,7 +35,7 @@ func generateUsers(t *testing.T, numUsersToGenerate int) (dbUsers []db.User) {
 	return
 }
 
-func TestListProfiles(t *testing.T) {
+func TestListUsers(t *testing.T) {
 	testCases := []struct {
 		name          string
 		req           *pb.ListUsersRequest
@@ -44,7 +44,9 @@ func TestListProfiles(t *testing.T) {
 	}{
 		{
 			name: "success",
-			req:  &pb.ListUsersRequest{},
+			req: &pb.ListUsersRequest{
+				PageSize: defaultPageSize,
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListUsers(gomock.Any(), gomock.Any()).
@@ -59,26 +61,67 @@ func TestListProfiles(t *testing.T) {
 			checkResponse: func(t *testing.T, res *pb.ListUsersResponse, err error) {
 				require.NoError(t, err)
 				require.NotEmpty(t, res)
-
+				require.NotEmpty(t, res.Users)
+				require.NotEmpty(t, res.Cursor)
+				require.Equal(t, int64(2), res.TotalCount)
 				require.Len(t, res.GetUsers(), 2)
-				require.Equal(t, int64(2), res.GetNumTotalUsers())
-				require.Equal(t, int32(1), res.GetPage())
-				require.Equal(t, int32(30), res.GetPageSize())
 			},
 		},
 		{
-			name: "invalid request parameters",
+			name: "page size is zero",
 			req: &pb.ListUsersRequest{
-				Page:     1,
-				PageSize: 101,
+				PageSize: 0,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListUsers(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(generateUsers(t, 2), nil)
+
+				store.EXPECT().
+					GetTotalUserCount(gomock.Any()).
+					Times(1).
+					Return(int64(2), nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ListUsersResponse, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, res)
+				require.Equal(t, res.Cursor.PageSize, defaultPageSize)
+			},
+		},
+		{
+			name: "page size is greater than allowed maximum",
+			req: &pb.ListUsersRequest{
+				PageSize: maxPageSize + 1,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListUsers(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(generateUsers(t, 2), nil)
+
+				store.EXPECT().
+					GetTotalUserCount(gomock.Any()).
+					Times(1).
+					Return(int64(2), nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ListUsersResponse, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, res)
+				require.Equal(t, res.Cursor.PageSize, defaultPageSize)
+			},
+		},
+		{
+			name: "invalid after id",
+			req: &pb.ListUsersRequest{
+				PageSize: defaultPageSize,
+				AfterId:  "abc",
 			},
 			buildStubs: func(store *mockdb.MockStore) {},
 			checkResponse: func(t *testing.T, res *pb.ListUsersResponse, err error) {
 				require.Error(t, err)
+				require.ErrorContains(t, err, InvalidAfterIdError)
 				require.Empty(t, res)
-
-				expectedFieldViolations := []string{"pageSize"}
-				checkInvalidRequestParams(t, err, expectedFieldViolations)
 			},
 		},
 		{

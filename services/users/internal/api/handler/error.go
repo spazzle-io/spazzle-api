@@ -15,6 +15,7 @@ const (
 	UnauthorizedAccessError string = "Authorization failed. Please verify your credentials and try again"
 	UserNotFoundError       string = "User not found"
 	InvalidUserIdError      string = "Invalid user id"
+	InvalidAfterIdError     string = "Invalid after id"
 )
 
 func protovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {

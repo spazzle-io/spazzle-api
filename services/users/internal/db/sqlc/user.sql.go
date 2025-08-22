@@ -86,19 +86,23 @@ func (q *Queries) GetUserByWalletAddress(ctx context.Context, walletAddress stri
 const listUsers = `-- name: ListUsers :many
 SELECT
     id, wallet_address, gamer_tag, created_at
-FROM users
-ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2
+FROM USERS
+WHERE (
+    $1::timestamptz IS NULL
+    OR created_at < $1
+    OR (created_at = $1 AND id < $2)
+) ORDER BY created_at DESC, id DESC
+LIMIT $3
 `
 
 type ListUsersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	AfterCreatedAt pgtype.Timestamptz `json:"after_created_at"`
+	AfterID        pgtype.UUID        `json:"after_id"`
+	PageSize       int32              `json:"page_size"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listUsers, arg.AfterCreatedAt, arg.AfterID, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}

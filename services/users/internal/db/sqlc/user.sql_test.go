@@ -93,7 +93,8 @@ func TestListUsers(t *testing.T) {
 	}
 
 	var recentWalletAddresses []string
-	numUsersToCreate := 4
+	numUsersToCreate := 5
+	lastSeenUserIdx := 0
 
 	for i := 0; i < numUsersToCreate; i++ {
 		user := createTestUser(t)
@@ -101,16 +102,39 @@ func TestListUsers(t *testing.T) {
 		recentWalletAddresses = append(recentWalletAddresses, user.WalletAddress)
 	}
 
-	params := ListUsersParams{
-		Limit:  int32(numUsersToCreate) - 1,
-		Offset: 1,
+	firstPageParams := ListUsersParams{
+		PageSize: 2,
 	}
-	recentlyCreatedUsers, err := testStore.ListUsers(context.Background(), params)
+	firstPageUsers, err := testStore.ListUsers(context.Background(), firstPageParams)
 	require.NoError(t, err)
-	require.NotEmpty(t, recentlyCreatedUsers)
+	require.NotEmpty(t, firstPageUsers)
+	require.Len(t, firstPageUsers, 2)
 
-	for idx, user := range recentlyCreatedUsers {
-		require.Equal(t, recentWalletAddresses[len(recentWalletAddresses)-idx-2], user.WalletAddress)
+	for _, user := range firstPageUsers {
+		require.Equal(t, recentWalletAddresses[len(recentWalletAddresses)-lastSeenUserIdx-1], user.WalletAddress)
+		lastSeenUserIdx += 1
+	}
+
+	lastPageParams := ListUsersParams{
+		PageSize: int32(numUsersToCreate),
+		AfterCreatedAt: pgtype.Timestamptz{
+			Time:  firstPageUsers[len(firstPageUsers)-1].CreatedAt,
+			Valid: true,
+		},
+		AfterID: pgtype.UUID{
+			Bytes: firstPageUsers[len(firstPageUsers)-1].ID,
+			Valid: true,
+		},
+	}
+	lastPageUsers, err := testStore.ListUsers(context.Background(), lastPageParams)
+	expectedNumLastPageUsers := numUsersToCreate - lastSeenUserIdx
+	require.NoError(t, err)
+	require.NotEmpty(t, lastPageUsers)
+	require.Greater(t, len(lastPageUsers), expectedNumLastPageUsers)
+	for i := 0; i < expectedNumLastPageUsers; i++ {
+		user := lastPageUsers[i]
+		require.Equal(t, recentWalletAddresses[len(recentWalletAddresses)-lastSeenUserIdx-1], user.WalletAddress)
+		lastSeenUserIdx += 1
 	}
 }
 

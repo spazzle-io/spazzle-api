@@ -10,4 +10,8 @@ Table users {
   wallet_address varchar [unique, not null]
   gamer_tag varchar [unique]
   created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    wallet_address
+  }
 }

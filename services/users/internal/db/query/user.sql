@@ -25,10 +25,13 @@ SELECT COUNT(*) as total_users FROM users;
 -- name: ListUsers :many
 SELECT
     id, wallet_address, gamer_tag, created_at
-FROM users
-ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2;
+FROM USERS
+WHERE (
+    sqlc.narg(after_created_at)::timestamptz IS NULL
+    OR created_at < sqlc.narg(after_created_at)
+    OR (created_at = sqlc.narg(after_created_at) AND id < sqlc.narg(after_id))
+) ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_size);
 
 -- name: UpdateUser :one
 UPDATE users
