@@ -268,6 +268,51 @@
         ]
       }
     },
+    "/servers/{serverId}/archive": {
+      "post": {
+        "summary": "Archive server",
+        "description": "Archive server",
+        "operationId": "ServerService_ArchiveServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ArchiveServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ServerServiceArchiveServerBody"
+            }
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/servers/{serverId}/permissions/{userId}": {
       "get": {
         "summary": "Get a user's server permissions",
@@ -309,6 +354,14 @@
     }
   },
   "definitions": {
+    "ServerServiceArchiveServerBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
     "ServerServiceUpdateServerBody": {
       "type": "object",
       "properties": {
@@ -363,6 +416,14 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "v1ArchiveServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
         }
       }
     },

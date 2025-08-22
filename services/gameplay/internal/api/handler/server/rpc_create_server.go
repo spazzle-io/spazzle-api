@@ -63,7 +63,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	server, err := h.store.CreateServer(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create server")
-		return nil, handleCreateServerError(err)
+		return nil, handleServerDBError(err)
 	}
 
 	pbServer, err := mapDBServerToPb(&server)
@@ -79,18 +79,6 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	logger.Info().Msg("server created successfully")
 
 	return response, nil
-}
-
-func handleCreateServerError(dbError error) error {
-	parsedDBError := db.ParseError(dbError)
-
-	if parsedDBError.Code == db.UniqueViolationCode {
-		if parsedDBError.ConstraintName == "servers_name_unique_unarchived_idx" {
-			return status.Errorf(codes.AlreadyExists, handler.ServerNameInUseError)
-		}
-	}
-
-	return status.Error(codes.Internal, handler.InternalServerError)
 }
 
 func validateCreateServerRequest(req *pb.CreateServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {

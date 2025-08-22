@@ -91,6 +91,15 @@ message UpdateServerResponse {
   Server server = 1;
 }
 
+message ArchiveServerRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message ArchiveServerResponse {
+  Server server = 1;
+}
+
 message Server {
   string id = 1;
   string name = 2;

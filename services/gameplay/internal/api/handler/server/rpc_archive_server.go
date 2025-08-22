@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"time"
 
 	"buf.build/go/protovalidate"
 
@@ -18,10 +19,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest) (*pb.UpdateServerResponse, error) {
+func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerRequest) (*pb.ArchiveServerResponse, error) {
 	logger := log.With().Str("user_id", req.GetUserId()).Str("server_id", req.GetServerId()).Logger()
 
-	violations := validateUpdateServerRequest(req)
+	violations := validateArchiveServerRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
@@ -55,42 +56,20 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	if !permissions.HasElevatedPermissions {
-		logger.Warn().Msg("user does not have permission to update server")
+	if !permissions.IsOwner {
+		logger.Warn().Msg("user does not have permission to archive server")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
-	}
-
-	stakePerGame, err := db.ParseWeiStrToBigInt(req.GetStakePerGame().GetValue())
-	if err != nil && req.GetStakePerGame() != nil {
-		logger.Error().Err(err).Msg("invalid stake per game")
-		return nil, status.Error(codes.InvalidArgument, handler.InvalidStakePerGameError)
 	}
 
 	params := db.UpdateServerParams{
 		ServerID: serverId,
-		Name: pgtype.Text{
-			String: req.GetName().GetValue(),
-			Valid:  req.GetName() != nil,
+		ArchivedAt: pgtype.Timestamptz{
+			Time:  time.Now().UTC(),
+			Valid: true,
 		},
-		IsPubliclyVisible: pgtype.Bool{
-			Bool:  req.GetIsPubliclyVisible().GetValue(),
-			Valid: req.GetIsPubliclyVisible() != nil,
-		},
-		StakePerGame: pgtype.Numeric{
-			Int:   stakePerGame,
-			Valid: req.GetStakePerGame() != nil,
-		},
-		NumRoundsPerGame: pgtype.Int4{
-			Int32: req.GetNumRoundsPerGame().GetValue(),
-			Valid: req.GetNumRoundsPerGame() != nil,
-		},
-		RoundDurationSecs: pgtype.Int4{
-			Int32: req.GetRoundDurationSecs().GetValue(),
-			Valid: req.GetRoundDurationSecs() != nil,
-		},
-		NumDrawingOptions: pgtype.Int4{
-			Int32: req.GetNumDrawingOptions().GetValue(),
-			Valid: req.GetNumDrawingOptions() != nil,
+		IsArchived: pgtype.Bool{
+			Bool:  true,
+			Valid: true,
 		},
 	}
 
@@ -106,16 +85,16 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	response := &pb.UpdateServerResponse{
+	response := &pb.ArchiveServerResponse{
 		Server: pbServer,
 	}
 
-	logger.Info().Msg("server updated successfully")
+	logger.Info().Msg("successfully archived server")
 
 	return response, nil
 }
 
-func validateUpdateServerRequest(req *pb.UpdateServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+func validateArchiveServerRequest(req *pb.ArchiveServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
 	if err := protovalidate.Validate(req); err != nil {
 		violations = append(violations, handler.ProtovalidateViolation(err)...)
 	}

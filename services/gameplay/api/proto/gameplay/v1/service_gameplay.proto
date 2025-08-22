@@ -129,4 +129,21 @@ service ServerService {
       };
     };
   }
+
+  rpc ArchiveServer(ArchiveServerRequest) returns (ArchiveServerResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/archive",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Archive server";
+      description: "Archive server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
 }

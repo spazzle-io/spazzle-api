@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"math/big"
 	"testing"
 
@@ -70,7 +69,7 @@ func TestGetServer(t *testing.T) {
 				store.EXPECT().
 					GetServerById(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.Server{}, errors.New("server not found"))
+					Return(db.Server{}, db.RecordNotFoundError)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetServerResponse, err error) {
 				require.Error(t, err)
