@@ -24,9 +24,9 @@ const (
 
 type ListUsersRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	AfterCreatedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        string                 `protobuf:"bytes,3,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	AfterCreatedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
+	AfterId        string                 `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize       int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -208,9 +208,9 @@ const file_users_v1_rpc_list_users_proto_rawDesc = "" +
 	"\n" +
 	"\x1dusers/v1/rpc_list_users.proto\x12\busers.v1\x1a\x15users/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\x01\n" +
 	"\x10ListUsersRequest\x12D\n" +
-	"\x10after_created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
-	"\bafter_id\x18\x03 \x01(\tR\aafterId\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\x8d\x01\n" +
+	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
+	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\x8d\x01\n" +
 	"\x11ListUsersResponse\x12$\n" +
 	"\x05users\x18\x01 \x03(\v2\x0e.users.v1.UserR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
