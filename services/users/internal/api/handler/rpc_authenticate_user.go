@@ -39,6 +39,7 @@ func (h *Handler) AuthenticateUser(ctx context.Context, req *pb.AuthenticateUser
 
 	response := &pb.AuthenticateUserResponse{
 		User: &pb.User{
+			Id:            user.ID.String(),
 			UserId:        user.ID.String(),
 			WalletAddress: user.WalletAddress,
 			GamerTag:      user.GamerTag.String,

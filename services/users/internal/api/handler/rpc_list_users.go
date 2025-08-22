@@ -80,6 +80,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 func mapUsers(dbUsers []db.User) (pbUsers []*pb.User) {
 	for _, dbUser := range dbUsers {
 		pbUsers = append(pbUsers, &pb.User{
+			Id:            dbUser.ID.String(),
 			UserId:        dbUser.ID.String(),
 			WalletAddress: dbUser.WalletAddress,
 			GamerTag:      dbUser.GamerTag.String,

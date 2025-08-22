@@ -55,6 +55,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 
 	response := &pb.UpdateUserResponse{
 		User: &pb.User{
+			Id:            user.ID.String(),
 			UserId:        user.ID.String(),
 			WalletAddress: user.WalletAddress,
 			GamerTag:      user.GamerTag.String,
