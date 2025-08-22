@@ -25,7 +25,6 @@ const (
 type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	WalletAddress string                 `protobuf:"bytes,3,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
 	GamerTag      string                 `protobuf:"bytes,4,opt,name=gamer_tag,json=gamerTag,proto3" json:"gamer_tag,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -70,13 +69,6 @@ func (x *User) GetId() string {
 	return ""
 }
 
-func (x *User) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
 func (x *User) GetWalletAddress() string {
 	if x != nil {
 		return x.WalletAddress
@@ -102,10 +94,9 @@ var File_users_v1_common_proto protoreflect.FileDescriptor
 
 const file_users_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x15users/v1/common.proto\x12\busers.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xae\x01\n" +
+	"\x15users/v1/common.proto\x12\busers.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x95\x01\n" +
 	"\x04User\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12%\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x12\x1b\n" +
 	"\tgamer_tag\x18\x04 \x01(\tR\bgamerTag\x129\n" +
 	"\n" +

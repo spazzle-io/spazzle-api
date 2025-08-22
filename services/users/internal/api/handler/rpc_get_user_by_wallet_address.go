@@ -34,7 +34,6 @@ func (h *Handler) GetUserByWalletAddress(ctx context.Context, req *pb.GetUserByW
 	response := &pb.GetUserByWalletAddressResponse{
 		User: &pb.User{
 			Id:            user.ID.String(),
-			UserId:        user.ID.String(),
 			WalletAddress: user.WalletAddress,
 			GamerTag:      user.GamerTag.String,
 			CreatedAt:     timestamppb.New(user.CreatedAt),

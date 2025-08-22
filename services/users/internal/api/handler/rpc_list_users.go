@@ -81,7 +81,6 @@ func mapUsers(dbUsers []db.User) (pbUsers []*pb.User) {
 	for _, dbUser := range dbUsers {
 		pbUsers = append(pbUsers, &pb.User{
 			Id:            dbUser.ID.String(),
-			UserId:        dbUser.ID.String(),
 			WalletAddress: dbUser.WalletAddress,
 			GamerTag:      dbUser.GamerTag.String,
 			CreatedAt:     timestamppb.New(dbUser.CreatedAt),

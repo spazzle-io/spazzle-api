@@ -361,9 +361,6 @@
         "id": {
           "type": "string"
         },
-        "userId": {
-          "type": "string"
-        },
         "walletAddress": {
           "type": "string"
         },

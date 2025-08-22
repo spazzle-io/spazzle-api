@@ -61,7 +61,7 @@ func TestUpdateUser(t *testing.T) {
 				require.NotNil(t, res)
 
 				require.NotEmpty(t, res.GetUser())
-				require.Equal(t, userId.String(), res.GetUser().UserId)
+				require.Equal(t, userId.String(), res.GetUser().Id)
 			},
 		},
 		{
