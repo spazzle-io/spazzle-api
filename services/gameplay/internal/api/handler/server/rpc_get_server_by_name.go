@@ -24,7 +24,7 @@ func (h *Handler) GetServerByName(ctx context.Context, req *pb.GetServerByNameRe
 	server, err := h.store.GetServerByName(ctx, req.GetName())
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get server")
-		return nil, status.Error(codes.NotFound, handler.ServerNotFoundError)
+		return nil, handleServerDBError(err)
 	}
 
 	pbServer, err := mapDBServerToPb(&server)

@@ -3,16 +3,12 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
-	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
@@ -23,40 +19,19 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func generateCreateServerReqParams(t *testing.T) *pb.CreateServerRequest {
-	randStr, err := commonUtil.GenerateRandomAlphanumericString(4)
-	require.NoError(t, err)
-	require.NotEmpty(t, randStr)
-
-	serverWallet, err := commonUtil.NewEthereumWallet()
-	require.NoError(t, err)
-	require.NotEmpty(t, serverWallet)
-
-	return &pb.CreateServerRequest{
-		UserId:            uuid.New().String(),
-		Name:              fmt.Sprintf("%s_%s", gofakeit.PetName(), randStr),
-		ServerAddress:     serverWallet.Address,
-		IsPubliclyVisible: true,
-		StakePerGame:      "1200000000000000000",
-		NumRoundsPerGame:  3,
-		RoundDurationSecs: 60,
-		NumDrawingOptions: 4,
-	}
-}
-
-func TestCreateServer(t *testing.T) {
-	createServerParams := generateCreateServerReqParams(t)
-	require.NotEmpty(t, createServerParams)
-
+func TestArchiveServer(t *testing.T) {
 	testCases := []struct {
 		name          string
-		req           *pb.CreateServerRequest
+		req           *pb.ArchiveServerRequest
 		buildStubs    func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService)
-		checkResponse func(t *testing.T, res *pb.CreateServerResponse, err error)
+		checkResponse func(t *testing.T, res *pb.ArchiveServerResponse, err error)
 	}{
 		{
 			name: "success",
-			req:  createServerParams,
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -64,76 +39,68 @@ func TestCreateServer(t *testing.T) {
 					Return(&authPb.VerifyAccessTokenResponse{}, nil)
 
 				store.EXPECT().
-					CreateServer(gomock.Any(), gomock.Any()).
+					UpdateServer(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(db.Server{
 						ID: uuid.New(),
 						StakePerGame: pgtype.Numeric{
-							Int:   big.NewInt(12),
+							Int:   big.NewInt(10),
 							Valid: true,
 						},
 					}, nil)
+
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						IsOwner: true,
+					}, nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
 				require.NoError(t, err)
-				require.NotNil(t, res)
+				require.NotEmpty(t, res)
 				require.NotEmpty(t, res.GetServer())
 			},
 		},
 		{
-			name:       "invalid request parameters",
-			req:        &pb.CreateServerRequest{},
+			name: "invalid request parameters",
+			req: &pb.ArchiveServerRequest{
+				ServerId: "fake-id",
+				UserId:   "fake-id",
+			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
 				require.Error(t, err)
-				require.Empty(t, res.GetServer())
+				require.Empty(t, res)
 
-				expectedFieldViolations := []string{"userId", "name", "serverAddress", "serverAddress", "stakePerGame", "numRoundsPerGame", "roundDurationSecs", "numDrawingOptions"}
+				expectedFieldViolations := []string{"userId", "serverId"}
 				handler.CheckInvalidRequestParams(t, err, expectedFieldViolations)
 			},
 		},
 		{
 			name: "could not verify access token",
-			req:  createServerParams,
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("could not verify access token"))
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.UnauthorizedAccessError)
 				require.Empty(t, res)
 			},
 		},
 		{
-			name: "invalid stake per game in request",
-			req: &pb.CreateServerRequest{
-				UserId:            createServerParams.UserId,
-				Name:              createServerParams.Name,
-				ServerAddress:     createServerParams.ServerAddress,
-				IsPubliclyVisible: false,
-				StakePerGame:      "abc",
-				NumRoundsPerGame:  createServerParams.NumRoundsPerGame,
-				RoundDurationSecs: createServerParams.RoundDurationSecs,
-				NumDrawingOptions: createServerParams.NumDrawingOptions,
+			name: "could not get server user permissions",
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
 			},
-			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
-				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
-			},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
-				require.Error(t, err)
-				require.ErrorContains(t, err, handler.InvalidStakePerGameError)
-				require.Empty(t, res)
-			},
-		},
-		{
-			name: "could not create server in db - server name already exists",
-			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -141,42 +108,22 @@ func TestCreateServer(t *testing.T) {
 					Return(&authPb.VerifyAccessTokenResponse{}, nil)
 
 				store.EXPECT().
-					CreateServer(gomock.Any(), gomock.Any()).
+					GetServerUserPermissions(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.Server{}, &pgconn.PgError{
-						Code:           db.UniqueViolationCode,
-						ConstraintName: "servers_name_unique_unarchived_idx",
-					})
+					Return(db.GetServerUserPermissionsRow{}, errors.New("could not get server user permissions"))
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
-				require.Error(t, err)
-				require.ErrorContains(t, err, handler.ServerNameInUseError)
-				require.Empty(t, res)
-			},
-		},
-		{
-			name: "could not create server in db - unknown error",
-			req:  createServerParams,
-			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
-				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
-
-				store.EXPECT().
-					CreateServer(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(db.Server{}, errors.New("unknown error"))
-			},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.InternalServerError)
 				require.Empty(t, res)
 			},
 		},
 		{
-			name: "invalid stake per game in db",
-			req:  createServerParams,
+			name: "user does not have permission to archive server",
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
+			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -184,7 +131,99 @@ func TestCreateServer(t *testing.T) {
 					Return(&authPb.VerifyAccessTokenResponse{}, nil)
 
 				store.EXPECT().
-					CreateServer(gomock.Any(), gomock.Any()).
+					GetServerUserPermissions(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						IsOwner: false,
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, handler.UnauthorizedAccessError)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name: "could not update server",
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
+			},
+			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						IsOwner: true,
+					}, nil)
+
+				store.EXPECT().
+					UpdateServer(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Server{}, errors.New("could not update server"))
+			},
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, handler.InternalServerError)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name: "server not found",
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
+			},
+			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						IsOwner: true,
+					}, nil)
+
+				store.EXPECT().
+					UpdateServer(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Server{}, db.RecordNotFoundError)
+			},
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, handler.ServerNotFoundError)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name: "could not map db server to pb",
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+				UserId:   uuid.New().String(),
+			},
+			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						IsOwner: true,
+					}, nil)
+
+				store.EXPECT().
+					UpdateServer(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(db.Server{
 						ID: uuid.New(),
@@ -193,7 +232,7 @@ func TestCreateServer(t *testing.T) {
 						},
 					}, nil)
 			},
-			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
 				require.Error(t, err)
 				require.ErrorContains(t, err, handler.InternalServerError)
 				require.Empty(t, res)
@@ -214,7 +253,7 @@ func TestCreateServer(t *testing.T) {
 
 			serverHandler := newTestHandler(store, cache, authService)
 
-			res, err := serverHandler.CreateServer(context.Background(), tc.req)
+			res, err := serverHandler.ArchiveServer(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

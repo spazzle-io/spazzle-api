@@ -25,6 +25,8 @@ const (
 	ServerService_ListServers_FullMethodName              = "/gameplay.v1.ServerService/ListServers"
 	ServerService_ListUserServers_FullMethodName          = "/gameplay.v1.ServerService/ListUserServers"
 	ServerService_GetUserServerPermissions_FullMethodName = "/gameplay.v1.ServerService/GetUserServerPermissions"
+	ServerService_UpdateServer_FullMethodName             = "/gameplay.v1.ServerService/UpdateServer"
+	ServerService_ArchiveServer_FullMethodName            = "/gameplay.v1.ServerService/ArchiveServer"
 )
 
 // ServerServiceClient is the client API for ServerService service.
@@ -37,6 +39,8 @@ type ServerServiceClient interface {
 	ListServers(ctx context.Context, in *ListServersRequest, opts ...grpc.CallOption) (*ListServersResponse, error)
 	ListUserServers(ctx context.Context, in *ListUserServersRequest, opts ...grpc.CallOption) (*ListUserServersResponse, error)
 	GetUserServerPermissions(ctx context.Context, in *GetUserServerPermissionsRequest, opts ...grpc.CallOption) (*GetUserServerPermissionsResponse, error)
+	UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*UpdateServerResponse, error)
+	ArchiveServer(ctx context.Context, in *ArchiveServerRequest, opts ...grpc.CallOption) (*ArchiveServerResponse, error)
 }
 
 type serverServiceClient struct {
@@ -107,6 +111,26 @@ func (c *serverServiceClient) GetUserServerPermissions(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *serverServiceClient) UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*UpdateServerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateServerResponse)
+	err := c.cc.Invoke(ctx, ServerService_UpdateServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serverServiceClient) ArchiveServer(ctx context.Context, in *ArchiveServerRequest, opts ...grpc.CallOption) (*ArchiveServerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ArchiveServerResponse)
+	err := c.cc.Invoke(ctx, ServerService_ArchiveServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServerServiceServer is the server API for ServerService service.
 // All implementations must embed UnimplementedServerServiceServer
 // for forward compatibility.
@@ -117,6 +141,8 @@ type ServerServiceServer interface {
 	ListServers(context.Context, *ListServersRequest) (*ListServersResponse, error)
 	ListUserServers(context.Context, *ListUserServersRequest) (*ListUserServersResponse, error)
 	GetUserServerPermissions(context.Context, *GetUserServerPermissionsRequest) (*GetUserServerPermissionsResponse, error)
+	UpdateServer(context.Context, *UpdateServerRequest) (*UpdateServerResponse, error)
+	ArchiveServer(context.Context, *ArchiveServerRequest) (*ArchiveServerResponse, error)
 	mustEmbedUnimplementedServerServiceServer()
 }
 
@@ -144,6 +170,12 @@ func (UnimplementedServerServiceServer) ListUserServers(context.Context, *ListUs
 }
 func (UnimplementedServerServiceServer) GetUserServerPermissions(context.Context, *GetUserServerPermissionsRequest) (*GetUserServerPermissionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserServerPermissions not implemented")
+}
+func (UnimplementedServerServiceServer) UpdateServer(context.Context, *UpdateServerRequest) (*UpdateServerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateServer not implemented")
+}
+func (UnimplementedServerServiceServer) ArchiveServer(context.Context, *ArchiveServerRequest) (*ArchiveServerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ArchiveServer not implemented")
 }
 func (UnimplementedServerServiceServer) mustEmbedUnimplementedServerServiceServer() {}
 func (UnimplementedServerServiceServer) testEmbeddedByValue()                       {}
@@ -274,6 +306,42 @@ func _ServerService_GetUserServerPermissions_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerService_UpdateServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateServerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerServiceServer).UpdateServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerService_UpdateServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerServiceServer).UpdateServer(ctx, req.(*UpdateServerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServerService_ArchiveServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveServerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerServiceServer).ArchiveServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerService_ArchiveServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerServiceServer).ArchiveServer(ctx, req.(*ArchiveServerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServerService_ServiceDesc is the grpc.ServiceDesc for ServerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -304,6 +372,14 @@ var ServerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserServerPermissions",
 			Handler:    _ServerService_GetUserServerPermissions_Handler,
+		},
+		{
+			MethodName: "UpdateServer",
+			Handler:    _ServerService_UpdateServer_Handler,
+		},
+		{
+			MethodName: "ArchiveServer",
+			Handler:    _ServerService_ArchiveServer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

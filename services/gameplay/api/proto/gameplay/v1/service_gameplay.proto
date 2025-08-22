@@ -112,4 +112,38 @@ service ServerService {
       security: {};
     };
   }
+
+  rpc UpdateServer(UpdateServerRequest) returns (UpdateServerResponse) {
+    option (google.api.http) = {
+      patch: "/servers/{server_id}",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update server";
+      description: "Update server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc ArchiveServer(ArchiveServerRequest) returns (ArchiveServerResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/archive",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Archive server";
+      description: "Archive server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
 }

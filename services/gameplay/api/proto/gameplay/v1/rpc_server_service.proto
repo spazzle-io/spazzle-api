@@ -3,6 +3,7 @@ syntax = "proto3";
 package gameplay.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
@@ -73,6 +74,30 @@ message GetUserServerPermissionsResponse {
   bool is_owner = 1;
   bool is_admin = 2;
   bool has_elevated_permissions = 3;
+}
+
+message UpdateServerRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.StringValue name = 3;
+  google.protobuf.BoolValue is_publicly_visible = 4;
+  google.protobuf.StringValue stake_per_game = 5;
+  google.protobuf.Int32Value num_rounds_per_game = 6;
+  google.protobuf.Int32Value round_duration_secs = 7;
+  google.protobuf.Int32Value num_drawing_options = 8;
+}
+
+message UpdateServerResponse {
+  Server server = 1;
+}
+
+message ArchiveServerRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message ArchiveServerResponse {
+  Server server = 1;
 }
 
 message Server {

@@ -19,11 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	InvalidStakePerGameError string = "Invalid stake per game"
-	NameInUseError           string = "Server name already in use"
-)
-
 func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
 	logger := log.With().Str("user_id", req.GetUserId()).Logger()
 
@@ -49,7 +44,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	stakePerGame, err := db.ParseWeiStrToBigInt(req.GetStakePerGame())
 	if err != nil {
 		logger.Error().Err(err).Msg("invalid stake per game")
-		return nil, status.Error(codes.InvalidArgument, InvalidStakePerGameError)
+		return nil, status.Error(codes.InvalidArgument, handler.InvalidStakePerGameError)
 	}
 
 	params := db.CreateServerParams{
@@ -68,7 +63,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	server, err := h.store.CreateServer(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create server")
-		return nil, handleCreateServerError(err)
+		return nil, handleServerDBError(err)
 	}
 
 	pbServer, err := mapDBServerToPb(&server)
@@ -84,18 +79,6 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	logger.Info().Msg("server created successfully")
 
 	return response, nil
-}
-
-func handleCreateServerError(dbError error) error {
-	parsedDBError := db.ParseError(dbError)
-
-	if parsedDBError.Code == db.UniqueViolationCode {
-		if parsedDBError.ConstraintName == "servers_name_unique_unarchived_idx" {
-			return status.Errorf(codes.AlreadyExists, NameInUseError)
-		}
-	}
-
-	return status.Error(codes.Internal, handler.InternalServerError)
 }
 
 func validateCreateServerRequest(req *pb.CreateServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
