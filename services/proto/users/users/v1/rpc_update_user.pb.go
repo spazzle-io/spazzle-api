@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -23,9 +24,9 @@ const (
 )
 
 type UpdateUserRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	GamerTag      string                 `protobuf:"bytes,2,opt,name=gamer_tag,json=gamerTag,proto3" json:"gamer_tag,omitempty"`
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Id            string                  `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	GamerTag      *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=gamer_tag,json=gamerTag,proto3" json:"gamer_tag,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,11 +68,11 @@ func (x *UpdateUserRequest) GetId() string {
 	return ""
 }
 
-func (x *UpdateUserRequest) GetGamerTag() string {
+func (x *UpdateUserRequest) GetGamerTag() *wrapperspb.StringValue {
 	if x != nil {
 		return x.GamerTag
 	}
-	return ""
+	return nil
 }
 
 type UpdateUserResponse struct {
@@ -122,10 +123,10 @@ var File_users_v1_rpc_update_user_proto protoreflect.FileDescriptor
 
 const file_users_v1_rpc_update_user_proto_rawDesc = "" +
 	"\n" +
-	"\x1eusers/v1/rpc_update_user.proto\x12\busers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15users/v1/common.proto\"M\n" +
+	"\x1eusers/v1/rpc_update_user.proto\x12\busers.v1\x1a\x1bbuf/validate/validate.proto\x1a\x15users/v1/common.proto\x1a\x1egoogle/protobuf/wrappers.proto\"k\n" +
 	"\x11UpdateUserRequest\x12\x1b\n" +
-	"\x02id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
-	"\tgamer_tag\x18\x02 \x01(\tR\bgamerTag\"8\n" +
+	"\x02id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x02id\x129\n" +
+	"\tgamer_tag\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\bgamerTag\"8\n" +
 	"\x12UpdateUserResponse\x12\"\n" +
 	"\x04user\x18\x01 \x01(\v2\x0e.users.v1.UserR\x04userB\x98\x01\n" +
 	"\fcom.users.v1B\x12RpcUpdateUserProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
@@ -144,17 +145,19 @@ func file_users_v1_rpc_update_user_proto_rawDescGZIP() []byte {
 
 var file_users_v1_rpc_update_user_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_users_v1_rpc_update_user_proto_goTypes = []any{
-	(*UpdateUserRequest)(nil),  // 0: users.v1.UpdateUserRequest
-	(*UpdateUserResponse)(nil), // 1: users.v1.UpdateUserResponse
-	(*User)(nil),               // 2: users.v1.User
+	(*UpdateUserRequest)(nil),      // 0: users.v1.UpdateUserRequest
+	(*UpdateUserResponse)(nil),     // 1: users.v1.UpdateUserResponse
+	(*wrapperspb.StringValue)(nil), // 2: google.protobuf.StringValue
+	(*User)(nil),                   // 3: users.v1.User
 }
 var file_users_v1_rpc_update_user_proto_depIdxs = []int32{
-	2, // 0: users.v1.UpdateUserResponse.user:type_name -> users.v1.User
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: users.v1.UpdateUserRequest.gamer_tag:type_name -> google.protobuf.StringValue
+	3, // 1: users.v1.UpdateUserResponse.user:type_name -> users.v1.User
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_users_v1_rpc_update_user_proto_init() }

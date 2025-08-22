@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"strings"
 
 	"buf.build/go/protovalidate"
 
@@ -30,13 +29,13 @@ func (h *Handler) ListUserServers(ctx context.Context, req *pb.ListUserServersRe
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidUserIdError)
 	}
 
-	afterId, err := uuid.Parse(req.GetAfterId())
-	if err != nil && strings.TrimSpace(req.GetAfterId()) != "" {
+	afterId, err := uuid.Parse(req.GetAfterId().GetValue())
+	if err != nil && req.GetAfterId() != nil {
 		log.Error().Err(err).Msg("invalid after id")
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidAfterIdError)
 	}
 
-	pageSize := req.GetPageSize()
+	pageSize := req.GetPageSize().GetValue()
 	if pageSize <= 0 || pageSize > handler.MaxPageSize {
 		pageSize = handler.DefaultPageSize
 	}
@@ -46,7 +45,7 @@ func (h *Handler) ListUserServers(ctx context.Context, req *pb.ListUserServersRe
 		PageSize: pageSize,
 		AfterID: pgtype.UUID{
 			Bytes: afterId,
-			Valid: strings.TrimSpace(req.GetAfterId()) != "",
+			Valid: req.GetAfterId() != nil,
 		},
 		AfterCreatedAt: pgtype.Timestamptz{
 			Time:  req.GetAfterCreatedAt().AsTime(),

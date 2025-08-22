@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -24,8 +26,10 @@ func TestUpdateUser(t *testing.T) {
 	require.NotEmpty(t, userId)
 
 	updateUserRequest := &pb.UpdateUserRequest{
-		Id:       userId.String(),
-		GamerTag: gofakeit.Gamertag(),
+		Id: userId.String(),
+		GamerTag: &wrapperspb.StringValue{
+			Value: gofakeit.Gamertag(),
+		},
 	}
 
 	testCases := []struct {
@@ -47,7 +51,7 @@ func TestUpdateUser(t *testing.T) {
 					UpdateUser(gomock.Any(), db.UpdateUserParams{
 						UserID: userId,
 						GamerTag: pgtype.Text{
-							String: updateUserRequest.GamerTag,
+							String: updateUserRequest.GetGamerTag().GetValue(),
 							Valid:  true,
 						},
 					}).
@@ -68,7 +72,7 @@ func TestUpdateUser(t *testing.T) {
 			name: "invalid request parameters",
 			req: &pb.UpdateUserRequest{
 				Id:       "",
-				GamerTag: "",
+				GamerTag: &wrapperspb.StringValue{Value: ""},
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
@@ -107,7 +111,7 @@ func TestUpdateUser(t *testing.T) {
 					UpdateUser(gomock.Any(), db.UpdateUserParams{
 						UserID: userId,
 						GamerTag: pgtype.Text{
-							String: updateUserRequest.GamerTag,
+							String: updateUserRequest.GetGamerTag().GetValue(),
 							Valid:  true,
 						},
 					}).

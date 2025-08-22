@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -21,13 +20,13 @@ const (
 )
 
 func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
-	afterId, err := uuid.Parse(req.GetAfterId())
-	if err != nil && strings.TrimSpace(req.GetAfterId()) != "" {
+	afterId, err := uuid.Parse(req.GetAfterId().GetValue())
+	if err != nil && req.GetAfterId() != nil {
 		log.Error().Err(err).Msg("invalid after id")
 		return nil, status.Error(codes.InvalidArgument, InvalidAfterIdError)
 	}
 
-	pageSize := req.GetPageSize()
+	pageSize := req.GetPageSize().GetValue()
 	if pageSize <= 0 || pageSize > maxPageSize {
 		pageSize = defaultPageSize
 	}
@@ -36,7 +35,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 		PageSize: pageSize,
 		AfterID: pgtype.UUID{
 			Bytes: afterId,
-			Valid: strings.TrimSpace(req.GetAfterId()) != "",
+			Valid: req.GetAfterId() != nil,
 		},
 		AfterCreatedAt: pgtype.Timestamptz{
 			Time:  req.GetAfterCreatedAt().AsTime(),
