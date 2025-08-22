@@ -3,17 +3,24 @@ syntax = "proto3";
 package users.v1;
 
 import "users/v1/common.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
 message ListUsersRequest {
-  int32 page = 1;
-  int32 page_size = 2;
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
 }
 
 message ListUsersResponse {
-  int32 page = 1;
-  int32 page_size = 2;
-  int64 num_total_users = 3;
-  repeated User users = 4;
+  repeated User users = 1;
+  int64 total_count = 2;
+  ListUsersCursor cursor = 3;
+}
+
+message ListUsersCursor {
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
 }

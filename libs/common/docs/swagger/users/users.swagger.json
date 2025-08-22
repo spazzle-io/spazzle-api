@@ -41,11 +41,17 @@
         },
         "parameters": [
           {
-            "name": "page",
+            "name": "afterCreatedAt",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "pageSize",
@@ -281,27 +287,38 @@
         }
       }
     },
-    "v1ListUsersResponse": {
+    "v1ListUsersCursor": {
       "type": "object",
       "properties": {
-        "page": {
-          "type": "integer",
-          "format": "int32"
+        "afterCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterId": {
+          "type": "string"
         },
         "pageSize": {
           "type": "integer",
           "format": "int32"
-        },
-        "numTotalUsers": {
-          "type": "string",
-          "format": "int64"
-        },
+        }
+      }
+    },
+    "v1ListUsersResponse": {
+      "type": "object",
+      "properties": {
         "users": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1User"
           }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1ListUsersCursor"
         }
       }
     },
@@ -341,7 +358,7 @@
     "v1User": {
       "type": "object",
       "properties": {
-        "userId": {
+        "id": {
           "type": "string"
         },
         "walletAddress": {

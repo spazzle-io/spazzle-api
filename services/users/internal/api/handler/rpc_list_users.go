@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
-	"buf.build/go/protovalidate"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/rs/zerolog/log"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
 	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,31 +21,32 @@ const (
 )
 
 func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
-	violations := validateListUsersRequest(req)
-	if violations != nil {
-		return nil, invalidArgumentError(violations)
+	afterId, err := uuid.Parse(req.GetAfterId())
+	if err != nil && strings.TrimSpace(req.GetAfterId()) != "" {
+		log.Error().Err(err).Msg("invalid after id")
+		return nil, status.Error(codes.InvalidArgument, InvalidAfterIdError)
 	}
 
-	page := req.GetPage()
-	if page <= 0 {
-		page = 1
+	pageSize := req.GetPageSize()
+	if pageSize <= 0 || pageSize > maxPageSize {
+		pageSize = defaultPageSize
 	}
-
-	limit := req.GetPageSize()
-	if limit <= 0 {
-		limit = defaultPageSize
-	}
-
-	offset := (page - 1) * limit
 
 	params := db.ListUsersParams{
-		Limit:  limit,
-		Offset: offset,
+		PageSize: pageSize,
+		AfterID: pgtype.UUID{
+			Bytes: afterId,
+			Valid: strings.TrimSpace(req.GetAfterId()) != "",
+		},
+		AfterCreatedAt: pgtype.Timestamptz{
+			Time:  req.GetAfterCreatedAt().AsTime(),
+			Valid: req.GetAfterCreatedAt().IsValid(),
+		},
 	}
 
 	users, err := h.store.ListUsers(ctx, params)
 	if err != nil {
-		log.Error().Err(err).Msg("could not list users")
+		log.Error().Err(err).Msg("failed to fetch users")
 		return nil, status.Errorf(codes.Internal, InternalServerError)
 	}
 
@@ -55,11 +56,20 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, InternalServerError)
 	}
 
+	var cursor *pb.ListUsersCursor
+	if n := len(users); n > 0 {
+		last := users[n-1]
+		cursor = &pb.ListUsersCursor{
+			AfterCreatedAt: timestamppb.New(last.CreatedAt),
+			AfterId:        last.ID.String(),
+			PageSize:       pageSize,
+		}
+	}
+
 	response := &pb.ListUsersResponse{
-		Page:          page,
-		PageSize:      limit,
-		NumTotalUsers: numTotalUsers,
-		Users:         mapUsers(users),
+		Users:      mapUsers(users),
+		TotalCount: numTotalUsers,
+		Cursor:     cursor,
 	}
 
 	log.Info().Msg("retrieved users successfully")
@@ -67,22 +77,10 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 	return response, nil
 }
 
-func validateListUsersRequest(req *pb.ListUsersRequest) (violations []*errdetails.BadRequest_FieldViolation) {
-	if err := protovalidate.Validate(req); err != nil {
-		violations = append(violations, protovalidateViolation(err)...)
-	}
-
-	if req.GetPageSize() > maxPageSize {
-		violations = append(violations, fieldViolation("pageSize", fmt.Errorf("must be <= %d", maxPageSize)))
-	}
-
-	return violations
-}
-
 func mapUsers(dbUsers []db.User) (pbUsers []*pb.User) {
 	for _, dbUser := range dbUsers {
 		pbUsers = append(pbUsers, &pb.User{
-			UserId:        dbUser.ID.String(),
+			Id:            dbUser.ID.String(),
 			WalletAddress: dbUser.WalletAddress,
 			GamerTag:      dbUser.GamerTag.String,
 			CreatedAt:     timestamppb.New(dbUser.CreatedAt),

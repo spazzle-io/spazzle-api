@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
 message User {
-  string user_id = 1;
+  string id = 1;
   string wallet_address = 2;
   string gamer_tag = 3;
   google.protobuf.Timestamp created_at = 4;
