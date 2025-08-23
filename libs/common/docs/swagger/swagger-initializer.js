@@ -6,7 +6,7 @@ window.onload = function() {
     // Service API definition objects.
     urls: [
       { url: "auth/auth.swagger.json", name: "Auth Service" },
-      { url: "users/users.swagger.json", name: "Users Service" },
+      { url: "users/users.swagger.json", name: "User Service" },
       { url: "gameplay/gameplay.swagger.json", name: "Gameplay Service" },
     ],
     "urls.primaryName": "Auth Service",

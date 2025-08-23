@@ -26,7 +26,7 @@ var File_auth_v1_service_auth_proto protoreflect.FileDescriptor
 
 const file_auth_v1_service_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\"auth/v1/rpc_get_siwe_payload.proto\x1a\x1eauth/v1/rpc_authenticate.proto\x1a%auth/v1/rpc_verify_access_token.proto\x1a&auth/v1/rpc_refresh_access_token.proto\x1a'auth/v1/rpc_revoke_refresh_tokens.proto2\xfe\t\n" +
+	"\x1aauth/v1/service_auth.proto\x12\aauth.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1eauth/v1/rpc_service_auth.proto2\xfe\t\n" +
 	"\vAuthService\x12\x93\x02\n" +
 	"\x0eGetSIWEPayload\x12\x1e.auth.v1.GetSIWEPayloadRequest\x1a\x1f.auth.v1.GetSIWEPayloadResponse\"\xbf\x01\x92A\xa1\x01\x127Generate SIWE message payload for EVM compatible chains\x1adGenerates a Sign-In With Ethereum (SIWE) message payload for the specified wallet address and domainb\x00\x82\xd3\xe4\x93\x02\x14\x12\x12/auth/siwe-payload\x12\xba\x02\n" +
 	"\fAuthenticate\x12\x1c.auth.v1.AuthenticateRequest\x1a\x1d.auth.v1.AuthenticateResponse\"\xec\x01\x92A\xcb\x01\x12UAuthenticates a user via their Web3 wallet and a SIWE (Sign-In with Ethereum) message\x1a^Authenticate a user by verifying their Ethereum wallet address using a cryptographic signatureb\x00j\x10\n" +
@@ -88,11 +88,7 @@ func file_auth_v1_service_auth_proto_init() {
 	if File_auth_v1_service_auth_proto != nil {
 		return
 	}
-	file_auth_v1_rpc_get_siwe_payload_proto_init()
-	file_auth_v1_rpc_authenticate_proto_init()
-	file_auth_v1_rpc_verify_access_token_proto_init()
-	file_auth_v1_rpc_refresh_access_token_proto_init()
-	file_auth_v1_rpc_revoke_refresh_tokens_proto_init()
+	file_auth_v1_rpc_service_auth_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

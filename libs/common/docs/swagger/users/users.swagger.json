@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Users Service",
+    "title": "User Service",
     "version": "0",
     "contact": {
       "name": "Spazzle",
@@ -10,7 +10,7 @@
   },
   "tags": [
     {
-      "name": "UsersService"
+      "name": "UserService"
     }
   ],
   "consumes": [
@@ -24,7 +24,7 @@
       "get": {
         "summary": "List users",
         "description": "List all users",
-        "operationId": "UsersService_ListUsers",
+        "operationId": "UserService_ListUsers",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -62,7 +62,7 @@
           }
         ],
         "tags": [
-          "UsersService"
+          "UserService"
         ],
         "security": []
       }
@@ -71,7 +71,7 @@
       "post": {
         "summary": "Authenticate user",
         "description": "Authenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signature",
-        "operationId": "UsersService_AuthenticateUser",
+        "operationId": "UserService_AuthenticateUser",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -97,7 +97,7 @@
           }
         ],
         "tags": [
-          "UsersService"
+          "UserService"
         ],
         "security": []
       }
@@ -106,7 +106,7 @@
       "get": {
         "summary": "Get user by wallet address",
         "description": "Get user by Ethereum wallet address",
-        "operationId": "UsersService_GetUserByWalletAddress",
+        "operationId": "UserService_GetUserByWalletAddress",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -130,7 +130,7 @@
           }
         ],
         "tags": [
-          "UsersService"
+          "UserService"
         ],
         "security": []
       }
@@ -139,7 +139,7 @@
       "get": {
         "summary": "Get user",
         "description": "Get user by id",
-        "operationId": "UsersService_GetUser",
+        "operationId": "UserService_GetUser",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -163,14 +163,14 @@
           }
         ],
         "tags": [
-          "UsersService"
+          "UserService"
         ],
         "security": []
       },
-      "put": {
-        "summary": "Authenticate user",
-        "description": "Authenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signature",
-        "operationId": "UsersService_UpdateUser",
+      "patch": {
+        "summary": "Update user",
+        "description": "Update user",
+        "operationId": "UserService_UpdateUser",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -197,12 +197,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UsersServiceUpdateUserBody"
+              "$ref": "#/definitions/UserServiceUpdateUserBody"
             }
           }
         ],
         "tags": [
-          "UsersService"
+          "UserService"
         ],
         "security": [
           {
@@ -213,7 +213,7 @@
     }
   },
   "definitions": {
-    "UsersServiceUpdateUserBody": {
+    "UserServiceUpdateUserBody": {
       "type": "object",
       "properties": {
         "gamerTag": {

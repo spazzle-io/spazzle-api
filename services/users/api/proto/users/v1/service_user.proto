@@ -4,17 +4,13 @@ package users.v1;
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "users/v1/rpc_authenticate_user.proto";
-import "users/v1/rpc_get_user.proto";
-import "users/v1/rpc_get_user_by_wallet_address.proto";
-import "users/v1/rpc_list_users.proto";
-import "users/v1/rpc_update_user.proto";
+import "users/v1/rpc_service_user.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
-    title: "Users Service";
+    title: "User Service";
     version: "0";
     contact: {
       name: "Spazzle";
@@ -39,7 +35,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   };
 };
 
-service UsersService {
+service UserService {
   rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse) {
     option (google.api.http) = {
       post: "/users/authenticate",
@@ -91,13 +87,13 @@ service UsersService {
 
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
     option (google.api.http) = {
-      put: "/users/{id}",
+      patch: "/users/{id}",
       body: "*"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Authenticate user";
-      description: "Authenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signature";
+      summary: "Update user";
+      description: "Update user";
       security: {
         security_requirement: {
           key: "bearer"

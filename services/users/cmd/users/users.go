@@ -101,7 +101,7 @@ func runGRPCServer(
 		},
 		[]commonServer.GrpcServiceRegistrar{
 			func(grpcServer *grpc.Server) {
-				pb.RegisterUsersServiceServer(grpcServer, s)
+				pb.RegisterUserServiceServer(grpcServer, s)
 			},
 		},
 	)
@@ -127,7 +127,7 @@ func runGatewayServer(
 		config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterUsersServiceHandlerServer(ctx, mux, s)
+				return pb.RegisterUserServiceHandlerServer(ctx, mux, s)
 			},
 		},
 		[]commonServer.HttpRouteRegistrar{},
