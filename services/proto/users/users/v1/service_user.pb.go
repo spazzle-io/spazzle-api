@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.7
 // 	protoc        (unknown)
-// source: users/v1/service_users.proto
+// source: users/v1/service_user.proto
 
 package pb
 
@@ -22,32 +22,32 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var File_users_v1_service_users_proto protoreflect.FileDescriptor
+var File_users_v1_service_user_proto protoreflect.FileDescriptor
 
-const file_users_v1_service_users_proto_rawDesc = "" +
+const file_users_v1_service_user_proto_rawDesc = "" +
 	"\n" +
-	"\x1cusers/v1/service_users.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$users/v1/rpc_authenticate_user.proto\x1a\x1busers/v1/rpc_get_user.proto\x1a-users/v1/rpc_get_user_by_wallet_address.proto\x1a\x1dusers/v1/rpc_list_users.proto\x1a\x1eusers/v1/rpc_update_user.proto2\xde\a\n" +
-	"\fUsersService\x12\x83\x02\n" +
+	"\x1busers/v1/service_user.proto\x12\busers.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x1fusers/v1/rpc_service_user.proto2\xf2\x06\n" +
+	"\vUserService\x12\x83\x02\n" +
 	"\x10AuthenticateUser\x12!.users.v1.AuthenticateUserRequest\x1a\".users.v1.AuthenticateUserResponse\"\xa7\x01\x92A\x85\x01\x12\x11Authenticate user\x1anAuthenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signatureb\x00\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/users/authenticate\x12r\n" +
 	"\aGetUser\x12\x18.users.v1.GetUserRequest\x1a\x19.users.v1.GetUserResponse\"2\x92A\x1c\x12\bGet user\x1a\x0eGet user by idb\x00\x82\xd3\xe4\x93\x02\r\x12\v/users/{id}\x12\xe4\x01\n" +
 	"\x16GetUserByWalletAddress\x12'.users.v1.GetUserByWalletAddressRequest\x1a(.users.v1.GetUserByWalletAddressResponse\"w\x92AC\x12\x1aGet user by wallet address\x1a#Get user by Ethereum wallet addressb\x00\x82\xd3\xe4\x93\x02+\x12)/users/by-wallet-address/{wallet_address}\x12u\n" +
 	"\tListUsers\x12\x1a.users.v1.ListUsersRequest\x1a\x1b.users.v1.ListUsersResponse\"/\x92A\x1e\x12\n" +
-	"List users\x1a\x0eList all usersb\x00\x82\xd3\xe4\x93\x02\b\x12\x06/users\x12\xf5\x01\n" +
+	"List users\x1a\x0eList all usersb\x00\x82\xd3\xe4\x93\x02\b\x12\x06/users\x12\x8a\x01\n" +
 	"\n" +
-	"UpdateUser\x12\x1b.users.v1.UpdateUserRequest\x1a\x1c.users.v1.UpdateUserResponse\"\xab\x01\x92A\x91\x01\x12\x11Authenticate user\x1anAuthenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signatureb\f\n" +
+	"UpdateUser\x12\x1b.users.v1.UpdateUserRequest\x1a\x1c.users.v1.UpdateUserResponse\"A\x92A(\x12\vUpdate user\x1a\vUpdate userb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x10:\x01*\x1a\v/users/{id}B\xb7\x02\x92A\x9c\x01\x121\n" +
-	"\rUsers Service\"\x1d\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x10:\x01*2\v/users/{id}B\xb5\x02\x92A\x9b\x01\x120\n" +
+	"\fUser Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
 	"\x06bearer\x12M\b\x02\x128Authentication token, prefixed by Bearer: bearer <token>\x1a\rAuthorization \x02b\f\n" +
 	"\n" +
 	"\n" +
 	"\x06bearer\x12\x00\n" +
-	"\fcom.users.v1B\x11ServiceUsersProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
+	"\fcom.users.v1B\x10ServiceUserProtoP\x01Z3github.com/spazzle-io/spazzle-api/services/users/pb\xa2\x02\x03UXX\xaa\x02\bUsers.V1\xca\x02\bUsers\\V1\xe2\x02\x14Users\\V1\\GPBMetadata\xea\x02\tUsers::V1b\x06proto3"
 
-var file_users_v1_service_users_proto_goTypes = []any{
+var file_users_v1_service_user_proto_goTypes = []any{
 	(*AuthenticateUserRequest)(nil),        // 0: users.v1.AuthenticateUserRequest
 	(*GetUserRequest)(nil),                 // 1: users.v1.GetUserRequest
 	(*GetUserByWalletAddressRequest)(nil),  // 2: users.v1.GetUserByWalletAddressRequest
@@ -59,17 +59,17 @@ var file_users_v1_service_users_proto_goTypes = []any{
 	(*ListUsersResponse)(nil),              // 8: users.v1.ListUsersResponse
 	(*UpdateUserResponse)(nil),             // 9: users.v1.UpdateUserResponse
 }
-var file_users_v1_service_users_proto_depIdxs = []int32{
-	0, // 0: users.v1.UsersService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
-	1, // 1: users.v1.UsersService.GetUser:input_type -> users.v1.GetUserRequest
-	2, // 2: users.v1.UsersService.GetUserByWalletAddress:input_type -> users.v1.GetUserByWalletAddressRequest
-	3, // 3: users.v1.UsersService.ListUsers:input_type -> users.v1.ListUsersRequest
-	4, // 4: users.v1.UsersService.UpdateUser:input_type -> users.v1.UpdateUserRequest
-	5, // 5: users.v1.UsersService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
-	6, // 6: users.v1.UsersService.GetUser:output_type -> users.v1.GetUserResponse
-	7, // 7: users.v1.UsersService.GetUserByWalletAddress:output_type -> users.v1.GetUserByWalletAddressResponse
-	8, // 8: users.v1.UsersService.ListUsers:output_type -> users.v1.ListUsersResponse
-	9, // 9: users.v1.UsersService.UpdateUser:output_type -> users.v1.UpdateUserResponse
+var file_users_v1_service_user_proto_depIdxs = []int32{
+	0, // 0: users.v1.UserService.AuthenticateUser:input_type -> users.v1.AuthenticateUserRequest
+	1, // 1: users.v1.UserService.GetUser:input_type -> users.v1.GetUserRequest
+	2, // 2: users.v1.UserService.GetUserByWalletAddress:input_type -> users.v1.GetUserByWalletAddressRequest
+	3, // 3: users.v1.UserService.ListUsers:input_type -> users.v1.ListUsersRequest
+	4, // 4: users.v1.UserService.UpdateUser:input_type -> users.v1.UpdateUserRequest
+	5, // 5: users.v1.UserService.AuthenticateUser:output_type -> users.v1.AuthenticateUserResponse
+	6, // 6: users.v1.UserService.GetUser:output_type -> users.v1.GetUserResponse
+	7, // 7: users.v1.UserService.GetUserByWalletAddress:output_type -> users.v1.GetUserByWalletAddressResponse
+	8, // 8: users.v1.UserService.ListUsers:output_type -> users.v1.ListUsersResponse
+	9, // 9: users.v1.UserService.UpdateUser:output_type -> users.v1.UpdateUserResponse
 	5, // [5:10] is the sub-list for method output_type
 	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -77,30 +77,26 @@ var file_users_v1_service_users_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_users_v1_service_users_proto_init() }
-func file_users_v1_service_users_proto_init() {
-	if File_users_v1_service_users_proto != nil {
+func init() { file_users_v1_service_user_proto_init() }
+func file_users_v1_service_user_proto_init() {
+	if File_users_v1_service_user_proto != nil {
 		return
 	}
-	file_users_v1_rpc_authenticate_user_proto_init()
-	file_users_v1_rpc_get_user_proto_init()
-	file_users_v1_rpc_get_user_by_wallet_address_proto_init()
-	file_users_v1_rpc_list_users_proto_init()
-	file_users_v1_rpc_update_user_proto_init()
+	file_users_v1_rpc_service_user_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_v1_service_users_proto_rawDesc), len(file_users_v1_service_users_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_v1_service_user_proto_rawDesc), len(file_users_v1_service_user_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_users_v1_service_users_proto_goTypes,
-		DependencyIndexes: file_users_v1_service_users_proto_depIdxs,
+		GoTypes:           file_users_v1_service_user_proto_goTypes,
+		DependencyIndexes: file_users_v1_service_user_proto_depIdxs,
 	}.Build()
-	File_users_v1_service_users_proto = out.File
-	file_users_v1_service_users_proto_goTypes = nil
-	file_users_v1_service_users_proto_depIdxs = nil
+	File_users_v1_service_user_proto = out.File
+	file_users_v1_service_user_proto_goTypes = nil
+	file_users_v1_service_user_proto_depIdxs = nil
 }

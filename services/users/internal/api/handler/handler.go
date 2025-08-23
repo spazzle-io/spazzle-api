@@ -12,7 +12,7 @@ import (
 )
 
 type Handler struct {
-	pb.UnimplementedUsersServiceServer
+	pb.UnimplementedUserServiceServer
 
 	config      util.Config
 	store       db.Store
