@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/users/pb";
+
+message AuthenticateUserRequest {
+  string wallet_address = 1 [(buf.validate.field).required = true];
+  string signature = 2 [(buf.validate.field).required = true];
+}
+
+message AuthenticateUserResponse {
+  User user = 1;
+  Session session = 2;
+}
+
+message GetUserRequest {
+  string id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message GetUserByWalletAddressRequest {
+  string wallet_address = 1 [(buf.validate.field).required = true];
+}
+
+message GetUserByWalletAddressResponse {
+  User user = 1;
+}
+
+message ListUsersRequest {
+  google.protobuf.Timestamp after_created_at = 1;
+  google.protobuf.StringValue after_id = 2;
+  google.protobuf.Int32Value page_size = 3;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  int64 total_count = 2;
+  ListUsersCursor cursor = 3;
+}
+
+message UpdateUserRequest {
+  string id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.StringValue gamer_tag = 2;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message Session {
+  string session_id = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  google.protobuf.Timestamp access_token_expires_at = 4;
+  google.protobuf.Timestamp refresh_token_expires_at = 5;
+  string token_type = 6;
+}
+
+message User {
+  string id = 1;
+  string wallet_address = 2;
+  string gamer_tag = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message ListUsersCursor {
+  google.protobuf.Timestamp after_created_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
+}

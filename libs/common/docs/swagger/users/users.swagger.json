@@ -167,9 +167,9 @@
         ],
         "security": []
       },
-      "put": {
-        "summary": "Authenticate user",
-        "description": "Authenticate a new or existing user by verifying their Ethereum wallet address using a cryptographic signature",
+      "patch": {
+        "summary": "Update user",
+        "description": "Update user",
         "operationId": "UsersService_UpdateUser",
         "responses": {
           "200": {

@@ -4,11 +4,7 @@ package auth.v1;
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "auth/v1/rpc_get_siwe_payload.proto";
-import "auth/v1/rpc_authenticate.proto";
-import "auth/v1/rpc_verify_access_token.proto";
-import "auth/v1/rpc_refresh_access_token.proto";
-import "auth/v1/rpc_revoke_refresh_tokens.proto";
+import "auth/v1/rpc_auth_service.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/auth/pb";
 
