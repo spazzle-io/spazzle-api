@@ -19,31 +19,32 @@ import (
 )
 
 func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest) (*pb.UpdateServerResponse, error) {
-	logger := log.With().Str("user_id", req.GetUserId()).Str("server_id", req.GetServerId()).Logger()
-
 	violations := validateUpdateServerRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	userId, err := uuid.Parse(req.GetUserId())
+	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	if err != nil {
+		log.Error().Err(err).Msg("access token verification failed")
+		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
+	}
+
+	logger := log.With().
+		Str("user_id", tkPayload.AccessTokenPayload.UserId).
+		Str("server_id", req.GetServerId()).
+		Logger()
+
+	userId, err := uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 	if err != nil {
 		logger.Error().Err(err).Msg("invalid user id")
-		return nil, status.Error(codes.InvalidArgument, handler.InvalidUserIdError)
+		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
 	serverId, err := uuid.Parse(req.GetServerId())
 	if err != nil {
 		logger.Error().Err(err).Msg("invalid server id")
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
-	}
-
-	_, err = h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{
-		UserId: req.GetUserId(),
-	})
-	if err != nil {
-		logger.Error().Err(err).Msg("access token verification failed")
-		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
 	permissions, err := h.store.GetServerUserPermissions(ctx, db.GetServerUserPermissionsParams{

@@ -189,7 +189,7 @@
     "/auth/verify-access-token": {
       "post": {
         "summary": "Verify access token",
-        "description": "Verify whether an access token is valid for a specified user id",
+        "description": "Verify whether an access token is valid",
         "operationId": "AuthService_VerifyAccessToken",
         "responses": {
           "200": {
@@ -355,15 +355,7 @@
       }
     },
     "v1RefreshAccessTokenRequest": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        },
-        "walletAddress": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     },
     "v1RefreshAccessTokenResponse": {
       "type": "object",
@@ -374,12 +366,7 @@
       }
     },
     "v1RevokeRefreshTokensRequest": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     },
     "v1RevokeRefreshTokensResponse": {
       "type": "object",
@@ -416,12 +403,7 @@
       }
     },
     "v1VerifyAccessTokenRequest": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     },
     "v1VerifyAccessTokenResponse": {
       "type": "object",

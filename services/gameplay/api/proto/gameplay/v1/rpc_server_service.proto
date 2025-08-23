@@ -9,14 +9,13 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
 
 message CreateServerRequest {
-  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).required = true];
-  string server_address = 3 [(buf.validate.field).required = true];
-  bool is_publicly_visible = 4;
-  string stake_per_game = 5 [(buf.validate.field).required = true];
-  int32 num_rounds_per_game = 6 [(buf.validate.field).required = true];
-  int32 round_duration_secs = 7 [(buf.validate.field).required = true];
-  int32 num_drawing_options = 8 [(buf.validate.field).required = true];
+  string name = 1 [(buf.validate.field).required = true];
+  string server_address = 2 [(buf.validate.field).required = true];
+  bool is_publicly_visible = 3;
+  string stake_per_game = 4 [(buf.validate.field).required = true];
+  int32 num_rounds_per_game = 5 [(buf.validate.field).required = true];
+  int32 round_duration_secs = 6 [(buf.validate.field).required = true];
+  int32 num_drawing_options = 7 [(buf.validate.field).required = true];
 }
 
 message CreateServerResponse {
@@ -77,14 +76,13 @@ message GetUserServerPermissionsResponse {
 }
 
 message UpdateServerRequest {
-  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  google.protobuf.StringValue name = 3;
-  google.protobuf.BoolValue is_publicly_visible = 4;
-  google.protobuf.StringValue stake_per_game = 5;
-  google.protobuf.Int32Value num_rounds_per_game = 6;
-  google.protobuf.Int32Value round_duration_secs = 7;
-  google.protobuf.Int32Value num_drawing_options = 8;
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.StringValue name = 2;
+  google.protobuf.BoolValue is_publicly_visible = 3;
+  google.protobuf.StringValue stake_per_game = 4;
+  google.protobuf.Int32Value num_rounds_per_game = 5;
+  google.protobuf.Int32Value round_duration_secs = 6;
+  google.protobuf.Int32Value num_drawing_options = 7;
 }
 
 message UpdateServerResponse {
@@ -92,8 +90,7 @@ message UpdateServerResponse {
 }
 
 message ArchiveServerRequest {
-  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  string server_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
 }
 
 message ArchiveServerResponse {

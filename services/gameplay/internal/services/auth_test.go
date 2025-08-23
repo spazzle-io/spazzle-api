@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	"github.com/stretchr/testify/require"
@@ -183,9 +182,7 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 	md := metadata.MD{}
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 
-	payload := &pb.VerifyAccessTokenRequest{
-		UserId: uuid.New().String(),
-	}
+	payload := &pb.VerifyAccessTokenRequest{}
 
 	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, "test", payload)
 	require.NoError(t, err)

@@ -7,6 +7,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.3.0
 	github.com/ethereum/go-ethereum v1.16.2
 	github.com/golang-migrate/migrate/v4 v4.18.3
+	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/jackc/pgx/v5 v5.7.5

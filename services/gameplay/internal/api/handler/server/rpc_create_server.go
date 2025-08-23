@@ -20,25 +20,23 @@ import (
 )
 
 func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
-	logger := log.With().Str("user_id", req.GetUserId()).Logger()
-
 	violations := validateCreateServerRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	_, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{
-		UserId: req.GetUserId(),
-	})
+	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
 	if err != nil {
-		logger.Error().Err(err).Msg("access token verification failed")
+		log.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	userId, err := uuid.Parse(req.GetUserId())
+	logger := log.With().Str("user_id", tkPayload.AccessTokenPayload.UserId).Logger()
+
+	userId, err := uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 	if err != nil {
 		logger.Error().Err(err).Msg("invalid user id")
-		return nil, status.Error(codes.InvalidArgument, handler.InvalidUserIdError)
+		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
 	stakePerGame, err := db.ParseWeiStrToBigInt(req.GetStakePerGame())
