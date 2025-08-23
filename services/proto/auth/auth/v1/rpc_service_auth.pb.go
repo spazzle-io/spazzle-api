@@ -76,7 +76,7 @@ type AuthenticateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	WalletAddress string                 `protobuf:"bytes,1,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Signature     string                 `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+	Signature     string                 `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -812,7 +812,7 @@ const file_auth_v1_rpc_service_auth_proto_rawDesc = "" +
 	"\x13AuthenticateRequest\x12-\n" +
 	"\x0ewallet_address\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rwalletAddress\x12$\n" +
 	"\auser_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12$\n" +
-	"\tsignature\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsignature\"w\n" +
+	"\tsignature\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\tsignature\"w\n" +
 	"\x14AuthenticateResponse\x123\n" +
 	"\n" +
 	"credential\x18\x01 \x01(\v2\x13.auth.v1.CredentialR\n" +
