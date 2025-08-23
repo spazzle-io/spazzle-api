@@ -32,7 +32,6 @@ func TestAuthorize(t *testing.T) {
 	testCases := []struct {
 		name            string
 		buildContext    func(t *testing.T, tokenMaker token.Maker) context.Context
-		userId          uuid.UUID
 		tokenType       token.Type
 		authorizedRoles []token.Role
 		checkResponse   func(t *testing.T, payload *token.Payload, err error)
@@ -53,7 +52,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -87,7 +85,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: nil,
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -110,7 +107,6 @@ func TestAuthorize(t *testing.T) {
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return context.Background()
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -129,7 +125,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -148,7 +143,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -167,7 +161,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -189,7 +182,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -211,29 +203,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
-			tokenType:       token.AccessToken,
-			authorizedRoles: []token.Role{token.User},
-			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
-				require.Error(t, err)
-				require.Empty(t, payload)
-			},
-		},
-		{
-			name: "Failure - mismatch in user id",
-			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				tk, _, err := tokenMaker.CreateToken(testUserId, testWalletAddress, token.User, token.AccessToken, 30*time.Second)
-				require.NoError(t, err)
-
-				md := metadata.MD{
-					commonMiddleware.AuthorizationHeader: []string{
-						fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, tk),
-					},
-				}
-
-				return metadata.NewIncomingContext(context.Background(), md)
-			},
-			userId:          uuid.New(),
 			tokenType:       token.AccessToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -255,7 +224,6 @@ func TestAuthorize(t *testing.T) {
 
 				return metadata.NewIncomingContext(context.Background(), md)
 			},
-			userId:          testUserId,
 			tokenType:       token.RefreshToken,
 			authorizedRoles: []token.Role{token.User},
 			checkResponse: func(t *testing.T, payload *token.Payload, err error) {
@@ -272,7 +240,7 @@ func TestAuthorize(t *testing.T) {
 			tokenMaker := getTestTokenMaker(t)
 
 			ctx := tc.buildContext(t, tokenMaker)
-			payload, err := AuthorizeToken(ctx, tc.userId, tokenMaker, tc.tokenType, tc.authorizedRoles)
+			payload, err := AuthorizeToken(ctx, tokenMaker, tc.tokenType, tc.authorizedRoles)
 
 			tc.checkResponse(t, payload, err)
 		})

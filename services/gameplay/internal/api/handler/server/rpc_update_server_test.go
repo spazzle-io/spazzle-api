@@ -30,7 +30,6 @@ func generateUpdateServerReqParams(t *testing.T) *pb.UpdateServerRequest {
 	require.NotEmpty(t, randStr)
 
 	return &pb.UpdateServerRequest{
-		UserId:            uuid.New().String(),
 		ServerId:          uuid.New().String(),
 		Name:              &wrapperspb.StringValue{Value: fmt.Sprintf("%s_%s", gofakeit.PetName(), randStr)},
 		IsPubliclyVisible: &wrapperspb.BoolValue{Value: true},
@@ -58,7 +57,11 @@ func TestUpdateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -87,14 +90,17 @@ func TestUpdateServer(t *testing.T) {
 		{
 			name: "success - no fields populated",
 			req: &pb.UpdateServerRequest{
-				UserId:   uuid.New().String(),
 				ServerId: uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -123,7 +129,6 @@ func TestUpdateServer(t *testing.T) {
 		{
 			name: "invalid request parameters",
 			req: &pb.UpdateServerRequest{
-				UserId:   "fake-user-id",
 				ServerId: "fake-server-id",
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {},
@@ -131,7 +136,7 @@ func TestUpdateServer(t *testing.T) {
 				require.Error(t, err)
 				require.Empty(t, res.GetServer())
 
-				expectedFieldViolations := []string{"userId", "serverId"}
+				expectedFieldViolations := []string{"serverId"}
 				handler.CheckInvalidRequestParams(t, err, expectedFieldViolations)
 			},
 		},
@@ -151,13 +156,36 @@ func TestUpdateServer(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid user id",
+			req:  updateServerParams,
+			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: "fake-id",
+						},
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateServerResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, handler.InternalServerError)
+				require.Empty(t, res)
+			},
+		},
+		{
 			name: "could not get server user permissions",
 			req:  updateServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -177,7 +205,11 @@ func TestUpdateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -195,7 +227,6 @@ func TestUpdateServer(t *testing.T) {
 		{
 			name: "invalid stake per game in request",
 			req: &pb.UpdateServerRequest{
-				UserId:   uuid.New().String(),
 				ServerId: uuid.New().String(),
 				StakePerGame: &wrapperspb.StringValue{
 					Value: "abc",
@@ -205,7 +236,11 @@ func TestUpdateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -227,7 +262,11 @@ func TestUpdateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -254,7 +293,11 @@ func TestUpdateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -284,7 +327,11 @@ func TestUpdateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).

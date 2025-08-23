@@ -79,7 +79,7 @@ service AuthService {
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Verify access token";
-      description: "Verify whether an access token is valid for a specified user id";
+      description: "Verify whether an access token is valid";
       security: {
         security_requirement: {
           key: "bearer"

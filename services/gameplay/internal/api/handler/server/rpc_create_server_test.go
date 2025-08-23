@@ -33,7 +33,6 @@ func generateCreateServerReqParams(t *testing.T) *pb.CreateServerRequest {
 	require.NotEmpty(t, serverWallet)
 
 	return &pb.CreateServerRequest{
-		UserId:            uuid.New().String(),
 		Name:              fmt.Sprintf("%s_%s", gofakeit.PetName(), randStr),
 		ServerAddress:     serverWallet.Address,
 		IsPubliclyVisible: true,
@@ -61,7 +60,11 @@ func TestCreateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					CreateServer(gomock.Any(), gomock.Any()).
@@ -88,7 +91,7 @@ func TestCreateServer(t *testing.T) {
 				require.Error(t, err)
 				require.Empty(t, res.GetServer())
 
-				expectedFieldViolations := []string{"userId", "name", "serverAddress", "serverAddress", "stakePerGame", "numRoundsPerGame", "roundDurationSecs", "numDrawingOptions"}
+				expectedFieldViolations := []string{"name", "serverAddress", "serverAddress", "stakePerGame", "numRoundsPerGame", "roundDurationSecs", "numDrawingOptions"}
 				handler.CheckInvalidRequestParams(t, err, expectedFieldViolations)
 			},
 		},
@@ -108,9 +111,27 @@ func TestCreateServer(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid user id",
+			req:  createServerParams,
+			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: "fake-id",
+						},
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, handler.InternalServerError)
+				require.Empty(t, res)
+			},
+		},
+		{
 			name: "invalid stake per game in request",
 			req: &pb.CreateServerRequest{
-				UserId:            createServerParams.UserId,
 				Name:              createServerParams.Name,
 				ServerAddress:     createServerParams.ServerAddress,
 				IsPubliclyVisible: false,
@@ -123,7 +144,11 @@ func TestCreateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
 				require.Error(t, err)
@@ -138,7 +163,11 @@ func TestCreateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					CreateServer(gomock.Any(), gomock.Any()).
@@ -158,15 +187,19 @@ func TestCreateServer(t *testing.T) {
 			name: "could not create server in db - unknown error",
 			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
-				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
-
 				store.EXPECT().
 					CreateServer(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(db.Server{}, errors.New("unknown error"))
+
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {
 				require.Error(t, err)
@@ -181,7 +214,11 @@ func TestCreateServer(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					CreateServer(gomock.Any(), gomock.Any()).

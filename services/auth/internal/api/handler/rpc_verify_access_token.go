@@ -3,14 +3,10 @@ package handler
 import (
 	"context"
 
-	"buf.build/go/protovalidate"
-
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/api/middleware"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,26 +14,15 @@ import (
 
 func (h *Handler) VerifyAccessToken(
 	ctx context.Context,
-	req *pb.VerifyAccessTokenRequest,
+	_ *pb.VerifyAccessTokenRequest,
 ) (*pb.VerifyAccessTokenResponse, error) {
-	logger := log.With().Str("user_id", req.GetUserId()).Logger()
-
-	violations := validateVerifyAccessTokenRequest(req)
-	if violations != nil {
-		return nil, invalidArgumentError(violations)
-	}
-
-	userId, err := uuid.Parse(req.GetUserId())
+	tkPayload, err := middleware.AuthorizeToken(ctx, h.tokenMaker, token.AccessToken, nil)
 	if err != nil {
-		logger.Error().Err(err).Msg("could not parse user id")
-		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
-	}
-
-	tkPayload, err := middleware.AuthorizeToken(ctx, userId, h.tokenMaker, token.AccessToken, nil)
-	if err != nil {
-		logger.Error().Err(err).Msg("could not authorize token")
+		log.Error().Err(err).Msg("could not authorize token")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
 	}
+
+	logger := log.With().Str("user_id", tkPayload.UserId.String()).Logger()
 
 	resPayloadRole := pb.AccessTokenPayload_ROLE_UNSPECIFIED
 	switch tkPayload.Role {
@@ -58,15 +43,7 @@ func (h *Handler) VerifyAccessToken(
 		},
 	}
 
+	logger.Info().Msg("access token verified")
+
 	return res, nil
-}
-
-func validateVerifyAccessTokenRequest(
-	req *pb.VerifyAccessTokenRequest,
-) (violations []*errdetails.BadRequest_FieldViolation) {
-	if err := protovalidate.Validate(req); err != nil {
-		violations = append(violations, protovalidateViolation(err)...)
-	}
-
-	return violations
 }

@@ -355,19 +355,11 @@
   },
   "definitions": {
     "ServerServiceArchiveServerBody": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     },
     "ServerServiceUpdateServerBody": {
       "type": "object",
       "properties": {
-        "userId": {
-          "type": "string"
-        },
         "name": {
           "type": "string"
         },
@@ -430,9 +422,6 @@
     "v1CreateServerRequest": {
       "type": "object",
       "properties": {
-        "userId": {
-          "type": "string"
-        },
         "name": {
           "type": "string"
         },

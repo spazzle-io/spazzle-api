@@ -20,9 +20,6 @@ func TestHandler_VerifyAccessToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, wallet)
 
-	userId := uuid.New()
-	userIdStr := userId.String()
-
 	testCases := []struct {
 		name          string
 		req           *pb.VerifyAccessTokenRequest
@@ -31,11 +28,11 @@ func TestHandler_VerifyAccessToken(t *testing.T) {
 	}{
 		{
 			name: "success",
-			req:  &pb.VerifyAccessTokenRequest{UserId: userIdStr},
+			req:  &pb.VerifyAccessTokenRequest{},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return newContextWithBearerToken(
 					t,
-					userId,
+					uuid.New(),
 					wallet.Address,
 					token.User,
 					token.AccessToken,
@@ -48,29 +45,8 @@ func TestHandler_VerifyAccessToken(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid request arguments",
-			req:  &pb.VerifyAccessTokenRequest{UserId: "invalid"},
-			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return newContextWithBearerToken(
-					t,
-					userId,
-					wallet.Address,
-					token.User,
-					token.AccessToken,
-					30*time.Second,
-					tokenMaker)
-			},
-			checkResponse: func(t *testing.T, res *pb.VerifyAccessTokenResponse, err error) {
-				require.Error(t, err)
-				require.Empty(t, res)
-
-				expectedFieldViolations := []string{"userId"}
-				checkInvalidRequestParams(t, err, expectedFieldViolations)
-			},
-		},
-		{
 			name: "missing authorization header",
-			req:  &pb.VerifyAccessTokenRequest{UserId: userIdStr},
+			req:  &pb.VerifyAccessTokenRequest{},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return context.Background()
 			},

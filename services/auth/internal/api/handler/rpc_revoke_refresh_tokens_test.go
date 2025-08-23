@@ -18,8 +18,6 @@ import (
 )
 
 func TestRevokeRefreshTokens(t *testing.T) {
-	userId := uuid.New()
-
 	testCases := []struct {
 		name          string
 		req           *pb.RevokeRefreshTokensRequest
@@ -29,20 +27,18 @@ func TestRevokeRefreshTokens(t *testing.T) {
 	}{
 		{
 			name: "success",
-			req: &pb.RevokeRefreshTokensRequest{
-				UserId: userId.String(),
-			},
+			req:  &pb.RevokeRefreshTokensRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				testCt := pgconn.NewCommandTag(fmt.Sprintf("test %d", int64(2)))
 
 				store.EXPECT().
-					RevokeSessions(gomock.Any(), userId).
+					RevokeSessions(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(testCt, nil)
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return newContextWithBearerToken(
-					t, userId, "walletAddress", token.User, token.AccessToken, 30*time.Second, tokenMaker,
+					t, uuid.New(), "walletAddress", token.User, token.AccessToken, 30*time.Second, tokenMaker,
 				)
 			},
 			checkResponse: func(t *testing.T, res *pb.RevokeRefreshTokensResponse, err error) {
@@ -51,27 +47,8 @@ func TestRevokeRefreshTokens(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid request parameters",
-			req: &pb.RevokeRefreshTokensRequest{
-				UserId: "",
-			},
-			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {},
-			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return context.Background()
-			},
-			checkResponse: func(t *testing.T, res *pb.RevokeRefreshTokensResponse, err error) {
-				require.Error(t, err)
-				require.Empty(t, res)
-
-				expectedFieldViolations := []string{"userId"}
-				checkInvalidRequestParams(t, err, expectedFieldViolations)
-			},
-		},
-		{
-			name: "missing access token",
-			req: &pb.RevokeRefreshTokensRequest{
-				UserId: userId.String(),
-			},
+			name:       "missing access token",
+			req:        &pb.RevokeRefreshTokensRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return context.Background()
@@ -84,18 +61,16 @@ func TestRevokeRefreshTokens(t *testing.T) {
 		},
 		{
 			name: "could not revoke sessions",
-			req: &pb.RevokeRefreshTokensRequest{
-				UserId: userId.String(),
-			},
+			req:  &pb.RevokeRefreshTokensRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				store.EXPECT().
-					RevokeSessions(gomock.Any(), userId).
+					RevokeSessions(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(pgconn.CommandTag{}, errors.New("some db error"))
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return newContextWithBearerToken(
-					t, userId, "walletAddress", token.User, token.AccessToken, 30*time.Second, tokenMaker,
+					t, uuid.New(), "walletAddress", token.User, token.AccessToken, 30*time.Second, tokenMaker,
 				)
 			},
 			checkResponse: func(t *testing.T, res *pb.RevokeRefreshTokensResponse, err error) {

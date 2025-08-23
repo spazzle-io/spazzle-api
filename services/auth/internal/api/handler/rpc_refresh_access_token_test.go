@@ -17,25 +17,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func generateTestRefreshAccessTokenReqParams(t *testing.T) (uuid.UUID, *pb.RefreshAccessTokenRequest) {
+func TestRefreshAccessToken(t *testing.T) {
 	wallet, err := commonUtil.NewEthereumWallet()
 	require.NoError(t, err)
 	require.NotEmpty(t, wallet)
-
-	userId, err := uuid.NewRandom()
-	require.NoError(t, err)
-	require.NotNil(t, userId)
-
-	return userId, &pb.RefreshAccessTokenRequest{
-		UserId:        userId.String(),
-		WalletAddress: wallet.Address,
-	}
-}
-
-func TestRefreshAccessToken(t *testing.T) {
-	userId, params := generateTestRefreshAccessTokenReqParams(t)
-	require.NotEmpty(t, params)
-	require.NotNil(t, userId)
 
 	testCases := []struct {
 		name          string
@@ -46,7 +31,7 @@ func TestRefreshAccessToken(t *testing.T) {
 	}{
 		{
 			name: "success",
-			req:  params,
+			req:  &pb.RefreshAccessTokenRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				store.EXPECT().
 					GetSessionById(gomock.Any(), gomock.Any()).
@@ -60,7 +45,7 @@ func TestRefreshAccessToken(t *testing.T) {
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return newContextWithBearerToken(
-					t, userId, params.WalletAddress, token.User, token.RefreshToken, 30*time.Second, tokenMaker,
+					t, uuid.New(), wallet.Address, token.User, token.RefreshToken, 30*time.Second, tokenMaker,
 				)
 			},
 			checkResponse: func(t *testing.T, res *pb.RefreshAccessTokenResponse, err error) {
@@ -69,26 +54,8 @@ func TestRefreshAccessToken(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid request arguments",
-			req: &pb.RefreshAccessTokenRequest{
-				UserId:        "invalid",
-				WalletAddress: "",
-			},
-			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {},
-			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return context.Background()
-			},
-			checkResponse: func(t *testing.T, res *pb.RefreshAccessTokenResponse, err error) {
-				require.Error(t, err)
-				require.Empty(t, res)
-
-				expectedFieldViolations := []string{"walletAddress", "walletAddress", "userId"}
-				checkInvalidRequestParams(t, err, expectedFieldViolations)
-			},
-		},
-		{
 			name:       "no refresh token",
-			req:        params,
+			req:        &pb.RefreshAccessTokenRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return context.Background()
@@ -101,7 +68,7 @@ func TestRefreshAccessToken(t *testing.T) {
 		},
 		{
 			name: "could not get session",
-			req:  params,
+			req:  &pb.RefreshAccessTokenRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				store.EXPECT().
 					GetSessionById(gomock.Any(), gomock.Any()).
@@ -110,7 +77,7 @@ func TestRefreshAccessToken(t *testing.T) {
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return newContextWithBearerToken(
-					t, userId, params.WalletAddress, token.User, token.RefreshToken, 30*time.Second, tokenMaker,
+					t, uuid.New(), wallet.Address, token.User, token.RefreshToken, 30*time.Second, tokenMaker,
 				)
 			},
 			checkResponse: func(t *testing.T, res *pb.RefreshAccessTokenResponse, err error) {
@@ -121,7 +88,7 @@ func TestRefreshAccessToken(t *testing.T) {
 		},
 		{
 			name: "session is revoked",
-			req:  params,
+			req:  &pb.RefreshAccessTokenRequest{},
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				store.EXPECT().
 					GetSessionById(gomock.Any(), gomock.Any()).
@@ -133,7 +100,7 @@ func TestRefreshAccessToken(t *testing.T) {
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
 				return newContextWithBearerToken(
-					t, userId, params.WalletAddress, token.User, token.RefreshToken, 30*time.Second, tokenMaker,
+					t, uuid.New(), wallet.Address, token.User, token.RefreshToken, 30*time.Second, tokenMaker,
 				)
 			},
 			checkResponse: func(t *testing.T, res *pb.RefreshAccessTokenResponse, err error) {

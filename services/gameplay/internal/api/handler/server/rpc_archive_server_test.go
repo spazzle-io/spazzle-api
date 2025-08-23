@@ -30,13 +30,16 @@ func TestArchiveServer(t *testing.T) {
 			name: "success",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					UpdateServer(gomock.Any(), gomock.Any()).
@@ -66,14 +69,13 @@ func TestArchiveServer(t *testing.T) {
 			name: "invalid request parameters",
 			req: &pb.ArchiveServerRequest{
 				ServerId: "fake-id",
-				UserId:   "fake-id",
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {},
 			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
 				require.Error(t, err)
 				require.Empty(t, res)
 
-				expectedFieldViolations := []string{"userId", "serverId"}
+				expectedFieldViolations := []string{"serverId"}
 				handler.CheckInvalidRequestParams(t, err, expectedFieldViolations)
 			},
 		},
@@ -81,7 +83,6 @@ func TestArchiveServer(t *testing.T) {
 			name: "could not verify access token",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
@@ -96,16 +97,40 @@ func TestArchiveServer(t *testing.T) {
 			},
 		},
 		{
-			name: "could not get server user permissions",
+			name: "invalid user id",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: "fake-id",
+						},
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ArchiveServerResponse, err error) {
+				require.Error(t, err)
+				require.ErrorContains(t, err, handler.InternalServerError)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name: "could not get server user permissions",
+			req: &pb.ArchiveServerRequest{
+				ServerId: uuid.New().String(),
+			},
+			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -122,13 +147,16 @@ func TestArchiveServer(t *testing.T) {
 			name: "user does not have permission to archive server",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -147,13 +175,16 @@ func TestArchiveServer(t *testing.T) {
 			name: "could not update server",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -177,13 +208,16 @@ func TestArchiveServer(t *testing.T) {
 			name: "server not found",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -207,13 +241,16 @@ func TestArchiveServer(t *testing.T) {
 			name: "could not map db server to pb",
 			req: &pb.ArchiveServerRequest{
 				ServerId: uuid.New().String(),
-				UserId:   uuid.New().String(),
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{
+						AccessTokenPayload: &authPb.AccessTokenPayload{
+							UserId: uuid.New().String(),
+						},
+					}, nil)
 
 				store.EXPECT().
 					GetServerUserPermissions(gomock.Any(), gomock.Any()).

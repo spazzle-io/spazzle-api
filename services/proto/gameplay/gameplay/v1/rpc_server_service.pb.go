@@ -26,14 +26,13 @@ const (
 
 type CreateServerRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	UserId            string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ServerAddress     string                 `protobuf:"bytes,3,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
-	IsPubliclyVisible bool                   `protobuf:"varint,4,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
-	StakePerGame      string                 `protobuf:"bytes,5,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  int32                  `protobuf:"varint,6,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs int32                  `protobuf:"varint,7,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions int32                  `protobuf:"varint,8,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ServerAddress     string                 `protobuf:"bytes,2,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
+	IsPubliclyVisible bool                   `protobuf:"varint,3,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
+	StakePerGame      string                 `protobuf:"bytes,4,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  int32                  `protobuf:"varint,5,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs int32                  `protobuf:"varint,6,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions int32                  `protobuf:"varint,7,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -66,13 +65,6 @@ func (x *CreateServerRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateServerRequest.ProtoReflect.Descriptor instead.
 func (*CreateServerRequest) Descriptor() ([]byte, []int) {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *CreateServerRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *CreateServerRequest) GetName() string {
@@ -714,14 +706,13 @@ func (x *GetUserServerPermissionsResponse) GetHasElevatedPermissions() bool {
 
 type UpdateServerRequest struct {
 	state             protoimpl.MessageState  `protogen:"open.v1"`
-	UserId            string                  `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServerId          string                  `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	Name              *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	IsPubliclyVisible *wrapperspb.BoolValue   `protobuf:"bytes,4,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
-	StakePerGame      *wrapperspb.StringValue `protobuf:"bytes,5,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  *wrapperspb.Int32Value  `protobuf:"bytes,6,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs *wrapperspb.Int32Value  `protobuf:"bytes,7,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions *wrapperspb.Int32Value  `protobuf:"bytes,8,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	ServerId          string                  `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	Name              *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	IsPubliclyVisible *wrapperspb.BoolValue   `protobuf:"bytes,3,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
+	StakePerGame      *wrapperspb.StringValue `protobuf:"bytes,4,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  *wrapperspb.Int32Value  `protobuf:"bytes,5,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs *wrapperspb.Int32Value  `protobuf:"bytes,6,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions *wrapperspb.Int32Value  `protobuf:"bytes,7,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -754,13 +745,6 @@ func (x *UpdateServerRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UpdateServerRequest.ProtoReflect.Descriptor instead.
 func (*UpdateServerRequest) Descriptor() ([]byte, []int) {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *UpdateServerRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *UpdateServerRequest) GetServerId() string {
@@ -858,8 +842,7 @@ func (x *UpdateServerResponse) GetServer() *Server {
 
 type ArchiveServerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ServerId      string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -892,13 +875,6 @@ func (x *ArchiveServerRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ArchiveServerRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveServerRequest) Descriptor() ([]byte, []int) {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ArchiveServerRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *ArchiveServerRequest) GetServerId() string {
@@ -1328,16 +1304,15 @@ var File_gameplay_v1_rpc_server_service_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\n" +
-	"$gameplay/v1/rpc_server_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x03\n" +
-	"\x13CreateServerRequest\x12$\n" +
-	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12\x1a\n" +
-	"\x04name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
-	"\x0eserver_address\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rserverAddress\x12.\n" +
-	"\x13is_publicly_visible\x18\x04 \x01(\bR\x11isPubliclyVisible\x12,\n" +
-	"\x0estake_per_game\x18\x05 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fstakePerGame\x125\n" +
-	"\x13num_rounds_per_game\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10numRoundsPerGame\x126\n" +
-	"\x13round_duration_secs\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11roundDurationSecs\x126\n" +
-	"\x13num_drawing_options\x18\b \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11numDrawingOptions\"C\n" +
+	"$gameplay/v1/rpc_server_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe5\x02\n" +
+	"\x13CreateServerRequest\x12\x1a\n" +
+	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
+	"\x0eserver_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rserverAddress\x12.\n" +
+	"\x13is_publicly_visible\x18\x03 \x01(\bR\x11isPubliclyVisible\x12,\n" +
+	"\x0estake_per_game\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fstakePerGame\x125\n" +
+	"\x13num_rounds_per_game\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10numRoundsPerGame\x126\n" +
+	"\x13round_duration_secs\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11roundDurationSecs\x126\n" +
+	"\x13num_drawing_options\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11numDrawingOptions\"C\n" +
 	"\x14CreateServerResponse\x12+\n" +
 	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"/\n" +
 	"\x10GetServerRequest\x12\x1b\n" +
@@ -1374,21 +1349,19 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	" GetUserServerPermissionsResponse\x12\x19\n" +
 	"\bis_owner\x18\x01 \x01(\bR\aisOwner\x12\x19\n" +
 	"\bis_admin\x18\x02 \x01(\bR\aisAdmin\x128\n" +
-	"\x18has_elevated_permissions\x18\x03 \x01(\bR\x16hasElevatedPermissions\"\x8d\x04\n" +
-	"\x13UpdateServerRequest\x12$\n" +
-	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12(\n" +
-	"\tserver_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x120\n" +
-	"\x04name\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueR\x04name\x12J\n" +
-	"\x13is_publicly_visible\x18\x04 \x01(\v2\x1a.google.protobuf.BoolValueR\x11isPubliclyVisible\x12B\n" +
-	"\x0estake_per_game\x18\x05 \x01(\v2\x1c.google.protobuf.StringValueR\fstakePerGame\x12J\n" +
-	"\x13num_rounds_per_game\x18\x06 \x01(\v2\x1b.google.protobuf.Int32ValueR\x10numRoundsPerGame\x12K\n" +
-	"\x13round_duration_secs\x18\a \x01(\v2\x1b.google.protobuf.Int32ValueR\x11roundDurationSecs\x12K\n" +
-	"\x13num_drawing_options\x18\b \x01(\v2\x1b.google.protobuf.Int32ValueR\x11numDrawingOptions\"C\n" +
+	"\x18has_elevated_permissions\x18\x03 \x01(\bR\x16hasElevatedPermissions\"\xe7\x03\n" +
+	"\x13UpdateServerRequest\x12(\n" +
+	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x120\n" +
+	"\x04name\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\x04name\x12J\n" +
+	"\x13is_publicly_visible\x18\x03 \x01(\v2\x1a.google.protobuf.BoolValueR\x11isPubliclyVisible\x12B\n" +
+	"\x0estake_per_game\x18\x04 \x01(\v2\x1c.google.protobuf.StringValueR\fstakePerGame\x12J\n" +
+	"\x13num_rounds_per_game\x18\x05 \x01(\v2\x1b.google.protobuf.Int32ValueR\x10numRoundsPerGame\x12K\n" +
+	"\x13round_duration_secs\x18\x06 \x01(\v2\x1b.google.protobuf.Int32ValueR\x11roundDurationSecs\x12K\n" +
+	"\x13num_drawing_options\x18\a \x01(\v2\x1b.google.protobuf.Int32ValueR\x11numDrawingOptions\"C\n" +
 	"\x14UpdateServerResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"f\n" +
-	"\x14ArchiveServerRequest\x12$\n" +
-	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12(\n" +
-	"\tserver_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"D\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"@\n" +
+	"\x14ArchiveServerRequest\x12(\n" +
+	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"D\n" +
 	"\x15ArchiveServerResponse\x12+\n" +
 	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\xb5\x04\n" +
 	"\x06Server\x12\x0e\n" +

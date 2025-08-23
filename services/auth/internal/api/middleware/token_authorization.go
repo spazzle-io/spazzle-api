@@ -8,14 +8,12 @@ import (
 
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 
-	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
 	"google.golang.org/grpc/metadata"
 )
 
 func AuthorizeToken(
 	ctx context.Context,
-	userId uuid.UUID,
 	tokenMaker token.Maker,
 	tokenType token.Type,
 	authorizedRoles []token.Role,
@@ -53,10 +51,6 @@ func AuthorizeToken(
 
 	if authorizedRoles != nil && !isAuthorizedRole(payload.Role, authorizedRoles) {
 		return nil, fmt.Errorf("unauthorized role: role '%s' is not allowed", payload.Role)
-	}
-
-	if userId != payload.UserId {
-		return nil, fmt.Errorf("unauthorized access: user ID '%s' does not match token owner '%s'", userId, payload.UserId)
 	}
 
 	return payload, nil
