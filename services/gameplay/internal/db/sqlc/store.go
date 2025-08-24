@@ -10,6 +10,7 @@ import (
 type Store interface {
 	Querier
 	AddServerAdminTx(ctx context.Context, params AddServerAdminTxParams) (AddServerAdminTxResult, error)
+	RemoveServerAdminTx(ctx context.Context, params RemoveServerAdminTxParams) error
 }
 
 type SQLStore struct {

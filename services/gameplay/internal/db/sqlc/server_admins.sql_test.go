@@ -122,8 +122,17 @@ func TestRemoveServerAdmin(t *testing.T) {
 		ServerID: server.ID,
 		UserID:   userId,
 	}
-	err = testStore.RemoveServerAdmin(context.Background(), params)
+	ct, err := testStore.RemoveServerAdmin(context.Background(), params)
 	require.NoError(t, err)
+	require.Equal(t, int64(1), ct.RowsAffected())
+
+	params = RemoveServerAdminParams{
+		ServerID: server.ID,
+		UserID:   userId,
+	}
+	ct, err = testStore.RemoveServerAdmin(context.Background(), params)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), ct.RowsAffected())
 
 	serverAdmins, err = testStore.ListServerAdmins(context.Background(), ListServerAdminsParams{
 		ServerID: server.ID,

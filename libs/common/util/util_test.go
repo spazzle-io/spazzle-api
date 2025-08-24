@@ -1,6 +1,7 @@
 package util
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -57,6 +58,45 @@ func TestNormalizeHexString(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			normalizedHex := NormalizeHexString(tc.inputHex)
 			require.Equal(t, tc.expectedHex, normalizedHex)
+		})
+	}
+}
+
+func TestInt64ToInt32(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    int64
+		expected int32
+		success  bool
+	}{
+		{
+			name:     "success",
+			input:    1,
+			expected: 1,
+			success:  true,
+		},
+		{
+			name:    "input too small",
+			input:   int64(math.MinInt64),
+			success: false,
+		},
+		{
+			name:    "input too large",
+			input:   int64(math.MaxInt64),
+			success: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Int64ToInt32(tc.input)
+			if tc.success {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+				return
+			}
+
+			require.Error(t, err)
 		})
 	}
 }

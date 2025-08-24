@@ -2,17 +2,11 @@ package db
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/rs/zerolog/log"
-)
-
-var (
-	ErrUserAlreadyAdmin = errors.New("user is already a registered server admin")
-	ErrServerNotfound   = errors.New("server not found")
 )
 
 type AddServerAdminTxParams struct {

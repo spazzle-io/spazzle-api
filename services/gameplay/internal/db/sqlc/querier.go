@@ -26,7 +26,7 @@ type Querier interface {
 	ListUserServers(ctx context.Context, arg ListUserServersParams) ([]ListUserServersRow, error)
 	ListWords(ctx context.Context, arg ListWordsParams) ([]ListWordsRow, error)
 	RemoveAllWordsFromServer(ctx context.Context, serverID uuid.UUID) (pgconn.CommandTag, error)
-	RemoveServerAdmin(ctx context.Context, arg RemoveServerAdminParams) error
+	RemoveServerAdmin(ctx context.Context, arg RemoveServerAdminParams) (pgconn.CommandTag, error)
 	RemoveWordsFromServer(ctx context.Context, arg RemoveWordsFromServerParams) (pgconn.CommandTag, error)
 	UpdateServer(ctx context.Context, arg UpdateServerParams) (Server, error)
 }
