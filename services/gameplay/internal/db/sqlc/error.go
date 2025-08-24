@@ -8,7 +8,10 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-const UniqueViolationCode = "23505"
+const (
+	UniqueViolationCode     = "23505"
+	ForeignKeyViolationCode = "23503"
+)
 
 var RecordNotFoundError = pgx.ErrNoRows
 

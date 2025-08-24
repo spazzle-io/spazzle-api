@@ -58,6 +58,21 @@ func (mr *MockStoreMockRecorder) AddServerAdmin(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServerAdmin", reflect.TypeOf((*MockStore)(nil).AddServerAdmin), ctx, arg)
 }
 
+// AddServerAdminTx mocks base method.
+func (m *MockStore) AddServerAdminTx(ctx context.Context, params db.AddServerAdminTxParams) (db.AddServerAdminTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddServerAdminTx", ctx, params)
+	ret0, _ := ret[0].(db.AddServerAdminTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddServerAdminTx indicates an expected call of AddServerAdminTx.
+func (mr *MockStoreMockRecorder) AddServerAdminTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServerAdminTx", reflect.TypeOf((*MockStore)(nil).AddServerAdminTx), ctx, params)
+}
+
 // AddWordsToServer mocks base method.
 func (m *MockStore) AddWordsToServer(ctx context.Context, arg db.AddWordsToServerParams) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()

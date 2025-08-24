@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package gameplay.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
+
+message AddServerAdminRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string user_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message AddServerAdminResponse {
+  ServerAdmin admin = 1;
+}
+
+message ListServerAdminsRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.Timestamp after_created_at = 2;
+  google.protobuf.StringValue after_id = 3;
+  google.protobuf.Int32Value page_size = 4;
+}
+
+message ListServerAdminsResponse {
+  repeated ServerAdmin admins = 1;
+  int64 total_count = 2;
+  ListServerAdminsCursor cursor = 3;
+}
+
+message RemoveServerAdminRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string user_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message RemoveServerAdminResponse {
+  string user_id = 1;
+}
+
+message ServerAdmin {
+  string server_id = 1;
+  string user_id = 2;
+  google.protobuf.Timestamp added_at = 3;
+}
+
+message ListServerAdminsCursor {
+  google.protobuf.Timestamp after_added_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
+}

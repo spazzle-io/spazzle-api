@@ -51,7 +51,7 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	nonce := splitServiceAuthenticationVal[2]
 	signature := splitServiceAuthenticationVal[3]
 
-	logger = log.With().Str("authenticating_service", serviceName).Logger()
+	logger = logger.With().Str("authenticating_service", serviceName).Logger()
 
 	reqTimestampInt, err := strconv.ParseInt(reqTimestampStr, 10, 64)
 	if err != nil {

@@ -385,3 +385,181 @@ var ServerService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "gameplay/v1/service_gameplay.proto",
 }
+
+const (
+	ServerAdminService_AddServerAdmin_FullMethodName    = "/gameplay.v1.ServerAdminService/AddServerAdmin"
+	ServerAdminService_ListServerAdmins_FullMethodName  = "/gameplay.v1.ServerAdminService/ListServerAdmins"
+	ServerAdminService_RemoveServerAdmin_FullMethodName = "/gameplay.v1.ServerAdminService/RemoveServerAdmin"
+)
+
+// ServerAdminServiceClient is the client API for ServerAdminService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ServerAdminServiceClient interface {
+	AddServerAdmin(ctx context.Context, in *AddServerAdminRequest, opts ...grpc.CallOption) (*AddServerAdminResponse, error)
+	ListServerAdmins(ctx context.Context, in *ListServerAdminsRequest, opts ...grpc.CallOption) (*ListServerAdminsResponse, error)
+	RemoveServerAdmin(ctx context.Context, in *RemoveServerAdminRequest, opts ...grpc.CallOption) (*RemoveServerAdminResponse, error)
+}
+
+type serverAdminServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewServerAdminServiceClient(cc grpc.ClientConnInterface) ServerAdminServiceClient {
+	return &serverAdminServiceClient{cc}
+}
+
+func (c *serverAdminServiceClient) AddServerAdmin(ctx context.Context, in *AddServerAdminRequest, opts ...grpc.CallOption) (*AddServerAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddServerAdminResponse)
+	err := c.cc.Invoke(ctx, ServerAdminService_AddServerAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serverAdminServiceClient) ListServerAdmins(ctx context.Context, in *ListServerAdminsRequest, opts ...grpc.CallOption) (*ListServerAdminsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListServerAdminsResponse)
+	err := c.cc.Invoke(ctx, ServerAdminService_ListServerAdmins_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serverAdminServiceClient) RemoveServerAdmin(ctx context.Context, in *RemoveServerAdminRequest, opts ...grpc.CallOption) (*RemoveServerAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveServerAdminResponse)
+	err := c.cc.Invoke(ctx, ServerAdminService_RemoveServerAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ServerAdminServiceServer is the server API for ServerAdminService service.
+// All implementations must embed UnimplementedServerAdminServiceServer
+// for forward compatibility.
+type ServerAdminServiceServer interface {
+	AddServerAdmin(context.Context, *AddServerAdminRequest) (*AddServerAdminResponse, error)
+	ListServerAdmins(context.Context, *ListServerAdminsRequest) (*ListServerAdminsResponse, error)
+	RemoveServerAdmin(context.Context, *RemoveServerAdminRequest) (*RemoveServerAdminResponse, error)
+	mustEmbedUnimplementedServerAdminServiceServer()
+}
+
+// UnimplementedServerAdminServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedServerAdminServiceServer struct{}
+
+func (UnimplementedServerAdminServiceServer) AddServerAdmin(context.Context, *AddServerAdminRequest) (*AddServerAdminResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddServerAdmin not implemented")
+}
+func (UnimplementedServerAdminServiceServer) ListServerAdmins(context.Context, *ListServerAdminsRequest) (*ListServerAdminsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListServerAdmins not implemented")
+}
+func (UnimplementedServerAdminServiceServer) RemoveServerAdmin(context.Context, *RemoveServerAdminRequest) (*RemoveServerAdminResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveServerAdmin not implemented")
+}
+func (UnimplementedServerAdminServiceServer) mustEmbedUnimplementedServerAdminServiceServer() {}
+func (UnimplementedServerAdminServiceServer) testEmbeddedByValue()                            {}
+
+// UnsafeServerAdminServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ServerAdminServiceServer will
+// result in compilation errors.
+type UnsafeServerAdminServiceServer interface {
+	mustEmbedUnimplementedServerAdminServiceServer()
+}
+
+func RegisterServerAdminServiceServer(s grpc.ServiceRegistrar, srv ServerAdminServiceServer) {
+	// If the following call pancis, it indicates UnimplementedServerAdminServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ServerAdminService_ServiceDesc, srv)
+}
+
+func _ServerAdminService_AddServerAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddServerAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerAdminServiceServer).AddServerAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerAdminService_AddServerAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerAdminServiceServer).AddServerAdmin(ctx, req.(*AddServerAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServerAdminService_ListServerAdmins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListServerAdminsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerAdminServiceServer).ListServerAdmins(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerAdminService_ListServerAdmins_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerAdminServiceServer).ListServerAdmins(ctx, req.(*ListServerAdminsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ServerAdminService_RemoveServerAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveServerAdminRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerAdminServiceServer).RemoveServerAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerAdminService_RemoveServerAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerAdminServiceServer).RemoveServerAdmin(ctx, req.(*RemoveServerAdminRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ServerAdminService_ServiceDesc is the grpc.ServiceDesc for ServerAdminService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ServerAdminService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gameplay.v1.ServerAdminService",
+	HandlerType: (*ServerAdminServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddServerAdmin",
+			Handler:    _ServerAdminService_AddServerAdmin_Handler,
+		},
+		{
+			MethodName: "ListServerAdmins",
+			Handler:    _ServerAdminService_ListServerAdmins_Handler,
+		},
+		{
+			MethodName: "RemoveServerAdmin",
+			Handler:    _ServerAdminService_RemoveServerAdmin_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gameplay/v1/service_gameplay.proto",
+}
