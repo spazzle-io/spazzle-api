@@ -61,7 +61,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	server, err := h.store.CreateServer(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create server")
-		return nil, handleServerDBError(err)
+		return nil, HandleServerDBError(err)
 	}
 
 	pbServer, err := mapDBServerToPb(&server)

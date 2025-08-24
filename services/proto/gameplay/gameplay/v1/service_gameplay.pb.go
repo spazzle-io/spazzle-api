@@ -26,7 +26,7 @@ var File_gameplay_v1_service_gameplay_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\n" +
-	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto2\xa4\v\n" +
+	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto\x1a*gameplay/v1/rpc_server_admin_service.proto2\xa4\v\n" +
 	"\rServerService\x12\x9d\x01\n" +
 	"\fCreateServer\x12 .gameplay.v1.CreateServerRequest\x1a!.gameplay.v1.CreateServerResponse\"H\x92A2\x12\rCreate server\x1a\x13Create a new serverb\f\n" +
 	"\n" +
@@ -46,7 +46,17 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\rArchiveServer\x12!.gameplay.v1.ArchiveServerRequest\x1a\".gameplay.v1.ArchiveServerResponse\"X\x92A.\x12\x0eArchive server\x1a\x0eArchive serverb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/servers/{server_id}/archiveB\xcf\x02\x92A\x9f\x01\x124\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/servers/{server_id}/archive2\x88\x05\n" +
+	"\x12ServerAdminService\x12\xca\x01\n" +
+	"\x0eAddServerAdmin\x12\".gameplay.v1.AddServerAdminRequest\x1a#.gameplay.v1.AddServerAdminResponse\"o\x92AF\x12\x1aAdd a server administrator\x1a\x1aAdd a server administratorb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/servers/{server_id}/admins\x12\xc1\x01\n" +
+	"\x10ListServerAdmins\x12$.gameplay.v1.ListServerAdminsRequest\x1a%.gameplay.v1.ListServerAdminsResponse\"`\x92A:\x12\x1aList server administrators\x1a\x1aList server administratorsb\x00\x82\xd3\xe4\x93\x02\x1d\x12\x1b/servers/{server_id}/admins\x12\xe0\x01\n" +
+	"\x11RemoveServerAdmin\x12%.gameplay.v1.RemoveServerAdminRequest\x1a&.gameplay.v1.RemoveServerAdminResponse\"|\x92AL\x12\x1dRemove a server administrator\x1a\x1dRemove a server administratorb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02'*%/servers/{server_id}/admins/{user_id}B\xcf\x02\x92A\x9f\x01\x124\n" +
 	"\x10Gameplay Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -65,14 +75,20 @@ var file_gameplay_v1_service_gameplay_proto_goTypes = []any{
 	(*GetUserServerPermissionsRequest)(nil),  // 5: gameplay.v1.GetUserServerPermissionsRequest
 	(*UpdateServerRequest)(nil),              // 6: gameplay.v1.UpdateServerRequest
 	(*ArchiveServerRequest)(nil),             // 7: gameplay.v1.ArchiveServerRequest
-	(*CreateServerResponse)(nil),             // 8: gameplay.v1.CreateServerResponse
-	(*GetServerResponse)(nil),                // 9: gameplay.v1.GetServerResponse
-	(*GetServerByNameResponse)(nil),          // 10: gameplay.v1.GetServerByNameResponse
-	(*ListServersResponse)(nil),              // 11: gameplay.v1.ListServersResponse
-	(*ListUserServersResponse)(nil),          // 12: gameplay.v1.ListUserServersResponse
-	(*GetUserServerPermissionsResponse)(nil), // 13: gameplay.v1.GetUserServerPermissionsResponse
-	(*UpdateServerResponse)(nil),             // 14: gameplay.v1.UpdateServerResponse
-	(*ArchiveServerResponse)(nil),            // 15: gameplay.v1.ArchiveServerResponse
+	(*AddServerAdminRequest)(nil),            // 8: gameplay.v1.AddServerAdminRequest
+	(*ListServerAdminsRequest)(nil),          // 9: gameplay.v1.ListServerAdminsRequest
+	(*RemoveServerAdminRequest)(nil),         // 10: gameplay.v1.RemoveServerAdminRequest
+	(*CreateServerResponse)(nil),             // 11: gameplay.v1.CreateServerResponse
+	(*GetServerResponse)(nil),                // 12: gameplay.v1.GetServerResponse
+	(*GetServerByNameResponse)(nil),          // 13: gameplay.v1.GetServerByNameResponse
+	(*ListServersResponse)(nil),              // 14: gameplay.v1.ListServersResponse
+	(*ListUserServersResponse)(nil),          // 15: gameplay.v1.ListUserServersResponse
+	(*GetUserServerPermissionsResponse)(nil), // 16: gameplay.v1.GetUserServerPermissionsResponse
+	(*UpdateServerResponse)(nil),             // 17: gameplay.v1.UpdateServerResponse
+	(*ArchiveServerResponse)(nil),            // 18: gameplay.v1.ArchiveServerResponse
+	(*AddServerAdminResponse)(nil),           // 19: gameplay.v1.AddServerAdminResponse
+	(*ListServerAdminsResponse)(nil),         // 20: gameplay.v1.ListServerAdminsResponse
+	(*RemoveServerAdminResponse)(nil),        // 21: gameplay.v1.RemoveServerAdminResponse
 }
 var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	0,  // 0: gameplay.v1.ServerService.CreateServer:input_type -> gameplay.v1.CreateServerRequest
@@ -83,16 +99,22 @@ var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	5,  // 5: gameplay.v1.ServerService.GetUserServerPermissions:input_type -> gameplay.v1.GetUserServerPermissionsRequest
 	6,  // 6: gameplay.v1.ServerService.UpdateServer:input_type -> gameplay.v1.UpdateServerRequest
 	7,  // 7: gameplay.v1.ServerService.ArchiveServer:input_type -> gameplay.v1.ArchiveServerRequest
-	8,  // 8: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
-	9,  // 9: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
-	10, // 10: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
-	11, // 11: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
-	12, // 12: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
-	13, // 13: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
-	14, // 14: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
-	15, // 15: gameplay.v1.ServerService.ArchiveServer:output_type -> gameplay.v1.ArchiveServerResponse
-	8,  // [8:16] is the sub-list for method output_type
-	0,  // [0:8] is the sub-list for method input_type
+	8,  // 8: gameplay.v1.ServerAdminService.AddServerAdmin:input_type -> gameplay.v1.AddServerAdminRequest
+	9,  // 9: gameplay.v1.ServerAdminService.ListServerAdmins:input_type -> gameplay.v1.ListServerAdminsRequest
+	10, // 10: gameplay.v1.ServerAdminService.RemoveServerAdmin:input_type -> gameplay.v1.RemoveServerAdminRequest
+	11, // 11: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
+	12, // 12: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
+	13, // 13: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
+	14, // 14: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
+	15, // 15: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
+	16, // 16: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
+	17, // 17: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
+	18, // 18: gameplay.v1.ServerService.ArchiveServer:output_type -> gameplay.v1.ArchiveServerResponse
+	19, // 19: gameplay.v1.ServerAdminService.AddServerAdmin:output_type -> gameplay.v1.AddServerAdminResponse
+	20, // 20: gameplay.v1.ServerAdminService.ListServerAdmins:output_type -> gameplay.v1.ListServerAdminsResponse
+	21, // 21: gameplay.v1.ServerAdminService.RemoveServerAdmin:output_type -> gameplay.v1.RemoveServerAdminResponse
+	11, // [11:22] is the sub-list for method output_type
+	0,  // [0:11] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -104,6 +126,7 @@ func file_gameplay_v1_service_gameplay_proto_init() {
 		return
 	}
 	file_gameplay_v1_rpc_server_service_proto_init()
+	file_gameplay_v1_rpc_server_admin_service_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
@@ -112,7 +135,7 @@ func file_gameplay_v1_service_gameplay_proto_init() {
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_gameplay_v1_service_gameplay_proto_goTypes,
 		DependencyIndexes: file_gameplay_v1_service_gameplay_proto_depIdxs,

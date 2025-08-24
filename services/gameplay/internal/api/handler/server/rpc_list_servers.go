@@ -56,16 +56,13 @@ func (h *Handler) ListServers(ctx context.Context, req *pb.ListServersRequest) (
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	var cursor *pb.ListServersCursor
+	cursor := &pb.ListServersCursor{
+		PageSize: pageSize,
+	}
 	if n := len(servers); n > 0 {
 		last := servers[n-1]
-		cursor = &pb.ListServersCursor{
-			AfterCreatedAt: timestamppb.New(last.CreatedAt),
-			AfterId:        last.ID.String(),
-			PageSize:       pageSize,
-		}
-	} else {
-		cursor = &pb.ListServersCursor{PageSize: pageSize}
+		cursor.AfterId = last.ID.String()
+		cursor.AfterCreatedAt = timestamppb.New(last.CreatedAt)
 	}
 
 	response := &pb.ListServersResponse{

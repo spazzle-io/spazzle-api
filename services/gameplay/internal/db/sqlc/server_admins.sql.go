@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -80,7 +81,7 @@ func (q *Queries) ListServerAdmins(ctx context.Context, arg ListServerAdminsPara
 	return items, nil
 }
 
-const removeServerAdmin = `-- name: RemoveServerAdmin :exec
+const removeServerAdmin = `-- name: RemoveServerAdmin :execresult
 DELETE FROM server_admins
 WHERE server_id = $1 AND user_id = $2
 `
@@ -90,7 +91,6 @@ type RemoveServerAdminParams struct {
 	UserID   uuid.UUID `json:"user_id"`
 }
 
-func (q *Queries) RemoveServerAdmin(ctx context.Context, arg RemoveServerAdminParams) error {
-	_, err := q.db.Exec(ctx, removeServerAdmin, arg.ServerID, arg.UserID)
-	return err
+func (q *Queries) RemoveServerAdmin(ctx context.Context, arg RemoveServerAdminParams) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, removeServerAdmin, arg.ServerID, arg.UserID)
 }

@@ -58,6 +58,21 @@ func (mr *MockStoreMockRecorder) AddServerAdmin(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServerAdmin", reflect.TypeOf((*MockStore)(nil).AddServerAdmin), ctx, arg)
 }
 
+// AddServerAdminTx mocks base method.
+func (m *MockStore) AddServerAdminTx(ctx context.Context, params db.AddServerAdminTxParams) (db.AddServerAdminTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddServerAdminTx", ctx, params)
+	ret0, _ := ret[0].(db.AddServerAdminTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddServerAdminTx indicates an expected call of AddServerAdminTx.
+func (mr *MockStoreMockRecorder) AddServerAdminTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServerAdminTx", reflect.TypeOf((*MockStore)(nil).AddServerAdminTx), ctx, params)
+}
+
 // AddWordsToServer mocks base method.
 func (m *MockStore) AddWordsToServer(ctx context.Context, arg db.AddWordsToServerParams) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
@@ -254,17 +269,32 @@ func (mr *MockStoreMockRecorder) RemoveAllWordsFromServer(ctx, serverID any) *go
 }
 
 // RemoveServerAdmin mocks base method.
-func (m *MockStore) RemoveServerAdmin(ctx context.Context, arg db.RemoveServerAdminParams) error {
+func (m *MockStore) RemoveServerAdmin(ctx context.Context, arg db.RemoveServerAdminParams) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveServerAdmin", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(pgconn.CommandTag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RemoveServerAdmin indicates an expected call of RemoveServerAdmin.
 func (mr *MockStoreMockRecorder) RemoveServerAdmin(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveServerAdmin", reflect.TypeOf((*MockStore)(nil).RemoveServerAdmin), ctx, arg)
+}
+
+// RemoveServerAdminTx mocks base method.
+func (m *MockStore) RemoveServerAdminTx(ctx context.Context, params db.RemoveServerAdminTxParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveServerAdminTx", ctx, params)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveServerAdminTx indicates an expected call of RemoveServerAdminTx.
+func (mr *MockStoreMockRecorder) RemoveServerAdminTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveServerAdminTx", reflect.TypeOf((*MockStore)(nil).RemoveServerAdminTx), ctx, params)
 }
 
 // RemoveWordsFromServer mocks base method.

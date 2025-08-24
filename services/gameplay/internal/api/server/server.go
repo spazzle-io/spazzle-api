@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	serveradmin "github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/server-admin"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/server"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/services"
@@ -15,7 +17,8 @@ import (
 )
 
 type Server struct {
-	ServerHandler server.Handler
+	ServerHandler      server.Handler
+	ServerAdminHandler serveradmin.Handler
 }
 
 var once sync.Once
@@ -27,14 +30,18 @@ func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, 
 	}
 
 	serverHandler := server.New(config, store, cache, authService)
+	serverAdminHandler := serveradmin.New(config, store, cache, authService)
 
-	err = setupRateLimiter(config.ServiceName, config.RedisConnURL, serverHandler.RateLimits())
+	err = setupRateLimiter(
+		config.ServiceName, config.RedisConnURL, serverHandler.RateLimits(), serverAdminHandler.RateLimits(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot setup rate limiter: %w", err)
 	}
 
 	s := &Server{
-		ServerHandler: *serverHandler,
+		ServerHandler:      *serverHandler,
+		ServerAdminHandler: *serverAdminHandler,
 	}
 
 	return s, nil

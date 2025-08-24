@@ -8,9 +8,16 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-const UniqueViolationCode = "23505"
+const (
+	UniqueViolationCode     = "23505"
+	ForeignKeyViolationCode = "23503"
+)
 
-var RecordNotFoundError = pgx.ErrNoRows
+var (
+	RecordNotFoundError = pgx.ErrNoRows
+	ErrUserAlreadyAdmin = errors.New("user is already a registered server admin")
+	ErrServerNotfound   = errors.New("server not found")
+)
 
 type Error struct {
 	Code           string

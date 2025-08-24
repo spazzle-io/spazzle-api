@@ -11,6 +11,9 @@
   "tags": [
     {
       "name": "ServerService"
+    },
+    {
+      "name": "ServerAdminService"
     }
   ],
   "consumes": [
@@ -268,6 +271,145 @@
         ]
       }
     },
+    "/servers/{serverId}/admins": {
+      "get": {
+        "summary": "List server administrators",
+        "description": "List server administrators",
+        "operationId": "ServerAdminService_ListServerAdmins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListServerAdminsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "afterAddedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterUserId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "ServerAdminService"
+        ],
+        "security": []
+      },
+      "post": {
+        "summary": "Add a server administrator",
+        "description": "Add a server administrator",
+        "operationId": "ServerAdminService_AddServerAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddServerAdminResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ServerAdminServiceAddServerAdminBody"
+            }
+          }
+        ],
+        "tags": [
+          "ServerAdminService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/servers/{serverId}/admins/{userId}": {
+      "delete": {
+        "summary": "Remove a server administrator",
+        "description": "Remove a server administrator",
+        "operationId": "ServerAdminService_RemoveServerAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RemoveServerAdminResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerAdminService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/servers/{serverId}/archive": {
       "post": {
         "summary": "Archive server",
@@ -354,6 +496,14 @@
     }
   },
   "definitions": {
+    "ServerAdminServiceAddServerAdminBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
     "ServerServiceArchiveServerBody": {
       "type": "object"
     },
@@ -408,6 +558,14 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "v1AddServerAdminResponse": {
+      "type": "object",
+      "properties": {
+        "admin": {
+          "$ref": "#/definitions/v1ServerAdmin"
         }
       }
     },
@@ -486,6 +644,41 @@
         }
       }
     },
+    "v1ListServerAdminsCursor": {
+      "type": "object",
+      "properties": {
+        "afterAddedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterUserId": {
+          "type": "string"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListServerAdminsResponse": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ServerAdmin"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1ListServerAdminsCursor"
+        }
+      }
+    },
     "v1ListServersCursor": {
       "type": "object",
       "properties": {
@@ -543,6 +736,14 @@
         }
       }
     },
+    "v1RemoveServerAdminResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
     "v1Server": {
       "type": "object",
       "properties": {
@@ -592,6 +793,21 @@
           "format": "date-time"
         },
         "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1ServerAdmin": {
+      "type": "object",
+      "properties": {
+        "serverId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "addedAt": {
           "type": "string",
           "format": "date-time"
         }

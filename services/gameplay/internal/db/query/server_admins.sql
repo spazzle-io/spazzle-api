@@ -20,6 +20,6 @@ AND (
 ) ORDER BY added_at DESC, user_id DESC
 LIMIT sqlc.arg(page_size);
 
--- name: RemoveServerAdmin :exec
+-- name: RemoveServerAdmin :execresult
 DELETE FROM server_admins
 WHERE server_id = $1 AND user_id = $2;

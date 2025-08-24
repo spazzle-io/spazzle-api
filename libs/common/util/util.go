@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 )
@@ -41,4 +42,13 @@ func NormalizeHexString(s string) string {
 		return "0x" + s
 	}
 	return s
+}
+
+// Int64ToInt32 safely converts int64 to int32 with bounds checking.
+// Returns an error if the value cannot fit in int32.
+func Int64ToInt32(n int64) (int32, error) {
+	if n < math.MinInt32 || n > math.MaxInt32 {
+		return 0, fmt.Errorf("int64 value %d out of int32 range", n)
+	}
+	return int32(n), nil
 }

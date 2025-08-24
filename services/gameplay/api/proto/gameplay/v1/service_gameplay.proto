@@ -5,6 +5,7 @@ package gameplay.v1;
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "gameplay/v1/rpc_server_service.proto";
+import "gameplay/v1/rpc_server_admin_service.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
 
@@ -139,6 +140,53 @@ service ServerService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Archive server";
       description: "Archive server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+}
+
+service ServerAdminService {
+  rpc AddServerAdmin(AddServerAdminRequest) returns (AddServerAdminResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/admins",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Add a server administrator";
+      description: "Add a server administrator";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc ListServerAdmins(ListServerAdminsRequest) returns (ListServerAdminsResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/admins"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List server administrators";
+      description: "List server administrators";
+      security: {};
+    };
+  }
+
+  rpc RemoveServerAdmin(RemoveServerAdminRequest) returns (RemoveServerAdminResponse) {
+    option (google.api.http) = {
+      delete: "/servers/{server_id}/admins/{user_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Remove a server administrator";
+      description: "Remove a server administrator";
       security: {
         security_requirement: {
           key: "bearer"

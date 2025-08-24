@@ -1,14 +1,12 @@
-package server
+package server_admin
 
 import (
 	"context"
 	"errors"
-	"time"
 
 	"buf.build/go/protovalidate"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
@@ -17,10 +15,13 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerRequest) (*pb.ArchiveServerResponse, error) {
-	violations := validateArchiveServerRequest(req)
+func (h *Handler) AddServerAdmin(ctx context.Context, req *pb.AddServerAdminRequest) (*pb.AddServerAdminResponse, error) {
+	logger := log.With().Str("user_to_add", req.GetUserId()).Str("server_id", req.GetServerId()).Logger()
+
+	violations := validateAddServerAdminRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
@@ -31,15 +32,18 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	logger := log.With().
-		Str("user_id", tkPayload.AccessTokenPayload.UserId).
-		Str("server_id", req.GetServerId()).
-		Logger()
+	logger = logger.With().Str("user_id", tkPayload.AccessTokenPayload.UserId).Logger()
 
 	userId, err := uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 	if err != nil {
-		logger.Error().Err(err).Msg("invalid user id")
+		log.Error().Err(err).Msg("invalid user id")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	}
+
+	userToAdd, err := uuid.Parse(req.GetUserId())
+	if err != nil {
+		logger.Error().Err(err).Msg("invalid user id")
+		return nil, status.Error(codes.InvalidArgument, handler.InvalidUserIdError)
 	}
 
 	serverId, err := uuid.Parse(req.GetServerId())
@@ -58,44 +62,45 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 	}
 
 	if !permissions.IsOwner {
-		logger.Warn().Msg("user does not have permission to archive server")
+		logger.Error().Err(err).Msg("user does not have permission to add a server admin")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	params := db.UpdateServerParams{
-		ServerID: serverId,
-		ArchivedAt: pgtype.Timestamptz{
-			Time:  time.Now().UTC(),
-			Valid: true,
-		},
-		IsArchived: pgtype.Bool{
-			Bool:  true,
-			Valid: true,
-		},
+	params := db.AddServerAdminTxParams{
+		UserId:   userToAdd,
+		ServerId: serverId,
 	}
-
-	server, err := h.store.UpdateServer(ctx, params)
+	txResult, err := h.store.AddServerAdminTx(ctx, params)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to update server")
-		return nil, HandleServerDBError(err)
+		logger.Error().Err(err).Msg("failed to add server admin")
+		return nil, handleAddServerAdminTxError(err)
 	}
 
-	pbServer, err := mapDBServerToPb(&server)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to map db server to pb")
-		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	response := &pb.AddServerAdminResponse{
+		Admin: &pb.ServerAdmin{
+			ServerId: txResult.ServerAdmin.ServerID.String(),
+			UserId:   txResult.ServerAdmin.UserID.String(),
+			AddedAt:  timestamppb.New(txResult.ServerAdmin.AddedAt),
+		},
 	}
 
-	response := &pb.ArchiveServerResponse{
-		Server: pbServer,
-	}
-
-	logger.Info().Msg("successfully archived server")
+	logger.Info().Msg("successfully added server admin")
 
 	return response, nil
 }
 
-func validateArchiveServerRequest(req *pb.ArchiveServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+func handleAddServerAdminTxError(err error) error {
+	switch {
+	case errors.Is(err, db.ErrServerNotfound):
+		return status.Error(codes.NotFound, handler.ServerNotFoundError)
+	case errors.Is(err, db.ErrUserAlreadyAdmin):
+		return status.Error(codes.AlreadyExists, err.Error())
+	default:
+		return status.Error(codes.Internal, handler.InternalServerError)
+	}
+}
+
+func validateAddServerAdminRequest(req *pb.AddServerAdminRequest) (violations []*errdetails.BadRequest_FieldViolation) {
 	if err := protovalidate.Validate(req); err != nil {
 		violations = append(violations, handler.ProtovalidateViolation(err)...)
 	}

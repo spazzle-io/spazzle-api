@@ -42,7 +42,7 @@ func (h *Handler) Authenticate(ctx context.Context, req *pb.AuthenticateRequest)
 		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
 	}
 
-	logger = log.With().Str("user_id", userId.String()).Logger()
+	logger = logger.With().Str("user_id", userId.String()).Logger()
 
 	_, err = commonMiddleware.AuthorizeService(ctx, allowedServices)
 	if err != nil {

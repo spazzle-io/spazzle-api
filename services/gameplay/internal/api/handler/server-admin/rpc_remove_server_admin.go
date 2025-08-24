@@ -1,14 +1,12 @@
-package server
+package server_admin
 
 import (
 	"context"
 	"errors"
-	"time"
 
 	"buf.build/go/protovalidate"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
@@ -19,8 +17,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerRequest) (*pb.ArchiveServerResponse, error) {
-	violations := validateArchiveServerRequest(req)
+func (h *Handler) RemoveServerAdmin(ctx context.Context, req *pb.RemoveServerAdminRequest) (*pb.RemoveServerAdminResponse, error) {
+	logger := log.With().Str("user_to_remove", req.GetUserId()).Str("server_id", req.GetServerId()).Logger()
+
+	violations := validateRemoveServerAdminRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
@@ -31,15 +31,18 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	logger := log.With().
-		Str("user_id", tkPayload.AccessTokenPayload.UserId).
-		Str("server_id", req.GetServerId()).
-		Logger()
+	logger = logger.With().Str("user_id", tkPayload.AccessTokenPayload.UserId).Logger()
 
 	userId, err := uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 	if err != nil {
-		logger.Error().Err(err).Msg("invalid user id")
+		log.Error().Err(err).Msg("invalid user id")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	}
+
+	userToRemove, err := uuid.Parse(req.GetUserId())
+	if err != nil {
+		logger.Error().Err(err).Msg("invalid user id")
+		return nil, status.Error(codes.InvalidArgument, handler.InvalidUserIdError)
 	}
 
 	serverId, err := uuid.Parse(req.GetServerId())
@@ -58,44 +61,38 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 	}
 
 	if !permissions.IsOwner {
-		logger.Warn().Msg("user does not have permission to archive server")
+		logger.Error().Err(err).Msg("user does not have permission to remove a server admin")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	params := db.UpdateServerParams{
-		ServerID: serverId,
-		ArchivedAt: pgtype.Timestamptz{
-			Time:  time.Now().UTC(),
-			Valid: true,
-		},
-		IsArchived: pgtype.Bool{
-			Bool:  true,
-			Valid: true,
-		},
+	params := db.RemoveServerAdminTxParams{
+		UserId:   userToRemove,
+		ServerId: serverId,
 	}
-
-	server, err := h.store.UpdateServer(ctx, params)
+	err = h.store.RemoveServerAdminTx(ctx, params)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to update server")
-		return nil, HandleServerDBError(err)
+		logger.Error().Err(err).Msg("failed to remove server admin")
+		return nil, handleRemoveServerAdminTxError(err)
 	}
 
-	pbServer, err := mapDBServerToPb(&server)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to map db server to pb")
-		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	response := &pb.RemoveServerAdminResponse{
+		UserId: userToRemove.String(),
 	}
 
-	response := &pb.ArchiveServerResponse{
-		Server: pbServer,
-	}
-
-	logger.Info().Msg("successfully archived server")
+	logger.Info().Msg("successfully removed server admin")
 
 	return response, nil
 }
 
-func validateArchiveServerRequest(req *pb.ArchiveServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+func handleRemoveServerAdminTxError(err error) error {
+	if errors.Is(err, db.ErrServerNotfound) {
+		return status.Error(codes.NotFound, handler.ServerNotFoundError)
+	}
+
+	return status.Error(codes.Internal, handler.InternalServerError)
+}
+
+func validateRemoveServerAdminRequest(req *pb.RemoveServerAdminRequest) (violations []*errdetails.BadRequest_FieldViolation) {
 	if err := protovalidate.Validate(req); err != nil {
 		violations = append(violations, handler.ProtovalidateViolation(err)...)
 	}
