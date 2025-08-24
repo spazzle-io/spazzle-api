@@ -55,14 +55,13 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, InternalServerError)
 	}
 
-	var cursor *pb.ListUsersCursor
+	cursor := &pb.ListUsersCursor{
+		PageSize: pageSize,
+	}
 	if n := len(users); n > 0 {
 		last := users[n-1]
-		cursor = &pb.ListUsersCursor{
-			AfterCreatedAt: timestamppb.New(last.CreatedAt),
-			AfterId:        last.ID.String(),
-			PageSize:       pageSize,
-		}
+		cursor.AfterId = last.ID.String()
+		cursor.AfterCreatedAt = timestamppb.New(last.CreatedAt)
 	}
 
 	response := &pb.ListUsersResponse{

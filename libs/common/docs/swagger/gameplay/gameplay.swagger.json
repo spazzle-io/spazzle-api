@@ -298,14 +298,14 @@
             "type": "string"
           },
           {
-            "name": "afterCreatedAt",
+            "name": "afterAddedAt",
             "in": "query",
             "required": false,
             "type": "string",
             "format": "date-time"
           },
           {
-            "name": "afterId",
+            "name": "afterUserId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -651,7 +651,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "afterId": {
+        "afterUserId": {
           "type": "string"
         },
         "pageSize": {

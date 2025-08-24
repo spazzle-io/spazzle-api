@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func handleServerDBError(dbError error) error {
+func HandleServerDBError(dbError error) error {
 	parsedDBError := db.ParseError(dbError)
 
 	switch {

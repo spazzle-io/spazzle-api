@@ -33,5 +33,6 @@ func (h *Handler) RateLimits() map[string]commonMiddleware.Rate {
 	return map[string]commonMiddleware.Rate{
 		"/gameplay.v1.ServerAdminService/AddServerAdmin":    {Aliases: []string{"POST:/servers/{uuid}/admins"}, Limit: 30, Period: time.Minute, Identifier: "AddServerAdmin"},
 		"/gameplay.v1.ServerAdminService/RemoveServerAdmin": {Aliases: []string{"DELETE:/servers/{uuid}/admins/{uuid}"}, Limit: 30, Period: time.Minute, Identifier: "RemoveServerAdmin"},
+		"/gameplay.v1.ServerAdminService/ListServerAdmins":  {Aliases: []string{"GET:/servers/{uuid}/admins"}, Limit: 120, Period: time.Minute, Identifier: "ListServerAdmins"},
 	}
 }

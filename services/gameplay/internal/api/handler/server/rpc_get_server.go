@@ -31,7 +31,7 @@ func (h *Handler) GetServer(ctx context.Context, req *pb.GetServerRequest) (*pb.
 	server, err := h.store.GetServerById(ctx, serverId)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get server")
-		return nil, handleServerDBError(err)
+		return nil, HandleServerDBError(err)
 	}
 
 	pbServer, err := mapDBServerToPb(&server)

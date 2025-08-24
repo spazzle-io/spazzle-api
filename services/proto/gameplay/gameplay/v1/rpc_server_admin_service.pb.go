@@ -121,13 +121,13 @@ func (x *AddServerAdminResponse) GetAdmin() *ServerAdmin {
 }
 
 type ListServerAdminsRequest struct {
-	state          protoimpl.MessageState  `protogen:"open.v1"`
-	ServerId       string                  `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	AfterCreatedAt *timestamppb.Timestamp  `protobuf:"bytes,2,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       *wrapperspb.Int32Value  `protobuf:"bytes,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	ServerId      string                  `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	AfterAddedAt  *timestamppb.Timestamp  `protobuf:"bytes,2,opt,name=after_added_at,json=afterAddedAt,proto3" json:"after_added_at,omitempty"`
+	AfterUserId   *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=after_user_id,json=afterUserId,proto3" json:"after_user_id,omitempty"`
+	PageSize      *wrapperspb.Int32Value  `protobuf:"bytes,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListServerAdminsRequest) Reset() {
@@ -167,16 +167,16 @@ func (x *ListServerAdminsRequest) GetServerId() string {
 	return ""
 }
 
-func (x *ListServerAdminsRequest) GetAfterCreatedAt() *timestamppb.Timestamp {
+func (x *ListServerAdminsRequest) GetAfterAddedAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.AfterCreatedAt
+		return x.AfterAddedAt
 	}
 	return nil
 }
 
-func (x *ListServerAdminsRequest) GetAfterId() *wrapperspb.StringValue {
+func (x *ListServerAdminsRequest) GetAfterUserId() *wrapperspb.StringValue {
 	if x != nil {
-		return x.AfterId
+		return x.AfterUserId
 	}
 	return nil
 }
@@ -407,7 +407,7 @@ func (x *ServerAdmin) GetAddedAt() *timestamppb.Timestamp {
 type ListServerAdminsCursor struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AfterAddedAt  *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=after_added_at,json=afterAddedAt,proto3" json:"after_added_at,omitempty"`
-	AfterId       string                 `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	AfterUserId   string                 `protobuf:"bytes,2,opt,name=after_user_id,json=afterUserId,proto3" json:"after_user_id,omitempty"`
 	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -450,9 +450,9 @@ func (x *ListServerAdminsCursor) GetAfterAddedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ListServerAdminsCursor) GetAfterId() string {
+func (x *ListServerAdminsCursor) GetAfterUserId() string {
 	if x != nil {
-		return x.AfterId
+		return x.AfterUserId
 	}
 	return ""
 }
@@ -473,11 +473,11 @@ const file_gameplay_v1_rpc_server_admin_service_proto_rawDesc = "" +
 	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x12$\n" +
 	"\auser_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\"H\n" +
 	"\x16AddServerAdminResponse\x12.\n" +
-	"\x05admin\x18\x01 \x01(\v2\x18.gameplay.v1.ServerAdminR\x05admin\"\xfc\x01\n" +
+	"\x05admin\x18\x01 \x01(\v2\x18.gameplay.v1.ServerAdminR\x05admin\"\x81\x02\n" +
 	"\x17ListServerAdminsRequest\x12(\n" +
-	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x12D\n" +
-	"\x10after_created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x127\n" +
-	"\bafter_id\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueR\aafterId\x128\n" +
+	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x12@\n" +
+	"\x0eafter_added_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\fafterAddedAt\x12@\n" +
+	"\rafter_user_id\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueR\vafterUserId\x128\n" +
 	"\tpage_size\x18\x04 \x01(\v2\x1b.google.protobuf.Int32ValueR\bpageSize\"\xaa\x01\n" +
 	"\x18ListServerAdminsResponse\x120\n" +
 	"\x06admins\x18\x01 \x03(\v2\x18.gameplay.v1.ServerAdminR\x06admins\x12\x1f\n" +
@@ -492,10 +492,10 @@ const file_gameplay_v1_rpc_server_admin_service_proto_rawDesc = "" +
 	"\vServerAdmin\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x125\n" +
-	"\badded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\x92\x01\n" +
+	"\badded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\x9b\x01\n" +
 	"\x16ListServerAdminsCursor\x12@\n" +
-	"\x0eafter_added_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\fafterAddedAt\x12\x19\n" +
-	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
+	"\x0eafter_added_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\fafterAddedAt\x12\"\n" +
+	"\rafter_user_id\x18\x02 \x01(\tR\vafterUserId\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSizeB\xb2\x01\n" +
 	"\x0fcom.gameplay.v1B\x1aRpcServerAdminServiceProtoP\x01Z6github.com/spazzle-io/spazzle-api/services/gameplay/pb\xa2\x02\x03GXX\xaa\x02\vGameplay.V1\xca\x02\vGameplay\\V1\xe2\x02\x17Gameplay\\V1\\GPBMetadata\xea\x02\fGameplay::V1b\x06proto3"
 
@@ -527,8 +527,8 @@ var file_gameplay_v1_rpc_server_admin_service_proto_goTypes = []any{
 }
 var file_gameplay_v1_rpc_server_admin_service_proto_depIdxs = []int32{
 	6,  // 0: gameplay.v1.AddServerAdminResponse.admin:type_name -> gameplay.v1.ServerAdmin
-	8,  // 1: gameplay.v1.ListServerAdminsRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	9,  // 2: gameplay.v1.ListServerAdminsRequest.after_id:type_name -> google.protobuf.StringValue
+	8,  // 1: gameplay.v1.ListServerAdminsRequest.after_added_at:type_name -> google.protobuf.Timestamp
+	9,  // 2: gameplay.v1.ListServerAdminsRequest.after_user_id:type_name -> google.protobuf.StringValue
 	10, // 3: gameplay.v1.ListServerAdminsRequest.page_size:type_name -> google.protobuf.Int32Value
 	6,  // 4: gameplay.v1.ListServerAdminsResponse.admins:type_name -> gameplay.v1.ServerAdmin
 	7,  // 5: gameplay.v1.ListServerAdminsResponse.cursor:type_name -> gameplay.v1.ListServerAdminsCursor

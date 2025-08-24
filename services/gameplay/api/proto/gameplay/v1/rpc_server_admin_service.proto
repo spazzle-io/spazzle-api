@@ -19,8 +19,8 @@ message AddServerAdminResponse {
 
 message ListServerAdminsRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  google.protobuf.Timestamp after_created_at = 2;
-  google.protobuf.StringValue after_id = 3;
+  google.protobuf.Timestamp after_added_at = 2;
+  google.protobuf.StringValue after_user_id = 3;
   google.protobuf.Int32Value page_size = 4;
 }
 
@@ -47,6 +47,6 @@ message ServerAdmin {
 
 message ListServerAdminsCursor {
   google.protobuf.Timestamp after_added_at = 1;
-  string after_id = 2;
+  string after_user_id = 2;
   int32 page_size = 3;
 }
