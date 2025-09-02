@@ -4,9 +4,9 @@ go 1.24.4
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/brianvoe/gofakeit/v7 v7.4.0
-	github.com/ethereum/go-ethereum v1.16.2
-	github.com/golang-migrate/migrate/v4 v4.18.3
+	github.com/brianvoe/gofakeit/v7 v7.5.1
+	github.com/ethereum/go-ethereum v1.16.3
+	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
@@ -14,7 +14,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/spazzle-io/spazzle-api/libs/common v0.0.0-20250810191229-6dd4403f4514
 	github.com/spazzle-io/spazzle-api/services/proto v0.0.0-20250810191229-6dd4403f4514
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/ulule/limiter/v3 v3.11.2
 	go.uber.org/mock v0.6.0
 	golang.org/x/sync v0.16.0

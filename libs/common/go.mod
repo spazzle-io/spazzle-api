@@ -3,8 +3,8 @@ module github.com/spazzle-io/spazzle-api/libs/common
 go 1.24.4
 
 require (
-	github.com/brianvoe/gofakeit/v7 v7.4.0
-	github.com/ethereum/go-ethereum v1.16.2
+	github.com/brianvoe/gofakeit/v7 v7.5.1
+	github.com/ethereum/go-ethereum v1.16.3
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
 	github.com/rakyll/statik v0.1.7
@@ -12,7 +12,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/ulule/limiter/v3 v3.11.2
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.41.0
