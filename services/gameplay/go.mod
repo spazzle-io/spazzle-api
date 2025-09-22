@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	buf.build/go/protovalidate v0.14.0
-	github.com/brianvoe/gofakeit/v7 v7.5.1
+	github.com/brianvoe/gofakeit/v7 v7.7.1
 	github.com/ethereum/go-ethereum v1.16.3
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/golang/protobuf v1.5.4
@@ -19,12 +19,12 @@ require (
 	go.uber.org/mock v0.6.0
 	golang.org/x/sync v0.17.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250818200422-3122310a409c
-	google.golang.org/grpc v1.75.0
-	google.golang.org/protobuf v1.36.8
+	google.golang.org/grpc v1.75.1
+	google.golang.org/protobuf v1.36.9
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.8-20250717185734-6c6e0d3c608e.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.9-20250912141014-52f32327d4b0.1 // indirect
 	cel.dev/expr v0.24.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
@@ -53,7 +53,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
-	github.com/redis/go-redis/v9 v9.13.0 // indirect
+	github.com/redis/go-redis/v9 v9.14.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
