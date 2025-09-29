@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "gameplay/v1/rpc_server_service.proto";
 import "gameplay/v1/rpc_server_admin_service.proto";
+import "gameplay/v1/rpc_word_service.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
 
@@ -187,6 +188,90 @@ service ServerAdminService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Remove a server administrator";
       description: "Remove a server administrator";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+}
+
+service WordService {
+  rpc AddWords(AddWordsRequest) returns (AddWordsResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/words",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Add words to a given server";
+      description: "Add words to a given server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc GetRandomWords(GetRandomWordsRequest) returns (GetRandomWordsResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/words:random"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get random words from a server";
+      description: "Get random words from a server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc ListWords(ListWordsRequest) returns (ListWordsResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/words"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List server words";
+      description: "List server words";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc RemoveWords(RemoveWordsRequest) returns (RemoveWordsResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/words:remove",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Remove words from a server";
+      description: "Remove words from a server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
+  rpc RemoveAllWords(RemoveAllWordsRequest) returns (RemoveAllWordsResponse) {
+    option (google.api.http) = {
+      delete: "/servers/{server_id}/words"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Remove all words from a server";
+      description: "Remove all words from a server";
       security: {
         security_requirement: {
           key: "bearer"

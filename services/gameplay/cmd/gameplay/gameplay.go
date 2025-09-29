@@ -105,6 +105,9 @@ func runGRPCServer(
 			func(grpcServer *grpc.Server) {
 				pb.RegisterServerAdminServiceServer(grpcServer, &s.ServerAdminHandler)
 			},
+			func(grpcServer *grpc.Server) {
+				pb.RegisterWordServiceServer(grpcServer, &s.WordHandler)
+			},
 		},
 	)
 }
@@ -133,6 +136,9 @@ func runGatewayServer(
 			},
 			func(ctx context.Context, mux *runtime.ServeMux) error {
 				return pb.RegisterServerAdminServiceHandlerServer(ctx, mux, &s.ServerAdminHandler)
+			},
+			func(ctx context.Context, mux *runtime.ServeMux) error {
+				return pb.RegisterWordServiceHandlerServer(ctx, mux, &s.WordHandler)
 			},
 		},
 		[]commonServer.HttpRouteRegistrar{},

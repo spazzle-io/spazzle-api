@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -11,6 +13,9 @@ type Store interface {
 	Querier
 	AddServerAdminTx(ctx context.Context, params AddServerAdminTxParams) (AddServerAdminTxResult, error)
 	RemoveServerAdminTx(ctx context.Context, params RemoveServerAdminTxParams) error
+	AddServerWordsTx(ctx context.Context, params AddServerWordsTxParams) (AddServerWordsTxResult, error)
+	RemoveServerWordsTx(ctx context.Context, params RemoveServerWordsTxParams) (RemoveServerWordsTxResult, error)
+	RemoveAllServerWordsTx(ctx context.Context, serverId uuid.UUID) (RemoveAllServerWordsTxResult, error)
 }
 
 type SQLStore struct {

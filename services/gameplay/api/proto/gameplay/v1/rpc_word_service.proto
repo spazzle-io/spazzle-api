@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package gameplay.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
+
+message AddWordsRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  repeated string words = 2;
+}
+
+message AddWordsResponse {
+  int32 num_words_added = 1;
+}
+
+message GetRandomWordsRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.Int32Value limit = 2;
+}
+
+message GetRandomWordsResponse {
+  repeated Word words = 1;
+}
+
+message ListWordsRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.Timestamp after_added_at = 2;
+  google.protobuf.StringValue after_id = 3;
+  google.protobuf.Int32Value page_size = 4;
+}
+
+message ListWordsResponse {
+  repeated Word words = 1;
+  int64 total_count = 2;
+  ListWordsCursor cursor = 3;
+}
+
+message RemoveWordsRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  repeated string words = 2;
+}
+
+message RemoveWordsResponse {
+  int32 num_words_removed = 1;
+}
+
+message RemoveAllWordsRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message RemoveAllWordsResponse {
+  int32 num_words_removed = 1;
+}
+
+message Word {
+  string id = 1;
+  string server_id = 2;
+  string word = 3;
+  google.protobuf.Timestamp added_at = 4;
+}
+
+message ListWordsCursor {
+  google.protobuf.Timestamp after_added_at = 1;
+  string after_id = 2;
+  int32 page_size = 3;
+}
