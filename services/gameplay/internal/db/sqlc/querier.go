@@ -15,7 +15,7 @@ type Querier interface {
 	AddServerAdmin(ctx context.Context, arg AddServerAdminParams) (ServerAdmin, error)
 	AddWordsToServer(ctx context.Context, arg AddWordsToServerParams) (pgconn.CommandTag, error)
 	CreateServer(ctx context.Context, arg CreateServerParams) (Server, error)
-	GetRandomWordsForServer(ctx context.Context, arg GetRandomWordsForServerParams) ([]string, error)
+	GetRandomWordsForServer(ctx context.Context, arg GetRandomWordsForServerParams) ([]GetRandomWordsForServerRow, error)
 	GetServerById(ctx context.Context, serverID uuid.UUID) (Server, error)
 	GetServerByName(ctx context.Context, name string) (Server, error)
 	GetServerUserPermissions(ctx context.Context, arg GetServerUserPermissionsParams) (GetServerUserPermissionsRow, error)

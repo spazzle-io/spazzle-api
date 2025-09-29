@@ -563,3 +563,257 @@ var ServerAdminService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "gameplay/v1/service_gameplay.proto",
 }
+
+const (
+	WordService_AddWords_FullMethodName       = "/gameplay.v1.WordService/AddWords"
+	WordService_GetRandomWords_FullMethodName = "/gameplay.v1.WordService/GetRandomWords"
+	WordService_ListWords_FullMethodName      = "/gameplay.v1.WordService/ListWords"
+	WordService_RemoveWords_FullMethodName    = "/gameplay.v1.WordService/RemoveWords"
+	WordService_RemoveAllWords_FullMethodName = "/gameplay.v1.WordService/RemoveAllWords"
+)
+
+// WordServiceClient is the client API for WordService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type WordServiceClient interface {
+	AddWords(ctx context.Context, in *AddWordsRequest, opts ...grpc.CallOption) (*AddWordsResponse, error)
+	GetRandomWords(ctx context.Context, in *GetRandomWordsRequest, opts ...grpc.CallOption) (*GetRandomWordsResponse, error)
+	ListWords(ctx context.Context, in *ListWordsRequest, opts ...grpc.CallOption) (*ListWordsResponse, error)
+	RemoveWords(ctx context.Context, in *RemoveWordsRequest, opts ...grpc.CallOption) (*RemoveWordsResponse, error)
+	RemoveAllWords(ctx context.Context, in *RemoveAllWordsRequest, opts ...grpc.CallOption) (*RemoveAllWordsResponse, error)
+}
+
+type wordServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewWordServiceClient(cc grpc.ClientConnInterface) WordServiceClient {
+	return &wordServiceClient{cc}
+}
+
+func (c *wordServiceClient) AddWords(ctx context.Context, in *AddWordsRequest, opts ...grpc.CallOption) (*AddWordsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddWordsResponse)
+	err := c.cc.Invoke(ctx, WordService_AddWords_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wordServiceClient) GetRandomWords(ctx context.Context, in *GetRandomWordsRequest, opts ...grpc.CallOption) (*GetRandomWordsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRandomWordsResponse)
+	err := c.cc.Invoke(ctx, WordService_GetRandomWords_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wordServiceClient) ListWords(ctx context.Context, in *ListWordsRequest, opts ...grpc.CallOption) (*ListWordsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListWordsResponse)
+	err := c.cc.Invoke(ctx, WordService_ListWords_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wordServiceClient) RemoveWords(ctx context.Context, in *RemoveWordsRequest, opts ...grpc.CallOption) (*RemoveWordsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveWordsResponse)
+	err := c.cc.Invoke(ctx, WordService_RemoveWords_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *wordServiceClient) RemoveAllWords(ctx context.Context, in *RemoveAllWordsRequest, opts ...grpc.CallOption) (*RemoveAllWordsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveAllWordsResponse)
+	err := c.cc.Invoke(ctx, WordService_RemoveAllWords_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// WordServiceServer is the server API for WordService service.
+// All implementations must embed UnimplementedWordServiceServer
+// for forward compatibility.
+type WordServiceServer interface {
+	AddWords(context.Context, *AddWordsRequest) (*AddWordsResponse, error)
+	GetRandomWords(context.Context, *GetRandomWordsRequest) (*GetRandomWordsResponse, error)
+	ListWords(context.Context, *ListWordsRequest) (*ListWordsResponse, error)
+	RemoveWords(context.Context, *RemoveWordsRequest) (*RemoveWordsResponse, error)
+	RemoveAllWords(context.Context, *RemoveAllWordsRequest) (*RemoveAllWordsResponse, error)
+	mustEmbedUnimplementedWordServiceServer()
+}
+
+// UnimplementedWordServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedWordServiceServer struct{}
+
+func (UnimplementedWordServiceServer) AddWords(context.Context, *AddWordsRequest) (*AddWordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddWords not implemented")
+}
+func (UnimplementedWordServiceServer) GetRandomWords(context.Context, *GetRandomWordsRequest) (*GetRandomWordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRandomWords not implemented")
+}
+func (UnimplementedWordServiceServer) ListWords(context.Context, *ListWordsRequest) (*ListWordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWords not implemented")
+}
+func (UnimplementedWordServiceServer) RemoveWords(context.Context, *RemoveWordsRequest) (*RemoveWordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveWords not implemented")
+}
+func (UnimplementedWordServiceServer) RemoveAllWords(context.Context, *RemoveAllWordsRequest) (*RemoveAllWordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveAllWords not implemented")
+}
+func (UnimplementedWordServiceServer) mustEmbedUnimplementedWordServiceServer() {}
+func (UnimplementedWordServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeWordServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to WordServiceServer will
+// result in compilation errors.
+type UnsafeWordServiceServer interface {
+	mustEmbedUnimplementedWordServiceServer()
+}
+
+func RegisterWordServiceServer(s grpc.ServiceRegistrar, srv WordServiceServer) {
+	// If the following call pancis, it indicates UnimplementedWordServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&WordService_ServiceDesc, srv)
+}
+
+func _WordService_AddWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddWordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WordServiceServer).AddWords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WordService_AddWords_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WordServiceServer).AddWords(ctx, req.(*AddWordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WordService_GetRandomWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRandomWordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WordServiceServer).GetRandomWords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WordService_GetRandomWords_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WordServiceServer).GetRandomWords(ctx, req.(*GetRandomWordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WordService_ListWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WordServiceServer).ListWords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WordService_ListWords_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WordServiceServer).ListWords(ctx, req.(*ListWordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WordService_RemoveWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveWordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WordServiceServer).RemoveWords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WordService_RemoveWords_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WordServiceServer).RemoveWords(ctx, req.(*RemoveWordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WordService_RemoveAllWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveAllWordsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WordServiceServer).RemoveAllWords(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WordService_RemoveAllWords_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WordServiceServer).RemoveAllWords(ctx, req.(*RemoveAllWordsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// WordService_ServiceDesc is the grpc.ServiceDesc for WordService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var WordService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gameplay.v1.WordService",
+	HandlerType: (*WordServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddWords",
+			Handler:    _WordService_AddWords_Handler,
+		},
+		{
+			MethodName: "GetRandomWords",
+			Handler:    _WordService_GetRandomWords_Handler,
+		},
+		{
+			MethodName: "ListWords",
+			Handler:    _WordService_ListWords_Handler,
+		},
+		{
+			MethodName: "RemoveWords",
+			Handler:    _WordService_RemoveWords_Handler,
+		},
+		{
+			MethodName: "RemoveAllWords",
+			Handler:    _WordService_RemoveAllWords_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gameplay/v1/service_gameplay.proto",
+}

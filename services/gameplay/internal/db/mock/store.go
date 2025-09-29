@@ -73,6 +73,21 @@ func (mr *MockStoreMockRecorder) AddServerAdminTx(ctx, params any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServerAdminTx", reflect.TypeOf((*MockStore)(nil).AddServerAdminTx), ctx, params)
 }
 
+// AddServerWordsTx mocks base method.
+func (m *MockStore) AddServerWordsTx(ctx context.Context, params db.AddServerWordsTxParams) (db.AddServerWordsTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddServerWordsTx", ctx, params)
+	ret0, _ := ret[0].(db.AddServerWordsTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddServerWordsTx indicates an expected call of AddServerWordsTx.
+func (mr *MockStoreMockRecorder) AddServerWordsTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddServerWordsTx", reflect.TypeOf((*MockStore)(nil).AddServerWordsTx), ctx, params)
+}
+
 // AddWordsToServer mocks base method.
 func (m *MockStore) AddWordsToServer(ctx context.Context, arg db.AddWordsToServerParams) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
@@ -104,10 +119,10 @@ func (mr *MockStoreMockRecorder) CreateServer(ctx, arg any) *gomock.Call {
 }
 
 // GetRandomWordsForServer mocks base method.
-func (m *MockStore) GetRandomWordsForServer(ctx context.Context, arg db.GetRandomWordsForServerParams) ([]string, error) {
+func (m *MockStore) GetRandomWordsForServer(ctx context.Context, arg db.GetRandomWordsForServerParams) ([]db.GetRandomWordsForServerRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRandomWordsForServer", ctx, arg)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]db.GetRandomWordsForServerRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -253,6 +268,21 @@ func (mr *MockStoreMockRecorder) ListWords(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWords", reflect.TypeOf((*MockStore)(nil).ListWords), ctx, arg)
 }
 
+// RemoveAllServerWordsTx mocks base method.
+func (m *MockStore) RemoveAllServerWordsTx(ctx context.Context, serverId uuid.UUID) (db.RemoveAllServerWordsTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveAllServerWordsTx", ctx, serverId)
+	ret0, _ := ret[0].(db.RemoveAllServerWordsTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveAllServerWordsTx indicates an expected call of RemoveAllServerWordsTx.
+func (mr *MockStoreMockRecorder) RemoveAllServerWordsTx(ctx, serverId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAllServerWordsTx", reflect.TypeOf((*MockStore)(nil).RemoveAllServerWordsTx), ctx, serverId)
+}
+
 // RemoveAllWordsFromServer mocks base method.
 func (m *MockStore) RemoveAllWordsFromServer(ctx context.Context, serverID uuid.UUID) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
@@ -295,6 +325,21 @@ func (m *MockStore) RemoveServerAdminTx(ctx context.Context, params db.RemoveSer
 func (mr *MockStoreMockRecorder) RemoveServerAdminTx(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveServerAdminTx", reflect.TypeOf((*MockStore)(nil).RemoveServerAdminTx), ctx, params)
+}
+
+// RemoveServerWordsTx mocks base method.
+func (m *MockStore) RemoveServerWordsTx(ctx context.Context, params db.RemoveServerWordsTxParams) (db.RemoveServerWordsTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveServerWordsTx", ctx, params)
+	ret0, _ := ret[0].(db.RemoveServerWordsTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveServerWordsTx indicates an expected call of RemoveServerWordsTx.
+func (mr *MockStoreMockRecorder) RemoveServerWordsTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveServerWordsTx", reflect.TypeOf((*MockStore)(nil).RemoveServerWordsTx), ctx, params)
 }
 
 // RemoveWordsFromServer mocks base method.

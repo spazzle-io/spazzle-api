@@ -41,8 +41,8 @@ random_indices AS (
     FROM bounds, generate_series(1, sqlc.arg(n)::int * COALESCE(sqlc.narg(oversample_by_perc)::int, 10))
 ),
 selected AS (
-    SELECT word FROM (
-        SELECT DISTINCT w.word
+    SELECT id, server_id, word, added_at FROM (
+        SELECT DISTINCT w.id, w.server_id, w.word, w.added_at
         FROM words w
         JOIN random_indices r ON w.word_idx = r.idx
         WHERE w.server_id = sqlc.arg(server_id)
@@ -51,16 +51,22 @@ selected AS (
     LIMIT sqlc.arg(n)
 ),
 fallback AS (
-    SELECT w.word
+    SELECT w.id, w.server_id, w.word, w.added_at
     FROM words w
     WHERE w.server_id = sqlc.arg(server_id)
-    AND w.word NOT IN (SELECT word FROM selected)
+    AND NOT EXISTS (
+        SELECT 1 FROM selected s WHERE s.id = w.id
+    )
     ORDER BY RANDOM()
     LIMIT GREATEST(sqlc.arg(n) - (SELECT COUNT(*) FROM selected), 0)
+),
+combined AS (
+    SELECT * FROM selected
+    UNION ALL
+    SELECT * FROM fallback
 )
-SELECT word FROM selected
-UNION ALL
-SELECT word FROM fallback;
+SELECT * FROM combined
+ORDER BY RANDOM();
 
 -- name: RemoveWordsFromServer :execresult
 DELETE FROM words

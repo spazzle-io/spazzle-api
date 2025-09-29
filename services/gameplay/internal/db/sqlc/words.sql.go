@@ -52,8 +52,8 @@ random_indices AS (
     FROM bounds, generate_series(1, $2::int * COALESCE($3::int, 10))
 ),
 selected AS (
-    SELECT word FROM (
-        SELECT DISTINCT w.word
+    SELECT id, server_id, word, added_at FROM (
+        SELECT DISTINCT w.id, w.server_id, w.word, w.added_at
         FROM words w
         JOIN random_indices r ON w.word_idx = r.idx
         WHERE w.server_id = $1
@@ -62,16 +62,22 @@ selected AS (
     LIMIT $2
 ),
 fallback AS (
-    SELECT w.word
+    SELECT w.id, w.server_id, w.word, w.added_at
     FROM words w
     WHERE w.server_id = $1
-    AND w.word NOT IN (SELECT word FROM selected)
+    AND NOT EXISTS (
+        SELECT 1 FROM selected s WHERE s.id = w.id
+    )
     ORDER BY RANDOM()
     LIMIT GREATEST($2 - (SELECT COUNT(*) FROM selected), 0)
+),
+combined AS (
+    SELECT id, server_id, word, added_at FROM selected
+    UNION ALL
+    SELECT id, server_id, word, added_at FROM fallback
 )
-SELECT word FROM selected
-UNION ALL
-SELECT word FROM fallback
+SELECT id, server_id, word, added_at FROM combined
+ORDER BY RANDOM()
 `
 
 type GetRandomWordsForServerParams struct {
@@ -80,19 +86,31 @@ type GetRandomWordsForServerParams struct {
 	OversampleByPerc pgtype.Int4 `json:"oversample_by_perc"`
 }
 
-func (q *Queries) GetRandomWordsForServer(ctx context.Context, arg GetRandomWordsForServerParams) ([]string, error) {
+type GetRandomWordsForServerRow struct {
+	ID       uuid.UUID `json:"id"`
+	ServerID uuid.UUID `json:"server_id"`
+	Word     string    `json:"word"`
+	AddedAt  time.Time `json:"added_at"`
+}
+
+func (q *Queries) GetRandomWordsForServer(ctx context.Context, arg GetRandomWordsForServerParams) ([]GetRandomWordsForServerRow, error) {
 	rows, err := q.db.Query(ctx, getRandomWordsForServer, arg.ServerID, arg.N, arg.OversampleByPerc)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []string{}
+	items := []GetRandomWordsForServerRow{}
 	for rows.Next() {
-		var word string
-		if err := rows.Scan(&word); err != nil {
+		var i GetRandomWordsForServerRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ServerID,
+			&i.Word,
+			&i.AddedAt,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, word)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

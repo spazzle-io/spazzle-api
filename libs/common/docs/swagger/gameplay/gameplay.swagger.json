@@ -14,6 +14,9 @@
     },
     {
       "name": "ServerAdminService"
+    },
+    {
+      "name": "WordService"
     }
   ],
   "consumes": [
@@ -493,6 +496,230 @@
         ],
         "security": []
       }
+    },
+    "/servers/{serverId}/words": {
+      "get": {
+        "summary": "List server words",
+        "description": "List server words",
+        "operationId": "WordService_ListWords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListWordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "afterAddedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "WordService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Remove all words from a server",
+        "description": "Remove all words from a server",
+        "operationId": "WordService_RemoveAllWords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RemoveAllWordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WordService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Add words to a given server",
+        "description": "Add words to a given server",
+        "operationId": "WordService_AddWords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddWordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/WordServiceAddWordsBody"
+            }
+          }
+        ],
+        "tags": [
+          "WordService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/servers/{serverId}/words:random": {
+      "get": {
+        "summary": "Get random words from a server",
+        "description": "Get random words from a server",
+        "operationId": "WordService_GetRandomWords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRandomWordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "WordService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/servers/{serverId}/words:remove": {
+      "post": {
+        "summary": "Remove words from a server",
+        "description": "Remove words from a server",
+        "operationId": "WordService_RemoveWords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RemoveWordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/WordServiceRemoveWordsBody"
+            }
+          }
+        ],
+        "tags": [
+          "WordService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "definitions": {
@@ -533,6 +760,28 @@
         }
       }
     },
+    "WordServiceAddWordsBody": {
+      "type": "object",
+      "properties": {
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "WordServiceRemoveWordsBody": {
+      "type": "object",
+      "properties": {
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -566,6 +815,15 @@
       "properties": {
         "admin": {
           "$ref": "#/definitions/v1ServerAdmin"
+        }
+      }
+    },
+    "v1AddWordsResponse": {
+      "type": "object",
+      "properties": {
+        "numWordsAdded": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -611,6 +869,18 @@
       "properties": {
         "server": {
           "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1GetRandomWordsResponse": {
+      "type": "object",
+      "properties": {
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Word"
+          }
         }
       }
     },
@@ -736,11 +1006,64 @@
         }
       }
     },
+    "v1ListWordsCursor": {
+      "type": "object",
+      "properties": {
+        "afterAddedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterId": {
+          "type": "string"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListWordsResponse": {
+      "type": "object",
+      "properties": {
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Word"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1ListWordsCursor"
+        }
+      }
+    },
+    "v1RemoveAllWordsResponse": {
+      "type": "object",
+      "properties": {
+        "numWordsRemoved": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "v1RemoveServerAdminResponse": {
       "type": "object",
       "properties": {
         "userId": {
           "type": "string"
+        }
+      }
+    },
+    "v1RemoveWordsResponse": {
+      "type": "object",
+      "properties": {
+        "numWordsRemoved": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -876,6 +1199,24 @@
           "format": "date-time"
         },
         "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1Word": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "serverId": {
+          "type": "string"
+        },
+        "word": {
+          "type": "string"
+        },
+        "addedAt": {
           "type": "string",
           "format": "date-time"
         }

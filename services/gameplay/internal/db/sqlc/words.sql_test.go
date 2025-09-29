@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -152,8 +153,13 @@ func TestGetRandomWordsForServer(t *testing.T) {
 
 			seen := make(map[string]bool)
 			for _, word := range fetchedWords {
-				require.False(t, seen[word], "duplicate word found: %s", word)
-				seen[word] = true
+				require.False(t, seen[word.Word], "duplicate word found: %s", word)
+				seen[word.Word] = true
+
+				require.NotNil(t, word.ID)
+				require.NotNil(t, word.ServerID)
+				require.NotZero(t, word.AddedAt)
+				require.WithinDuration(t, time.Now().UTC(), word.AddedAt, time.Second)
 			}
 		})
 	}

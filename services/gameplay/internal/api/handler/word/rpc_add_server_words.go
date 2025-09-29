@@ -1,16 +1,13 @@
-package server
+package word
 
 import (
 	"context"
-	"time"
-
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/middleware"
 
 	"buf.build/go/protovalidate"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/middleware"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -18,10 +15,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerRequest) (*pb.ArchiveServerResponse, error) {
+func (h *Handler) AddWords(ctx context.Context, req *pb.AddWordsRequest) (*pb.AddWordsResponse, error) {
 	logger := log.With().Str("server_id", req.GetServerId()).Logger()
 
-	violations := validateArchiveServerRequest(req)
+	violations := validateAddServerWordsRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
@@ -35,45 +32,31 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 
 	logger = logger.With().Str("user_id", serverUserCtx.UserId.String()).Logger()
 
-	if !serverUserCtx.UserServerPermissions.IsOwner {
-		logger.Warn().Msg("user does not have permission to archive server")
+	if !serverUserCtx.UserServerPermissions.HasElevatedPermissions {
+		logger.Error().Err(err).Msg("user does not have permission to add server words")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	params := db.UpdateServerParams{
-		ServerID: serverUserCtx.ServerId,
-		ArchivedAt: pgtype.Timestamptz{
-			Time:  time.Now().UTC(),
-			Valid: true,
-		},
-		IsArchived: pgtype.Bool{
-			Bool:  true,
-			Valid: true,
-		},
+	params := db.AddServerWordsTxParams{
+		ServerId: serverUserCtx.ServerId,
+		Words:    req.GetWords(),
 	}
-
-	server, err := h.store.UpdateServer(ctx, params)
+	txResult, err := h.store.AddServerWordsTx(ctx, params)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to update server")
-		return nil, HandleServerDBError(err)
-	}
-
-	pbServer, err := mapDBServerToPb(&server)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to map db server to pb")
+		logger.Error().Err(err).Msg("failed to add server words")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	response := &pb.ArchiveServerResponse{
-		Server: pbServer,
+	response := &pb.AddWordsResponse{
+		NumWordsAdded: txResult.NumWordsAdded,
 	}
 
-	logger.Info().Msg("successfully archived server")
+	logger.Info().Msg("successfully added server words")
 
 	return response, nil
 }
 
-func validateArchiveServerRequest(req *pb.ArchiveServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+func validateAddServerWordsRequest(req *pb.AddWordsRequest) (violations []*errdetails.BadRequest_FieldViolation) {
 	if err := protovalidate.Validate(req); err != nil {
 		violations = append(violations, handler.ProtovalidateViolation(err)...)
 	}

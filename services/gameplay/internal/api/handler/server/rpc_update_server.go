@@ -2,16 +2,15 @@ package server
 
 import (
 	"context"
-	"errors"
+
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/middleware"
 
 	"buf.build/go/protovalidate"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -19,44 +18,23 @@ import (
 )
 
 func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest) (*pb.UpdateServerResponse, error) {
+	logger := log.With().Str("server_id", req.GetServerId()).Logger()
+
 	violations := validateUpdateServerRequest(req)
 	if violations != nil {
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	serverUserCtx, err := middleware.ResolveServerUserContext(
+		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("access token verification failed")
-		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
+		return nil, err
 	}
 
-	logger := log.With().
-		Str("user_id", tkPayload.AccessTokenPayload.UserId).
-		Str("server_id", req.GetServerId()).
-		Logger()
+	logger = logger.With().Str("user_id", serverUserCtx.UserId.String()).Logger()
 
-	userId, err := uuid.Parse(tkPayload.AccessTokenPayload.UserId)
-	if err != nil {
-		logger.Error().Err(err).Msg("invalid user id")
-		return nil, status.Error(codes.Internal, handler.InternalServerError)
-	}
-
-	serverId, err := uuid.Parse(req.GetServerId())
-	if err != nil {
-		logger.Error().Err(err).Msg("invalid server id")
-		return nil, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
-	}
-
-	permissions, err := h.store.GetServerUserPermissions(ctx, db.GetServerUserPermissionsParams{
-		UserID:   userId,
-		ServerID: serverId,
-	})
-	if err != nil && !errors.Is(err, db.RecordNotFoundError) {
-		logger.Error().Err(err).Msg("failed to get server permissions")
-		return nil, status.Error(codes.Internal, handler.InternalServerError)
-	}
-
-	if !permissions.HasElevatedPermissions {
+	if !serverUserCtx.UserServerPermissions.HasElevatedPermissions {
 		logger.Warn().Msg("user does not have permission to update server")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
@@ -68,7 +46,7 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 	}
 
 	params := db.UpdateServerParams{
-		ServerID: serverId,
+		ServerID: serverUserCtx.ServerId,
 		Name: pgtype.Text{
 			String: req.GetName().GetValue(),
 			Valid:  req.GetName() != nil,

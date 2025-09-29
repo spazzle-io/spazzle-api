@@ -52,3 +52,12 @@ func Int64ToInt32(n int64) (int32, error) {
 	}
 	return int32(n), nil
 }
+
+// IntToInt32 safely converts int to int32 with bounds checking.
+// Returns an error if the value cannot fit in int32.
+func IntToInt32(n int) (int32, error) {
+	if n < math.MinInt32 || n > math.MaxInt32 {
+		return 0, fmt.Errorf("int value %d out of int32 range", n)
+	}
+	return int32(n), nil
+}
