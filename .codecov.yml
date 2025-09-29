@@ -11,6 +11,6 @@ coverage:
         threshold: 50%
         base: auto
 ignore:
-  - "**/docs/**/*"
-  - "**/mock/**/*"
+  - "**/docs/**"
+  - "**/mock/**"
   - "services/proto"

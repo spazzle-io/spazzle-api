@@ -134,12 +134,15 @@ sqlc:
 server:
 	cd ./$(module) && go run ./cmd/$(notdir $(module))
 
+buf_update:
+	@cd ./$(module)/api && buf dep update && buf lint && buf build && buf breaking --against "https://github.com/spazzle-io/spazzle-api.git#branch=main,subdir=$(module)/api/proto"
+
 proto:
 	@rm -f ./libs/common/docs/swagger/$(notdir $(module)).swagger.json
 	@rm -rf ./services/proto/$(notdir $(module))
 	@rm -rf ./libs/common/docs/statik
-	@cd ./$(module)/api && buf dep update && buf build && buf lint && buf generate
+	@cd ./$(module)/api && buf lint && buf build && buf generate && buf breaking --against "https://github.com/spazzle-io/spazzle-api.git#branch=main,subdir=$(module)/api/proto"
 	@statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
 	@cd ./services/proto && go install tool && go mod tidy
 
-.PHONY: test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc proto
+.PHONY: test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto
