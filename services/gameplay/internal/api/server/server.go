@@ -37,7 +37,8 @@ func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, 
 	wordHandler := word.New(config, store, cache, authService)
 
 	err = setupRateLimiter(
-		config.ServiceName, config.RedisConnURL, serverHandler.RateLimits(), serverAdminHandler.RateLimits(),
+		config.ServiceName, config.RedisConnURL,
+		serverHandler.RateLimits(), serverAdminHandler.RateLimits(), wordHandler.RateLimits(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot setup rate limiter: %w", err)
