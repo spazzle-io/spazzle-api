@@ -12,6 +12,8 @@ window.onload = function() {
     "urls.primaryName": "Auth Service",
     dom_id: '#swagger-ui',
     deepLinking: true,
+    docExpansion: "list",
+    defaultModelsExpandDepth: 0,
     presets: [
       SwaggerUIBundle.presets.apis,
       SwaggerUIStandalonePreset
