@@ -10,7 +10,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
-	github.com/jackc/pgx/v5 v5.7.5
+	github.com/jackc/pgx/v5 v5.7.6
 	github.com/rs/zerolog v1.34.0
 	github.com/spazzle-io/spazzle-api/libs/common v0.0.0-20250810191229-6dd4403f4514
 	github.com/spazzle-io/spazzle-api/services/proto v0.0.0-20250810191229-6dd4403f4514
