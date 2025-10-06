@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -61,13 +64,29 @@ type ResponseRecorder struct {
 }
 
 func (rec *ResponseRecorder) WriteHeader(statusCode int) {
-	rec.StatusCode = statusCode
-	rec.ResponseWriter.WriteHeader(statusCode)
+	if rec.StatusCode == 0 {
+		rec.StatusCode = statusCode
+		rec.ResponseWriter.WriteHeader(statusCode)
+	}
 }
 
 func (rec *ResponseRecorder) Write(body []byte) (int, error) {
-	rec.Body = body
+	rec.Body = append(rec.Body, body...)
 	return rec.ResponseWriter.Write(body)
+}
+
+func (rec *ResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := rec.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("underlying ResponseWriter does not support hijacking")
+	}
+	return hj.Hijack()
+}
+
+func (rec *ResponseRecorder) Flush() {
+	if f, ok := rec.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 func HTTPLogger(handler http.Handler) http.Handler {
@@ -75,9 +94,12 @@ func HTTPLogger(handler http.Handler) http.Handler {
 		startTime := time.Now()
 		rec := &ResponseRecorder{
 			ResponseWriter: res,
-			StatusCode:     http.StatusOK,
+			StatusCode:     0,
 		}
 		handler.ServeHTTP(rec, req)
+		if rec.StatusCode == 0 {
+			rec.StatusCode = http.StatusOK
+		}
 		duration := time.Since(startTime)
 
 		logger := log.Info()
