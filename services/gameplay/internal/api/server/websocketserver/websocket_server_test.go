@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -51,7 +51,6 @@ func TestServeWS(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			initialStartClientPumps := startClientPumps
 			startClientPumps = func(ctx context.Context, c *Client) {}
@@ -59,7 +58,11 @@ func TestServeWS(t *testing.T) {
 				startClientPumps = initialStartClientPumps
 			}()
 
+			var wg sync.WaitGroup
+			wg.Add(1)
+
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				defer wg.Done()
 				_, err := ServeWs(context.Background(), sm, tc.config, w, r)
 				if tc.shouldErr {
 					require.Error(t, err)
@@ -82,7 +85,8 @@ func TestServeWS(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			time.Sleep(50 * time.Millisecond)
+			wg.Wait()
+			server.Close()
 		})
 	}
 }
