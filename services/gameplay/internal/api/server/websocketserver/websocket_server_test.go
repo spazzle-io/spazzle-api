@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -50,6 +51,7 @@ func TestServeWS(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			initialStartClientPumps := startClientPumps
 			startClientPumps = func(ctx context.Context, c *Client) {}
@@ -79,6 +81,8 @@ func TestServeWS(t *testing.T) {
 			if !tc.shouldErr {
 				require.NoError(t, err)
 			}
+
+			time.Sleep(50 * time.Millisecond)
 		})
 	}
 }
