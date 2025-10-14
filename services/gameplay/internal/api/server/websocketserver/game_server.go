@@ -54,11 +54,7 @@ type GameServer struct {
 	wg            sync.WaitGroup
 }
 
-var runGameServer = func(gameServer *GameServer) {
-	go gameServer.run()
-}
-
-func NewGameServer(ctx context.Context, serverId uuid.UUID) *GameServer {
+func NewGameServer(ctx context.Context, serverId uuid.UUID, run bool) *GameServer {
 	ctx, cancel := context.WithCancel(ctx)
 	gameServer := &GameServer{
 		serverId:   serverId,
@@ -71,8 +67,10 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID) *GameServer {
 		cancel:     cancel,
 	}
 
-	gameServer.wg.Add(1)
-	runGameServer(gameServer)
+	if run {
+		gameServer.wg.Add(1)
+		go gameServer.run()
+	}
 
 	gameServer.getLogger(nil).Info().Msg("created ws game server")
 

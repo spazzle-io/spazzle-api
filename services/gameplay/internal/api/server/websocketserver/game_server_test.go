@@ -11,20 +11,9 @@ import (
 )
 
 func createTestGameServer(t *testing.T) *GameServer {
-	isGameServerRunCalled := false
-
-	initialRunGameServer := runGameServer
-	defer func() {
-		runGameServer = initialRunGameServer
-	}()
-	runGameServer = func(gameServer *GameServer) {
-		isGameServerRunCalled = true
-	}
-
 	serverId := uuid.New()
-	gameServer := NewGameServer(context.Background(), serverId)
+	gameServer := NewGameServer(context.Background(), serverId, false)
 
-	require.True(t, isGameServerRunCalled)
 	require.NotEmpty(t, gameServer)
 	require.Equal(t, serverId, gameServer.serverId)
 
