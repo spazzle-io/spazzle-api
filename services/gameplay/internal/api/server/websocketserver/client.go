@@ -18,15 +18,21 @@ const (
 	ClientSendChanBufSize = 256
 )
 
+type serverAPI interface {
+	GetServerId() uuid.UUID
+	Broadcast(msg []byte) error
+	Unregister(c *Client) error
+}
+
 type Client struct {
 	userId     uuid.UUID
 	connId     uuid.UUID
-	gameServer *GameServer
+	gameServer serverAPI
 	conn       *websocket.Conn
 	send       chan []byte
 }
 
-func NewClient(gameServer *GameServer, conn *websocket.Conn, userId uuid.UUID) (*Client, error) {
+func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID) (*Client, error) {
 	connId, err := uuid.NewRandom()
 	if err != nil {
 		log.Error().
@@ -53,7 +59,7 @@ func (c *Client) getLogger() *zerolog.Logger {
 	logger := log.With().
 		Str("user_id", c.userId.String()).
 		Str("conn_id", c.connId.String()).
-		Str("server_id", c.gameServer.serverId.String()).
+		Str("server_id", c.gameServer.GetServerId().String()).
 		Logger()
 
 	return &logger

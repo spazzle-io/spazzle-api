@@ -23,10 +23,12 @@ const (
 
 var ErrClosedGameServer = errors.New("game server is closed")
 
+// DirectMsgRecipient defines the recipient of a direct ws message.
+// To send a message to a specific connection of a given user, add its connection ID ConnIds.
+// If ConnIds is empty, the message is sent to all user ws connections.
 type DirectMsgRecipient struct {
-	UserId               uuid.UUID
-	ConnIds              []uuid.UUID
-	SendToAllConnections bool
+	UserId  uuid.UUID
+	ConnIds []uuid.UUID
 }
 
 type DirectMsgPayload struct {
@@ -52,6 +54,10 @@ type GameServer struct {
 	wg            sync.WaitGroup
 }
 
+var runGameServer = func(gameServer *GameServer) {
+	go gameServer.run()
+}
+
 func NewGameServer(ctx context.Context, serverId uuid.UUID) *GameServer {
 	ctx, cancel := context.WithCancel(ctx)
 	gameServer := &GameServer{
@@ -66,7 +72,7 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID) *GameServer {
 	}
 
 	gameServer.wg.Add(1)
-	go gameServer.run()
+	runGameServer(gameServer)
 
 	gameServer.getLogger(nil).Info().Msg("created ws game server")
 
@@ -162,11 +168,12 @@ func (gs *GameServer) removeAllClients() {
 	gs.clientsMu.Lock()
 	defer gs.clientsMu.Unlock()
 
-	for _, conns := range gs.clients {
+	for userId, conns := range gs.clients {
 		for connId, client := range conns {
 			delete(conns, connId)
 			close(client.send)
 		}
+		delete(gs.clients, userId)
 	}
 
 	gs.connCount.Store(0)
@@ -202,7 +209,7 @@ func (gs *GameServer) dispatchDirectMsg(directMsgPayload *DirectMsgPayload) {
 	for _, recipient := range directMsgPayload.Recipients {
 		if clients, ok := gs.clients[recipient.UserId]; ok {
 			for connId, client := range clients {
-				if !recipient.SendToAllConnections && !slices.Contains(recipient.ConnIds, connId) {
+				if len(recipient.ConnIds) > 0 && !slices.Contains(recipient.ConnIds, connId) {
 					continue
 				}
 
@@ -272,6 +279,10 @@ func (gs *GameServer) cancelScheduledShutdown() bool {
 
 func (gs *GameServer) IsClosed() bool {
 	return gs.isClosed.Load()
+}
+
+func (gs *GameServer) GetServerId() uuid.UUID {
+	return gs.serverId
 }
 
 func (gs *GameServer) Broadcast(msg []byte) error {
