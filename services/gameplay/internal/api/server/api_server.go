@@ -18,7 +18,7 @@ import (
 	"github.com/ulule/limiter/v3"
 )
 
-type Server struct {
+type APIServer struct {
 	ServerHandler      server.Handler
 	ServerAdminHandler serveradmin.Handler
 	WordHandler        word.Handler
@@ -26,7 +26,7 @@ type Server struct {
 
 var once sync.Once
 
-func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
+func NewAPIServer(config util.Config, store db.Store, cache commonCache.Cache) (*APIServer, error) {
 	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
 	if err != nil {
 		return nil, fmt.Errorf("could not create auth service gRPC client: %w", err)
@@ -44,7 +44,7 @@ func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, 
 		return nil, fmt.Errorf("cannot setup rate limiter: %w", err)
 	}
 
-	s := &Server{
+	s := &APIServer{
 		ServerHandler:      *serverHandler,
 		ServerAdminHandler: *serverAdminHandler,
 		WordHandler:        *wordHandler,

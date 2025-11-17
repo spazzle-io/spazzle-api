@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/server/websocketserver"
+
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -81,7 +83,7 @@ func runGRPCServer(
 	store db.Store,
 	cache commonCache.Cache,
 ) {
-	s, err := server.New(config, store, cache)
+	s, err := server.NewAPIServer(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
@@ -119,10 +121,12 @@ func runGatewayServer(
 	store db.Store,
 	cache commonCache.Cache,
 ) {
-	s, err := server.New(config, store, cache)
+	s, err := server.NewAPIServer(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
+
+	gameServerManager := websocketserver.NewGameServerManager()
 
 	commonServer.RunGatewayServer(
 		ctx,
@@ -141,7 +145,16 @@ func runGatewayServer(
 				return pb.RegisterWordServiceHandlerServer(ctx, mux, &s.WordHandler)
 			},
 		},
-		[]commonServer.HttpRouteRegistrar{},
+		[]commonServer.HttpRouteRegistrar{
+			func(mux *http.ServeMux) {
+				mux.HandleFunc(websocketserver.ServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
+					_, err = websocketserver.ServeWs(ctx, gameServerManager, config, w, r, nil)
+					if err != nil {
+						log.Fatal().Err(err).Msg("could not serve server join ws")
+					}
+				})
+			},
+		},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{
 				Cache: cache,
