@@ -56,7 +56,7 @@ func (sm *GameServerManager) GetOrCreateGameServer(ctx context.Context, serverId
 	}
 
 	// creating a new game server
-	gameServer = NewGameServer(ctx, serverId, true)
+	gameServer = NewGameServer(ctx, serverId, nil)
 	sm.gameServers[serverId] = gameServer
 	sm.getLogger(serverId).Info().Msg("ws game server registered by game server manager")
 	return gameServer

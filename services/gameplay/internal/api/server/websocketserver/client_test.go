@@ -40,14 +40,8 @@ func createTestClient(t *testing.T) (*httptest.Server, *websocket.Conn, *Client)
 	sm := createTestGameServerManager(t)
 	config := getTestConfig()
 
-	initialStartClientPumps := startClientPumps
-	startClientPumps = func(ctx context.Context, c *Client) {}
-	defer func() {
-		startClientPumps = initialStartClientPumps
-	}()
-
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client, err := ServeWs(context.Background(), sm, config, w, r)
+		client, err := ServeWs(context.Background(), sm, config, w, r, &ServeWsOptions{StartPumps: false})
 		require.NoError(t, err)
 		require.NotEmpty(t, client)
 

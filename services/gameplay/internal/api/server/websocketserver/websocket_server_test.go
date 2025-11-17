@@ -52,18 +52,12 @@ func TestServeWS(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			initialStartClientPumps := startClientPumps
-			startClientPumps = func(ctx context.Context, c *Client) {}
-			defer func() {
-				startClientPumps = initialStartClientPumps
-			}()
-
 			var wg sync.WaitGroup
 			wg.Add(1)
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				defer wg.Done()
-				_, err := ServeWs(context.Background(), sm, tc.config, w, r)
+				_, err := ServeWs(context.Background(), sm, tc.config, w, r, &ServeWsOptions{StartPumps: false})
 				if tc.shouldErr {
 					require.Error(t, err)
 					return

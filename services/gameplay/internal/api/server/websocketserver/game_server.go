@@ -54,8 +54,22 @@ type GameServer struct {
 	wg            sync.WaitGroup
 }
 
-func NewGameServer(ctx context.Context, serverId uuid.UUID, run bool) *GameServer {
+// NewGameServerOptions defines optional behaviors for the GameServer constructor.
+type NewGameServerOptions struct {
+	// When true (default), the GameServer's main loop is started automatically.
+	// This configuration is primarily intended for unit testing.
+	StartServer bool
+}
+
+func NewGameServer(ctx context.Context, serverId uuid.UUID, opts *NewGameServerOptions) *GameServer {
 	ctx, cancel := context.WithCancel(ctx)
+
+	if opts == nil {
+		opts = &NewGameServerOptions{
+			StartServer: true,
+		}
+	}
+
 	gameServer := &GameServer{
 		serverId:   serverId,
 		register:   make(chan *Client),
@@ -67,7 +81,7 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID, run bool) *GameServe
 		cancel:     cancel,
 	}
 
-	if run {
+	if opts.StartServer {
 		gameServer.wg.Add(1)
 		go gameServer.run()
 	}

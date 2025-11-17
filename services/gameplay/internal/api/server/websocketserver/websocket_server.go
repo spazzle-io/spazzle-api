@@ -24,9 +24,12 @@ var (
 	ErrMissingServerID            = errors.New("missing server ID")
 )
 
-var startClientPumps = func(ctx context.Context, c *Client) {
-	go c.readPump(ctx)
-	go c.writePump(ctx)
+// ServeWsOptions defines optional behaviors for the ServeWs function.
+// It allows callers to customize how the WebSocket connection is initialized.
+type ServeWsOptions struct {
+	// When true (default), ServeWs will automatically start the client's
+	// read and write goroutines. This configuration is primarily intended for unit testing.
+	StartPumps bool
 }
 
 func ServeWs(
@@ -35,7 +38,14 @@ func ServeWs(
 	config util.Config,
 	w http.ResponseWriter,
 	r *http.Request,
+	opts *ServeWsOptions,
 ) (*Client, error) {
+	if opts == nil {
+		opts = &ServeWsOptions{
+			StartPumps: true,
+		}
+	}
+
 	userId, serverId, _, err := extractRequestMetadata(w, r)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to extract metadata from ws upgrade request")
@@ -85,7 +95,10 @@ func ServeWs(
 		return client, err
 	}
 
-	startClientPumps(ctx, client)
+	if opts.StartPumps {
+		go client.readPump(ctx)
+		go client.writePump(ctx)
+	}
 
 	return client, nil
 }

@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
 
 func createTestGameServer(t *testing.T) *GameServer {
 	serverId := uuid.New()
-	gameServer := NewGameServer(context.Background(), serverId, false)
+	gameServer := NewGameServer(context.Background(), serverId, &NewGameServerOptions{StartServer: false})
 
 	require.NotEmpty(t, gameServer)
 	require.Equal(t, serverId, gameServer.serverId)
@@ -29,13 +28,12 @@ func TestAddClient(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	require.Len(t, gameServer.clients, 0)
 	require.Len(t, gameServer.clients[client.userId], 0)
@@ -54,13 +52,12 @@ func TestRemoveClient(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client)
 
@@ -81,13 +78,12 @@ func TestRemoveClient_UserIdNotRegistered(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client)
 
@@ -105,13 +101,12 @@ func TestRemoveClient_UserConnNotRegistered(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client)
 
@@ -128,21 +123,19 @@ func TestRemoveAllClients(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client1 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client1)
+	client1 := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
-	server, conn, client2 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client2)
+	client2 := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client1)
 	gameServer.addClient(client2)
@@ -166,13 +159,12 @@ func TestDispatchMsg(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client)
 
@@ -183,24 +175,54 @@ func TestDispatchMsg(t *testing.T) {
 	require.Equal(t, msg, retrievedMsg)
 }
 
-func TestDispatchDirectMsg_RecipientNotFound(t *testing.T) {
+func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+
+	gameServer.addClient(client)
+
+	testMsg := []byte("test msg")
+	payload := &DirectMsgPayload{
+		Recipients: []*DirectMsgRecipient{
+			{
+				UserId:  uuid.New(),
+				ConnIds: []uuid.UUID{client.connId},
+			},
+		},
+		Msg: testMsg,
+	}
+
+	gameServer.dispatchDirectMsg(payload)
+
+	require.Len(t, client.send, 0)
+}
+
+func TestDispatchDirectMsg_RecipientConnIdNotFound(t *testing.T) {
+	gameServer := createTestGameServer(t)
+	require.NotEmpty(t, gameServer)
+
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+
+	gameServer.addClient(client)
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
 		Recipients: []*DirectMsgRecipient{
 			{
 				UserId:  client.userId,
-				ConnIds: []uuid.UUID{client.connId},
+				ConnIds: []uuid.UUID{uuid.New()},
 			},
 		},
 		Msg: testMsg,
@@ -215,32 +237,30 @@ func TestDispatchDirectMsg_AllUserConnections(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client1 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client1)
+	userId := uuid.New()
 
-	server, conn, client2 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client2)
-	client2Copy := *client2
-	client2Copy.userId = client1.userId
+	client1 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+
+	client2 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client1)
-	gameServer.addClient(&client2Copy)
+	gameServer.addClient(client2)
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
 		Recipients: []*DirectMsgRecipient{
 			{
-				UserId: client1.userId,
+				UserId: userId,
 			},
 		},
 		Msg: testMsg,
@@ -258,43 +278,38 @@ func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client1 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client1)
+	userId := uuid.New()
 
-	server, conn, client2 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client2)
-	client2Copy := *client2
-	client2Copy.userId = client1.userId
+	client1 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
-	server, conn, client3 := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client3)
-	client3Copy := *client3
-	client3Copy.userId = client1.userId
+	client2 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+
+	client3 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client1)
-	gameServer.addClient(&client2Copy)
-	gameServer.addClient(&client3Copy)
+	gameServer.addClient(client2)
+	gameServer.addClient(client3)
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
 		Recipients: []*DirectMsgRecipient{
 			{
-				UserId:  client1.userId,
+				UserId:  userId,
 				ConnIds: []uuid.UUID{client2.connId, client3.connId},
 			},
 		},
@@ -325,13 +340,12 @@ func TestShutdown(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
 
 	gameServer.addClient(client)
 
@@ -460,13 +474,13 @@ func TestRegister(t *testing.T) {
 		}
 	}()
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+
 	err := gameServer.Register(client)
 	require.NoError(t, err)
 
@@ -493,13 +507,13 @@ func TestUnregister(t *testing.T) {
 		}
 	}()
 
-	server, conn, client := createTestClient(t)
-	defer server.Close()
-	defer func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
-	}(conn)
-	require.NotEmpty(t, client)
+	client := &Client{
+		userId:     uuid.New(),
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+
 	err := gameServer.Unregister(client)
 	require.NoError(t, err)
 
