@@ -24,7 +24,7 @@ const (
 var ErrClosedGameServer = errors.New("game server is closed")
 
 // DirectMsgRecipient defines the recipient of a direct ws message.
-// To send a message to a specific connection of a given user, add its connection ID ConnIds.
+// To send a message to a specific connection of a given user, add its connection ID to ConnIds.
 // If ConnIds is empty, the message is sent to all user ws connections.
 type DirectMsgRecipient struct {
 	UserId  uuid.UUID
