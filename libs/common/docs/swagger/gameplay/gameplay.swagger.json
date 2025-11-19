@@ -458,6 +458,51 @@
         ]
       }
     },
+    "/servers/{serverId}/join": {
+      "post": {
+        "summary": "Join server",
+        "description": "Join server",
+        "operationId": "ServerService_JoinServer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1JoinServerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ServerServiceJoinServerBody"
+            }
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/servers/{serverId}/permissions/{userId}": {
       "get": {
         "summary": "Get a user's server permissions",
@@ -734,6 +779,9 @@
     "ServerServiceArchiveServerBody": {
       "type": "object"
     },
+    "ServerServiceJoinServerBody": {
+      "type": "object"
+    },
     "ServerServiceUpdateServerBody": {
       "type": "object",
       "properties": {
@@ -911,6 +959,21 @@
         },
         "hasElevatedPermissions": {
           "type": "boolean"
+        }
+      }
+    },
+    "v1JoinServerResponse": {
+      "type": "object",
+      "properties": {
+        "serverId": {
+          "type": "string"
+        },
+        "joinCode": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
