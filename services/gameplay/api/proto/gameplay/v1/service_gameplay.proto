@@ -132,6 +132,23 @@ service ServerService {
     };
   }
 
+  rpc JoinServer(JoinServerRequest) returns (JoinServerResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/join",
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Join server";
+      description: "Join server";
+      security: {
+        security_requirement: {
+          key: "bearer"
+        }
+      };
+    };
+  }
+
   rpc ArchiveServer(ArchiveServerRequest) returns (ArchiveServerResponse) {
     option (google.api.http) = {
       post: "/servers/{server_id}/archive",

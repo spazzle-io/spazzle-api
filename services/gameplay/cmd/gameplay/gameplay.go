@@ -147,10 +147,10 @@ func runGatewayServer(
 		},
 		[]commonServer.HttpRouteRegistrar{
 			func(mux *http.ServeMux) {
-				mux.HandleFunc(websocketserver.ServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
-					_, err = websocketserver.ServeWs(ctx, gameServerManager, config, w, r, nil)
+				mux.HandleFunc(websocketserver.WsServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
+					_, err = websocketserver.ServeWs(ctx, gameServerManager, config, cache, w, r, nil)
 					if err != nil {
-						log.Fatal().Err(err).Msg("could not serve server join ws")
+						log.Error().Err(err).Msg("could not serve server join ws")
 					}
 				})
 			},

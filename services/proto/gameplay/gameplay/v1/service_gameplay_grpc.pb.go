@@ -26,6 +26,7 @@ const (
 	ServerService_ListUserServers_FullMethodName          = "/gameplay.v1.ServerService/ListUserServers"
 	ServerService_GetUserServerPermissions_FullMethodName = "/gameplay.v1.ServerService/GetUserServerPermissions"
 	ServerService_UpdateServer_FullMethodName             = "/gameplay.v1.ServerService/UpdateServer"
+	ServerService_JoinServer_FullMethodName               = "/gameplay.v1.ServerService/JoinServer"
 	ServerService_ArchiveServer_FullMethodName            = "/gameplay.v1.ServerService/ArchiveServer"
 )
 
@@ -40,6 +41,7 @@ type ServerServiceClient interface {
 	ListUserServers(ctx context.Context, in *ListUserServersRequest, opts ...grpc.CallOption) (*ListUserServersResponse, error)
 	GetUserServerPermissions(ctx context.Context, in *GetUserServerPermissionsRequest, opts ...grpc.CallOption) (*GetUserServerPermissionsResponse, error)
 	UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*UpdateServerResponse, error)
+	JoinServer(ctx context.Context, in *JoinServerRequest, opts ...grpc.CallOption) (*JoinServerResponse, error)
 	ArchiveServer(ctx context.Context, in *ArchiveServerRequest, opts ...grpc.CallOption) (*ArchiveServerResponse, error)
 }
 
@@ -121,6 +123,16 @@ func (c *serverServiceClient) UpdateServer(ctx context.Context, in *UpdateServer
 	return out, nil
 }
 
+func (c *serverServiceClient) JoinServer(ctx context.Context, in *JoinServerRequest, opts ...grpc.CallOption) (*JoinServerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoinServerResponse)
+	err := c.cc.Invoke(ctx, ServerService_JoinServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *serverServiceClient) ArchiveServer(ctx context.Context, in *ArchiveServerRequest, opts ...grpc.CallOption) (*ArchiveServerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ArchiveServerResponse)
@@ -142,6 +154,7 @@ type ServerServiceServer interface {
 	ListUserServers(context.Context, *ListUserServersRequest) (*ListUserServersResponse, error)
 	GetUserServerPermissions(context.Context, *GetUserServerPermissionsRequest) (*GetUserServerPermissionsResponse, error)
 	UpdateServer(context.Context, *UpdateServerRequest) (*UpdateServerResponse, error)
+	JoinServer(context.Context, *JoinServerRequest) (*JoinServerResponse, error)
 	ArchiveServer(context.Context, *ArchiveServerRequest) (*ArchiveServerResponse, error)
 	mustEmbedUnimplementedServerServiceServer()
 }
@@ -173,6 +186,9 @@ func (UnimplementedServerServiceServer) GetUserServerPermissions(context.Context
 }
 func (UnimplementedServerServiceServer) UpdateServer(context.Context, *UpdateServerRequest) (*UpdateServerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateServer not implemented")
+}
+func (UnimplementedServerServiceServer) JoinServer(context.Context, *JoinServerRequest) (*JoinServerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method JoinServer not implemented")
 }
 func (UnimplementedServerServiceServer) ArchiveServer(context.Context, *ArchiveServerRequest) (*ArchiveServerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ArchiveServer not implemented")
@@ -324,6 +340,24 @@ func _ServerService_UpdateServer_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerService_JoinServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinServerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerServiceServer).JoinServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerService_JoinServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerServiceServer).JoinServer(ctx, req.(*JoinServerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ServerService_ArchiveServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ArchiveServerRequest)
 	if err := dec(in); err != nil {
@@ -376,6 +410,10 @@ var ServerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateServer",
 			Handler:    _ServerService_UpdateServer_Handler,
+		},
+		{
+			MethodName: "JoinServer",
+			Handler:    _ServerService_JoinServer_Handler,
 		},
 		{
 			MethodName: "ArchiveServer",

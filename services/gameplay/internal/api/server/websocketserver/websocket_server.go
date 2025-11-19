@@ -3,9 +3,14 @@ package websocketserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -14,7 +19,12 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 )
 
-const ServerJoinEndpoint = "/ws/servers/join"
+const (
+	WsServerJoinEndpoint      = "/ws/servers/join"
+	serverJoinCodeCachePrefix = "server-join-code"
+	ServerJoinCodeCacheTTL    = 15 * time.Minute
+	nonceLength               = 8
+)
 
 var (
 	ErrInternalServerError        = errors.New("an unexpected error occurred while processing your request")
@@ -22,6 +32,7 @@ var (
 	ErrInvalidAuthorizationHeader = errors.New("invalid authorization header format")
 	ErrMissingUserID              = errors.New("missing user ID")
 	ErrMissingServerID            = errors.New("missing server ID")
+	ErrUnauthorizedAccess         = errors.New("authorization failed. Please verify your credentials and try again")
 )
 
 // ServeWsOptions defines optional behaviors for the ServeWs function.
@@ -36,6 +47,7 @@ func ServeWs(
 	ctx context.Context,
 	sm *GameServerManager,
 	config util.Config,
+	cache commonCache.Cache,
 	w http.ResponseWriter,
 	r *http.Request,
 	opts *ServeWsOptions,
@@ -46,7 +58,7 @@ func ServeWs(
 		}
 	}
 
-	userId, serverId, _, err := extractRequestMetadata(w, r)
+	userId, serverId, serverJoinCode, err := extractRequestMetadata(w, r)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to extract metadata from ws upgrade request")
 		return nil, err
@@ -54,7 +66,16 @@ func ServeWs(
 
 	logger := log.With().Str("user_id", userId.String()).Str("server_id", serverId.String()).Logger()
 
-	// TODO: Validate the server join code
+	validServerJoinCode, err := fetchServerJoinCode(ctx, w, userId, serverId, config, cache)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to fetch server join code")
+		return nil, err
+	}
+	if !strings.EqualFold(validServerJoinCode, serverJoinCode) {
+		logger.Error().Msg("server join code mismatch")
+		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
+		return nil, ErrUnauthorizedAccess
+	}
 
 	gameServer := sm.GetOrCreateGameServer(ctx, serverId)
 	if gameServer.IsClosed() {
@@ -207,4 +228,75 @@ func checkOrigin(userId uuid.UUID, config util.Config) func(r *http.Request) boo
 
 		return false
 	}
+}
+
+func getServerJoinCodeCacheKey(userId uuid.UUID, serverId uuid.UUID, config util.Config) string {
+	return fmt.Sprintf("%s-%s:%s:%s",
+		config.ServiceName,
+		serverJoinCodeCachePrefix,
+		serverId.String(),
+		userId.String(),
+	)
+}
+
+func GenerateServerJoinCode(
+	ctx context.Context,
+	userId uuid.UUID,
+	serverId uuid.UUID,
+	config util.Config,
+	cache commonCache.Cache,
+) (string, error) {
+	joinCode, err := commonUtil.GenerateRandomAlphanumericString(nonceLength)
+	if err != nil {
+		return "", fmt.Errorf("could not generate server join code: %w", err)
+	}
+
+	cacheKey := getServerJoinCodeCacheKey(userId, serverId, config)
+	err = cache.Set(ctx, cacheKey, joinCode, ServerJoinCodeCacheTTL)
+	if err != nil {
+		return "", fmt.Errorf("could not cache server join code: %w", err)
+	}
+
+	return joinCode, nil
+}
+
+func fetchServerJoinCode(
+	ctx context.Context,
+	w http.ResponseWriter,
+	userId uuid.UUID,
+	serverId uuid.UUID,
+	config util.Config,
+	cache commonCache.Cache,
+) (string, error) {
+	logger := log.With().Str("user_id", userId.String()).Str("server_id", serverId.String()).Logger()
+
+	cacheKey := getServerJoinCodeCacheKey(userId, serverId, config)
+	res, err := cache.Get(ctx, cacheKey)
+	if err != nil {
+		logger.Error().Err(err).Msg("could not fetch server join code from cache")
+		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
+		return "", ErrInternalServerError
+	}
+
+	if res == nil {
+		logger.Error().Msg("server join code not found in cache")
+		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
+		return "", ErrUnauthorizedAccess
+	}
+
+	joinCode, ok := res.(string)
+	if !ok {
+		logger.Error().Msg("could not cast server join code to string")
+		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
+		return "", ErrInternalServerError
+	}
+
+	err = cache.Del(ctx, cacheKey)
+	if err != nil {
+		logger.Error().Err(err).Msg("could not delete server join code from cache")
+		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
+		return "", ErrInternalServerError
+	}
+
+	return joinCode, nil
 }

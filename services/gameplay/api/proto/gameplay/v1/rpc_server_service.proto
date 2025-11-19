@@ -89,6 +89,16 @@ message UpdateServerResponse {
   Server server = 1;
 }
 
+message JoinServerRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message JoinServerResponse {
+  string server_id = 1;
+  string join_code = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
 message ArchiveServerRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
 }

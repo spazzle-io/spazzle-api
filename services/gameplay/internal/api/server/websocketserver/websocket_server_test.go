@@ -2,6 +2,7 @@ package websocketserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,9 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
+	"go.uber.org/mock/gomock"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -20,15 +24,17 @@ import (
 func TestServeWS(t *testing.T) {
 	validUserID := uuid.New()
 	validServerID := uuid.New()
+	validServerJoinCode := "some_valid_token"
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	testCases := []struct {
-		name      string
-		query     url.Values
-		config    util.Config
-		shouldErr bool
+		name       string
+		query      url.Values
+		config     util.Config
+		buildStubs func(cache *mockcache.MockCache)
+		shouldErr  bool
 	}{
 		{
 			name:  "success",
@@ -36,6 +42,17 @@ func TestServeWS(t *testing.T) {
 			config: util.Config{
 				Environment:    "production",
 				AllowedOrigins: []string{"https://spazzle.io"},
+			},
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(validServerJoinCode, nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
 			},
 			shouldErr: false,
 		},
@@ -46,6 +63,42 @@ func TestServeWS(t *testing.T) {
 				Environment:    "production",
 				AllowedOrigins: []string{"https://spazzle.io"},
 			},
+			buildStubs: func(cache *mockcache.MockCache) {},
+			shouldErr:  true,
+		},
+		{
+			name:  "error fetching server join code",
+			query: url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}},
+			config: util.Config{
+				Environment:    "production",
+				AllowedOrigins: []string{"https://spazzle.io"},
+			},
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return("", errors.New("failed to fetch server join code"))
+			},
+			shouldErr: true,
+		},
+		{
+			name:  "server join code mismatch",
+			query: url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}},
+			config: util.Config{
+				Environment:    "production",
+				AllowedOrigins: []string{"https://spazzle.io"},
+			},
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return("invalid-server-join-code", nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+			},
 			shouldErr: true,
 		},
 	}
@@ -55,9 +108,15 @@ func TestServeWS(t *testing.T) {
 			var wg sync.WaitGroup
 			wg.Add(1)
 
+			crtl := gomock.NewController(t)
+			defer crtl.Finish()
+
+			cache := mockcache.NewMockCache(crtl)
+			tc.buildStubs(cache)
+
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				defer wg.Done()
-				_, err := ServeWs(context.Background(), sm, tc.config, w, r, &ServeWsOptions{StartPumps: false})
+				_, err := ServeWs(context.Background(), sm, tc.config, cache, w, r, &ServeWsOptions{StartPumps: false})
 				if tc.shouldErr {
 					require.Error(t, err)
 					return
@@ -68,8 +127,7 @@ func TestServeWS(t *testing.T) {
 
 			urlStr := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?" + tc.query.Encode()
 
-			validToken := "some_valid_token"
-			authHeader := fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken)
+			authHeader := fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validServerJoinCode)
 
 			header := http.Header{}
 			header.Add(commonMiddleware.AuthorizationHeader, authHeader)
@@ -292,6 +350,175 @@ func TestCheckOrigin(t *testing.T) {
 			valid := checkFn(req)
 
 			require.Equal(t, tc.expectedValid, valid)
+		})
+	}
+}
+
+func TestGetServerJoinCodeCacheKey(t *testing.T) {
+	userId := uuid.New()
+	serverID := uuid.New()
+	config := util.Config{
+		ServiceName: "gameplay",
+	}
+
+	expectedCacheKey := fmt.Sprintf("gameplay-%s:%s:%s", serverJoinCodeCachePrefix, serverID.String(), userId.String())
+	cacheKey := getServerJoinCodeCacheKey(userId, serverID, config)
+
+	require.Equal(t, expectedCacheKey, cacheKey)
+}
+
+func TestGenerateServerJoinCode(t *testing.T) {
+	testCases := []struct {
+		name       string
+		buildStubs func(cache *mockcache.MockCache)
+		shouldErr  bool
+	}{
+		{
+			name: "success",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Set(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+			},
+			shouldErr: false,
+		},
+		{
+			name: "could not cache server join code",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Set(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(errors.New("could not cache server join code"))
+			},
+			shouldErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			crtl := gomock.NewController(t)
+			defer crtl.Finish()
+
+			config := util.Config{
+				ServiceName: "test",
+			}
+
+			cache := mockcache.NewMockCache(crtl)
+			tc.buildStubs(cache)
+
+			joinCode, err := GenerateServerJoinCode(context.Background(), uuid.New(), uuid.New(), config, cache)
+			if tc.shouldErr {
+				require.Error(t, err)
+				require.Empty(t, joinCode)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotEmpty(t, joinCode)
+			require.Len(t, joinCode, nonceLength)
+		})
+	}
+}
+
+func TestFetchServerJoinCode(t *testing.T) {
+	testCases := []struct {
+		name             string
+		buildStubs       func(cache *mockcache.MockCache)
+		expectedJoinCode string
+		expectedErr      error
+	}{
+		{
+			name: "success",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return("valid-server-join-code", nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+			},
+			expectedErr:      nil,
+			expectedJoinCode: "valid-server-join-code",
+		},
+		{
+			name: "error retrieving server join code from cache",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil, errors.New("error retrieving server join code"))
+			},
+			expectedErr:      ErrInternalServerError,
+			expectedJoinCode: "",
+		},
+		{
+			name: "server join code not found in cache",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil, nil)
+			},
+			expectedErr:      ErrUnauthorizedAccess,
+			expectedJoinCode: "",
+		},
+		{
+			name: "could not cast server join code to string",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(util.Config{}, nil)
+			},
+			expectedErr:      ErrInternalServerError,
+			expectedJoinCode: "",
+		},
+		{
+			name: "could not delete server join code from cache",
+			buildStubs: func(cache *mockcache.MockCache) {
+				cache.EXPECT().
+					Get(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return("valid-server-join-code", nil)
+
+				cache.EXPECT().
+					Del(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(errors.New("could not delete server join code"))
+			},
+			expectedErr:      ErrInternalServerError,
+			expectedJoinCode: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			crtl := gomock.NewController(t)
+			defer crtl.Finish()
+
+			config := util.Config{
+				ServiceName: "test",
+			}
+
+			cache := mockcache.NewMockCache(crtl)
+			tc.buildStubs(cache)
+
+			recorder := httptest.NewRecorder()
+
+			joinCode, err := fetchServerJoinCode(context.Background(), recorder, uuid.New(), uuid.New(), config, cache)
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tc.expectedErr)
+				require.Empty(t, joinCode)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotEmpty(t, joinCode)
 		})
 	}
 }
