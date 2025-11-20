@@ -38,6 +38,7 @@ type DirectMsgPayload struct {
 
 type GameServer struct {
 	serverId      uuid.UUID
+	instanceId    uuid.UUID
 	register      chan *Client
 	unregister    chan *Client
 	broadcast     chan []byte
@@ -72,6 +73,7 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID, opts *NewGameServerO
 
 	gameServer := &GameServer{
 		serverId:   serverId,
+		instanceId: uuid.New(),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte),
@@ -84,6 +86,7 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID, opts *NewGameServerO
 	if opts.StartServer {
 		gameServer.wg.Add(1)
 		go gameServer.run()
+		// TODO: Add a goroutine that sends heartbeats to the GameServer workflow via redis as a persistence store.
 	}
 
 	gameServer.getLogger(nil).Info().Msg("created ws game server")
