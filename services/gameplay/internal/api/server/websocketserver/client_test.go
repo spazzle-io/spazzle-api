@@ -201,7 +201,9 @@ func TestClientWritePump_ReceiveMessage(t *testing.T) {
 	go client.writePump(ctx)
 
 	testMsg := []byte(`test msg`)
-	client.send <- testMsg
+	client.send <- OutgoingMessage{
+		Data: testMsg,
+	}
 
 	_, response, err := conn.ReadMessage()
 	require.NoError(t, err)

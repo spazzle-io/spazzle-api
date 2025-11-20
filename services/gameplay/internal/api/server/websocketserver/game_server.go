@@ -32,8 +32,8 @@ type DirectMsgRecipient struct {
 }
 
 type DirectMsgPayload struct {
-	Recipients []*DirectMsgRecipient
-	Msg        []byte
+	Recipients []DirectMsgRecipient
+	Msg        OutgoingMessage
 }
 
 type GameServer struct {
@@ -206,10 +206,14 @@ func (gs *GameServer) dispatchMsg(msg []byte) {
 	gs.clientsMu.RLock()
 	defer gs.clientsMu.RUnlock()
 
+	outgoingMsg := OutgoingMessage{
+		Data: msg,
+	}
+
 	for _, conns := range gs.clients {
 		for _, client := range conns {
 			select {
-			case client.send <- msg:
+			case client.send <- outgoingMsg:
 			default:
 				// If client send buffer is full, drop the client connection
 				gs.getLogger(client).Warn().Msg("could not send message to client ws send channel")
@@ -237,6 +241,10 @@ func (gs *GameServer) dispatchDirectMsg(directMsgPayload *DirectMsgPayload) {
 				default:
 					// If client send buffer is full, drop the client connection
 					gs.getLogger(client).Warn().Msg("could not send message to client ws send channel")
+					if directMsgPayload.Msg.RequiresAck {
+						// TODO: Notify workflow that message send has failed
+						_ = struct{}{}
+					}
 					if !gs.IsClosed() {
 						go func(c *Client) { gs.unregister <- c }(client)
 					}
