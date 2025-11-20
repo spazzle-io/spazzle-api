@@ -48,6 +48,41 @@ func TestAddClient(t *testing.T) {
 	require.Equal(t, gameServer.connCount.Load(), int32(1))
 }
 
+func TestGetClientConnections(t *testing.T) {
+	gameServer := createTestGameServer(t)
+	require.NotEmpty(t, gameServer)
+
+	userId := uuid.New()
+
+	clientConns := gameServer.getClientConnections(userId)
+	require.Empty(t, clientConns)
+	require.Len(t, clientConns, 0)
+
+	client1 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+	gameServer.addClient(client1)
+
+	clientConns = gameServer.getClientConnections(userId)
+	require.NotEmpty(t, clientConns)
+	require.Len(t, clientConns, 1)
+
+	client2 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan []byte, ClientSendChanBufSize),
+	}
+	gameServer.addClient(client2)
+
+	clientConns = gameServer.getClientConnections(userId)
+	require.NotEmpty(t, clientConns)
+	require.Len(t, clientConns, 2)
+}
+
 func TestRemoveClient(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)

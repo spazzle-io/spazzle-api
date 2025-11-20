@@ -97,7 +97,10 @@ func ServeWs(
 		return nil, err
 	}
 
-	client, err := NewClient(gameServer, conn, userId)
+	clientConns := gameServer.getClientConnections(userId)
+	isNewClientSpectating := len(clientConns) > 0
+
+	client, err := NewClient(gameServer, conn, userId, isNewClientSpectating)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create ws client")
 		if err = conn.Close(); err != nil {

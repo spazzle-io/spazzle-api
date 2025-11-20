@@ -25,14 +25,15 @@ type serverAPI interface {
 }
 
 type Client struct {
-	userId     uuid.UUID
-	connId     uuid.UUID
-	gameServer serverAPI
-	conn       *websocket.Conn
-	send       chan []byte
+	userId       uuid.UUID
+	connId       uuid.UUID
+	gameServer   serverAPI
+	conn         *websocket.Conn
+	send         chan []byte
+	isSpectating bool
 }
 
-func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID) (*Client, error) {
+func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID, isSpectating bool) (*Client, error) {
 	connId, err := uuid.NewRandom()
 	if err != nil {
 		log.Error().
@@ -43,11 +44,12 @@ func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID) (*C
 	}
 
 	client := Client{
-		gameServer: gameServer,
-		conn:       conn,
-		send:       make(chan []byte, ClientSendChanBufSize),
-		userId:     userId,
-		connId:     connId,
+		gameServer:   gameServer,
+		conn:         conn,
+		send:         make(chan []byte, ClientSendChanBufSize),
+		userId:       userId,
+		connId:       connId,
+		isSpectating: isSpectating,
 	}
 
 	client.getLogger().Info().Msg("created ws client")

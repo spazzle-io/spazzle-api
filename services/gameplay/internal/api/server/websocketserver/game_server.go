@@ -124,6 +124,13 @@ func (gs *GameServer) run() {
 	}
 }
 
+func (gs *GameServer) getClientConnections(userId uuid.UUID) map[uuid.UUID]*Client {
+	gs.clientsMu.RLock()
+	defer gs.clientsMu.RUnlock()
+
+	return gs.clients[userId]
+}
+
 func (gs *GameServer) addClient(c *Client) bool {
 	gs.clientsMu.Lock()
 	defer gs.clientsMu.Unlock()

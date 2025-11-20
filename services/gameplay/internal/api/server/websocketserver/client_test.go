@@ -127,6 +127,7 @@ func TestCreateClient(t *testing.T) {
 	}(conn)
 
 	require.NotEmpty(t, client)
+	require.False(t, client.isSpectating)
 }
 
 func TestClientReadPump_BroadcastMessage(t *testing.T) {
