@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
+
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	"go.uber.org/mock/gomock"
 
@@ -26,7 +28,7 @@ func TestServeWS(t *testing.T) {
 	validServerID := uuid.New()
 	validServerJoinCode := "some_valid_token"
 
-	sm := createTestGameServerManager(t)
+	sm := gameserver.NewManager()
 	require.NotEmpty(t, sm)
 
 	testCases := []struct {

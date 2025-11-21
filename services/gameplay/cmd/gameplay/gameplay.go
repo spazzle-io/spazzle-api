@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/server/websocketserver"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -126,7 +128,7 @@ func runGatewayServer(
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
-	gameServerManager := websocketserver.NewGameServerManager()
+	gameServerManager := gameserver.NewManager()
 
 	commonServer.RunGatewayServer(
 		ctx,

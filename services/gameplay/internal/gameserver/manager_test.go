@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTestGameServerManager(t *testing.T) *GameServerManager {
-	gameServerManager := NewGameServerManager()
+func createTestGameServerManager(t *testing.T) *Manager {
+	gameServerManager := NewManager()
 	require.NotEmpty(t, gameServerManager)
 	require.Empty(t, gameServerManager.gameServers)
 

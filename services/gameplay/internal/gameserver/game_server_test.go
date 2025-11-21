@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func TestGetClientConnections(t *testing.T) {
 
 	userId := uuid.New()
 
-	clientConns := gameServer.getClientConnections(userId)
+	clientConns := gameServer.GetClientConnections(userId)
 	require.Empty(t, clientConns)
 	require.Len(t, clientConns, 0)
 
@@ -66,7 +66,7 @@ func TestGetClientConnections(t *testing.T) {
 	}
 	gameServer.addClient(client1)
 
-	clientConns = gameServer.getClientConnections(userId)
+	clientConns = gameServer.GetClientConnections(userId)
 	require.NotEmpty(t, clientConns)
 	require.Len(t, clientConns, 1)
 
@@ -78,7 +78,7 @@ func TestGetClientConnections(t *testing.T) {
 	}
 	gameServer.addClient(client2)
 
-	clientConns = gameServer.getClientConnections(userId)
+	clientConns = gameServer.GetClientConnections(userId)
 	require.NotEmpty(t, clientConns)
 	require.Len(t, clientConns, 2)
 }

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 
@@ -45,13 +47,13 @@ type ServeWsOptions struct {
 
 func ServeWs(
 	ctx context.Context,
-	sm *GameServerManager,
+	sm *gameserver.Manager,
 	config util.Config,
 	cache commonCache.Cache,
 	w http.ResponseWriter,
 	r *http.Request,
 	opts *ServeWsOptions,
-) (*Client, error) {
+) (*gameserver.Client, error) {
 	if opts == nil {
 		opts = &ServeWsOptions{
 			StartPumps: true,
@@ -97,10 +99,10 @@ func ServeWs(
 		return nil, err
 	}
 
-	clientConns := gameServer.getClientConnections(userId)
-	isNewClientSpectating := len(clientConns) > 0
+	clientConns := gameServer.GetClientConnections(userId)
+	isClientSpectating := len(clientConns) > 0
 
-	client, err := NewClient(gameServer, conn, userId, isNewClientSpectating)
+	client, err := gameserver.NewClient(ctx, gameServer, conn, userId, isClientSpectating, opts.StartPumps)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create ws client")
 		if err = conn.Close(); err != nil {
@@ -117,11 +119,6 @@ func ServeWs(
 		}
 		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
 		return client, err
-	}
-
-	if opts.StartPumps {
-		go client.readPump(ctx)
-		go client.writePump(ctx)
 	}
 
 	return client, nil

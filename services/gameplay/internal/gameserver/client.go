@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -17,12 +17,6 @@ const (
 	MaxMessageSize        = 1 << 18             // 0.25 MB
 	ClientSendChanBufSize = 256
 )
-
-type serverAPI interface {
-	GetServerId() uuid.UUID
-	Broadcast(msg []byte) error
-	Unregister(c *Client) error
-}
 
 // OutgoingMessage represents a message that the GameServer sends to a client
 // over the WebSocket connection. It supports optional delivery acknowledgment to the
@@ -48,13 +42,20 @@ type OutgoingMessage struct {
 type Client struct {
 	userId       uuid.UUID
 	connId       uuid.UUID
-	gameServer   serverAPI
+	gameServer   *GameServer
 	conn         *websocket.Conn
 	send         chan OutgoingMessage
 	isSpectating bool
 }
 
-func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID, isSpectating bool) (*Client, error) {
+func NewClient(
+	ctx context.Context,
+	gameServer *GameServer,
+	conn *websocket.Conn,
+	userId uuid.UUID,
+	isSpectating bool,
+	startPumps bool,
+) (*Client, error) {
 	connId, err := uuid.NewRandom()
 	if err != nil {
 		log.Error().
@@ -71,6 +72,11 @@ func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID, isS
 		userId:       userId,
 		connId:       connId,
 		isSpectating: isSpectating,
+	}
+
+	if startPumps {
+		go client.readPump(ctx)
+		go client.writePump(ctx)
 	}
 
 	client.getLogger().Info().Msg("created ws client")

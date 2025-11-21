@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	GameServerShutdownGracePeriod = time.Second * 30
-	BroadcastTimeout              = time.Second * 5
-	SendDirectMsgTimeout          = time.Second * 5
-	ClientRegisterTimeout         = time.Second * 5
-	ClientUnregisterTimeout       = time.Second * 5
+	ShutdownGracePeriod     = time.Second * 30
+	BroadcastTimeout        = time.Second * 5
+	SendDirectMsgTimeout    = time.Second * 5
+	ClientRegisterTimeout   = time.Second * 5
+	ClientUnregisterTimeout = time.Second * 5
 )
 
 var ErrClosedGameServer = errors.New("game server is closed")
@@ -125,13 +125,6 @@ func (gs *GameServer) run() {
 			return
 		}
 	}
-}
-
-func (gs *GameServer) getClientConnections(userId uuid.UUID) map[uuid.UUID]*Client {
-	gs.clientsMu.RLock()
-	defer gs.clientsMu.RUnlock()
-
-	return gs.clients[userId]
 }
 
 func (gs *GameServer) addClient(c *Client) bool {
@@ -269,7 +262,7 @@ func (gs *GameServer) scheduleShutdown() {
 		return
 	}
 
-	gs.shutdownTimer = time.AfterFunc(GameServerShutdownGracePeriod, func() {
+	gs.shutdownTimer = time.AfterFunc(ShutdownGracePeriod, func() {
 		gs.shutdown()
 		gs.wg.Wait()
 	})
@@ -313,6 +306,13 @@ func (gs *GameServer) IsClosed() bool {
 
 func (gs *GameServer) GetServerId() uuid.UUID {
 	return gs.serverId
+}
+
+func (gs *GameServer) GetClientConnections(userId uuid.UUID) map[uuid.UUID]*Client {
+	gs.clientsMu.RLock()
+	defer gs.clientsMu.RUnlock()
+
+	return gs.clients[userId]
 }
 
 func (gs *GameServer) Broadcast(msg []byte) error {
