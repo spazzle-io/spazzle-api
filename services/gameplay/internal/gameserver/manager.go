@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -9,13 +9,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type GameServerManager struct {
+type Manager struct {
 	mu          sync.RWMutex
 	gameServers map[uuid.UUID]*GameServer
 }
 
-func NewGameServerManager() *GameServerManager {
-	gameServerManager := &GameServerManager{
+func NewManager() *Manager {
+	gameServerManager := &Manager{
 		gameServers: make(map[uuid.UUID]*GameServer),
 	}
 
@@ -24,7 +24,7 @@ func NewGameServerManager() *GameServerManager {
 	return gameServerManager
 }
 
-func (sm *GameServerManager) getLogger(serverId uuid.UUID) *zerolog.Logger {
+func (sm *Manager) getLogger(serverId uuid.UUID) *zerolog.Logger {
 	logger := log.With().Logger()
 
 	if serverId != uuid.Nil {
@@ -34,7 +34,7 @@ func (sm *GameServerManager) getLogger(serverId uuid.UUID) *zerolog.Logger {
 	return &logger
 }
 
-func (sm *GameServerManager) GetOrCreateGameServer(ctx context.Context, serverId uuid.UUID) *GameServer {
+func (sm *Manager) GetOrCreateGameServer(ctx context.Context, serverId uuid.UUID) *GameServer {
 	// quick lookup of the game server on a read lock
 	sm.mu.RLock()
 	gameServer, ok := sm.gameServers[serverId]
@@ -62,7 +62,7 @@ func (sm *GameServerManager) GetOrCreateGameServer(ctx context.Context, serverId
 	return gameServer
 }
 
-func (sm *GameServerManager) RemoveGameServerIfClosed(serverId uuid.UUID) {
+func (sm *Manager) RemoveGameServerIfClosed(serverId uuid.UUID) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 

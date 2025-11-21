@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -18,21 +18,44 @@ const (
 	ClientSendChanBufSize = 256
 )
 
-type serverAPI interface {
-	GetServerId() uuid.UUID
-	Broadcast(msg []byte) error
-	Unregister(c *Client) error
+// OutgoingMessage represents a message that the GameServer sends to a client
+// over the WebSocket connection. It supports optional delivery acknowledgment to the
+// GameServer workflow.
+type OutgoingMessage struct {
+	// Data is the raw serialized payload to send to the client.
+	Data []byte
+	// CorrelationID uniquely identifies this message on the server side.
+	// If RequiresAck is false, CorrelationID may be empty.
+	CorrelationID string
+	// RequiresAck indicates whether an acknowledgment message should be sent to the GameServer workflow
+	// to notify whether the message was successfully delivered to the client. Note that an individual
+	// acknowledgment message will be sent for each recipient of the message.
+	//
+	// If the message is successfully written to the client's WebSocket,
+	// an acknowledgment is guaranteed to be sent.
+	//
+	// If the write fails or isn't able to be performed, a best-effort attempt may be made to send a
+	// failure acknowledgment, but it is not guaranteed.
+	RequiresAck bool
 }
 
 type Client struct {
-	userId     uuid.UUID
-	connId     uuid.UUID
-	gameServer serverAPI
-	conn       *websocket.Conn
-	send       chan []byte
+	userId       uuid.UUID
+	connId       uuid.UUID
+	gameServer   *GameServer
+	conn         *websocket.Conn
+	send         chan OutgoingMessage
+	isSpectating bool
 }
 
-func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID) (*Client, error) {
+func NewClient(
+	ctx context.Context,
+	gameServer *GameServer,
+	conn *websocket.Conn,
+	userId uuid.UUID,
+	isSpectating bool,
+	startPumps bool,
+) (*Client, error) {
 	connId, err := uuid.NewRandom()
 	if err != nil {
 		log.Error().
@@ -43,11 +66,17 @@ func NewClient(gameServer serverAPI, conn *websocket.Conn, userId uuid.UUID) (*C
 	}
 
 	client := Client{
-		gameServer: gameServer,
-		conn:       conn,
-		send:       make(chan []byte, ClientSendChanBufSize),
-		userId:     userId,
-		connId:     connId,
+		gameServer:   gameServer,
+		conn:         conn,
+		send:         make(chan OutgoingMessage, ClientSendChanBufSize),
+		userId:       userId,
+		connId:       connId,
+		isSpectating: isSpectating,
+	}
+
+	if startPumps {
+		go client.readPump(ctx)
+		go client.writePump(ctx)
 	}
 
 	client.getLogger().Info().Msg("created ws client")
@@ -122,7 +151,7 @@ func (c *Client) writePump(ctx context.Context) {
 
 	for {
 		select {
-		case message, ok := <-c.send:
+		case outgoingMsg, ok := <-c.send:
 			err := c.conn.SetWriteDeadline(time.Now().UTC().Add(WriteWait))
 			if err != nil {
 				c.getLogger().Warn().Err(err).Msg("failed to set ws write deadline")
@@ -141,10 +170,21 @@ func (c *Client) writePump(ctx context.Context) {
 				return
 			}
 
-			_, err = w.Write(message)
+			_, err = w.Write(outgoingMsg.Data)
 			if err != nil {
 				c.getLogger().Warn().Err(err).Msg("failed to send message to client ws connection")
+
+				if outgoingMsg.RequiresAck {
+					// TODO: Notify workflow that message send has failed
+					_ = struct{}{}
+				}
+
 				return
+			}
+
+			if outgoingMsg.RequiresAck {
+				// TODO: Notify workflow that message send has succeeded
+				_ = struct{}{}
 			}
 
 			if err := w.Close(); err != nil {

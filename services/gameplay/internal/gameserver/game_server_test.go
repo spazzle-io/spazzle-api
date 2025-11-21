@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func TestAddClient(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	require.Len(t, gameServer.clients, 0)
@@ -48,6 +48,41 @@ func TestAddClient(t *testing.T) {
 	require.Equal(t, gameServer.connCount.Load(), int32(1))
 }
 
+func TestGetClientConnections(t *testing.T) {
+	gameServer := createTestGameServer(t)
+	require.NotEmpty(t, gameServer)
+
+	userId := uuid.New()
+
+	clientConns := gameServer.GetClientConnections(userId)
+	require.Empty(t, clientConns)
+	require.Len(t, clientConns, 0)
+
+	client1 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+	}
+	gameServer.addClient(client1)
+
+	clientConns = gameServer.GetClientConnections(userId)
+	require.NotEmpty(t, clientConns)
+	require.Len(t, clientConns, 1)
+
+	client2 := &Client{
+		userId:     userId,
+		connId:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+	}
+	gameServer.addClient(client2)
+
+	clientConns = gameServer.GetClientConnections(userId)
+	require.NotEmpty(t, clientConns)
+	require.Len(t, clientConns, 2)
+}
+
 func TestRemoveClient(t *testing.T) {
 	gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
@@ -56,7 +91,7 @@ func TestRemoveClient(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
@@ -82,7 +117,7 @@ func TestRemoveClient_UserIdNotRegistered(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
@@ -105,7 +140,7 @@ func TestRemoveClient_UserConnNotRegistered(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
@@ -127,14 +162,14 @@ func TestRemoveAllClients(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client2 := &Client{
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client1)
@@ -163,7 +198,7 @@ func TestDispatchMsg(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
@@ -172,7 +207,9 @@ func TestDispatchMsg(t *testing.T) {
 	gameServer.dispatchMsg(msg)
 
 	retrievedMsg := <-client.send
-	require.Equal(t, msg, retrievedMsg)
+	require.Equal(t, msg, retrievedMsg.Data)
+	require.False(t, retrievedMsg.RequiresAck)
+	require.Empty(t, retrievedMsg.CorrelationID)
 }
 
 func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
@@ -183,20 +220,22 @@ func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
-		Recipients: []*DirectMsgRecipient{
+		Recipients: []DirectMsgRecipient{
 			{
 				UserId:  uuid.New(),
 				ConnIds: []uuid.UUID{client.connId},
 			},
 		},
-		Msg: testMsg,
+		Msg: OutgoingMessage{
+			Data: testMsg,
+		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
@@ -212,20 +251,22 @@ func TestDispatchDirectMsg_RecipientConnIdNotFound(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
-		Recipients: []*DirectMsgRecipient{
+		Recipients: []DirectMsgRecipient{
 			{
 				UserId:  client.userId,
 				ConnIds: []uuid.UUID{uuid.New()},
 			},
 		},
-		Msg: testMsg,
+		Msg: OutgoingMessage{
+			Data: testMsg,
+		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
@@ -243,14 +284,14 @@ func TestDispatchDirectMsg_AllUserConnections(t *testing.T) {
 		userId:     userId,
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client2 := &Client{
 		userId:     userId,
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client1)
@@ -258,20 +299,22 @@ func TestDispatchDirectMsg_AllUserConnections(t *testing.T) {
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
-		Recipients: []*DirectMsgRecipient{
+		Recipients: []DirectMsgRecipient{
 			{
 				UserId: userId,
 			},
 		},
-		Msg: testMsg,
+		Msg: OutgoingMessage{
+			Data: testMsg,
+		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
 
 	retrievedMsgClient1 := <-client1.send
 	retrievedMsgClient2 := <-client2.send
-	require.Equal(t, testMsg, retrievedMsgClient1)
-	require.Equal(t, testMsg, retrievedMsgClient2)
+	require.Equal(t, testMsg, retrievedMsgClient1.Data)
+	require.Equal(t, testMsg, retrievedMsgClient2.Data)
 }
 
 func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
@@ -284,21 +327,21 @@ func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
 		userId:     userId,
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client2 := &Client{
 		userId:     userId,
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client3 := &Client{
 		userId:     userId,
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client1)
@@ -307,13 +350,15 @@ func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
 
 	testMsg := []byte("test msg")
 	payload := &DirectMsgPayload{
-		Recipients: []*DirectMsgRecipient{
+		Recipients: []DirectMsgRecipient{
 			{
 				UserId:  userId,
 				ConnIds: []uuid.UUID{client2.connId, client3.connId},
 			},
 		},
-		Msg: testMsg,
+		Msg: OutgoingMessage{
+			Data: testMsg,
+		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
@@ -321,8 +366,8 @@ func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
 	retrievedMsgClient2 := <-client2.send
 	retrievedMsgClient3 := <-client3.send
 	require.Len(t, client1.send, 0)
-	require.Equal(t, testMsg, retrievedMsgClient2)
-	require.Equal(t, testMsg, retrievedMsgClient3)
+	require.Equal(t, testMsg, retrievedMsgClient2.Data)
+	require.Equal(t, testMsg, retrievedMsgClient3.Data)
 }
 
 func TestScheduleShutdown(t *testing.T) {
@@ -344,7 +389,7 @@ func TestShutdown(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
@@ -439,7 +484,7 @@ func TestSendDirectMsg(t *testing.T) {
 	}()
 
 	payload := &DirectMsgPayload{
-		Recipients: []*DirectMsgRecipient{
+		Recipients: []DirectMsgRecipient{
 			{
 				UserId: uuid.New(),
 				ConnIds: []uuid.UUID{
@@ -478,7 +523,7 @@ func TestRegister(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	err := gameServer.Register(client)
@@ -511,7 +556,7 @@ func TestUnregister(t *testing.T) {
 		userId:     uuid.New(),
 		connId:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan []byte, ClientSendChanBufSize),
+		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	err := gameServer.Unregister(client)

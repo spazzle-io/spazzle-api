@@ -1,4 +1,4 @@
-package websocketserver
+package gameserver
 
 import (
 	"context"
@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	GameServerShutdownGracePeriod = time.Second * 30
-	BroadcastTimeout              = time.Second * 5
-	SendDirectMsgTimeout          = time.Second * 5
-	ClientRegisterTimeout         = time.Second * 5
-	ClientUnregisterTimeout       = time.Second * 5
+	ShutdownGracePeriod     = time.Second * 30
+	BroadcastTimeout        = time.Second * 5
+	SendDirectMsgTimeout    = time.Second * 5
+	ClientRegisterTimeout   = time.Second * 5
+	ClientUnregisterTimeout = time.Second * 5
 )
 
 var ErrClosedGameServer = errors.New("game server is closed")
@@ -32,12 +32,13 @@ type DirectMsgRecipient struct {
 }
 
 type DirectMsgPayload struct {
-	Recipients []*DirectMsgRecipient
-	Msg        []byte
+	Recipients []DirectMsgRecipient
+	Msg        OutgoingMessage
 }
 
 type GameServer struct {
 	serverId      uuid.UUID
+	instanceId    uuid.UUID
 	register      chan *Client
 	unregister    chan *Client
 	broadcast     chan []byte
@@ -72,6 +73,7 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID, opts *NewGameServerO
 
 	gameServer := &GameServer{
 		serverId:   serverId,
+		instanceId: uuid.New(),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte),
@@ -84,6 +86,7 @@ func NewGameServer(ctx context.Context, serverId uuid.UUID, opts *NewGameServerO
 	if opts.StartServer {
 		gameServer.wg.Add(1)
 		go gameServer.run()
+		// TODO: Add a goroutine that sends heartbeats to the GameServer workflow via redis as a persistence store.
 	}
 
 	gameServer.getLogger(nil).Info().Msg("created ws game server")
@@ -199,10 +202,14 @@ func (gs *GameServer) dispatchMsg(msg []byte) {
 	gs.clientsMu.RLock()
 	defer gs.clientsMu.RUnlock()
 
+	outgoingMsg := OutgoingMessage{
+		Data: msg,
+	}
+
 	for _, conns := range gs.clients {
 		for _, client := range conns {
 			select {
-			case client.send <- msg:
+			case client.send <- outgoingMsg:
 			default:
 				// If client send buffer is full, drop the client connection
 				gs.getLogger(client).Warn().Msg("could not send message to client ws send channel")
@@ -230,6 +237,10 @@ func (gs *GameServer) dispatchDirectMsg(directMsgPayload *DirectMsgPayload) {
 				default:
 					// If client send buffer is full, drop the client connection
 					gs.getLogger(client).Warn().Msg("could not send message to client ws send channel")
+					if directMsgPayload.Msg.RequiresAck {
+						// TODO: Notify workflow that message send has failed
+						_ = struct{}{}
+					}
 					if !gs.IsClosed() {
 						go func(c *Client) { gs.unregister <- c }(client)
 					}
@@ -251,7 +262,7 @@ func (gs *GameServer) scheduleShutdown() {
 		return
 	}
 
-	gs.shutdownTimer = time.AfterFunc(GameServerShutdownGracePeriod, func() {
+	gs.shutdownTimer = time.AfterFunc(ShutdownGracePeriod, func() {
 		gs.shutdown()
 		gs.wg.Wait()
 	})
@@ -295,6 +306,13 @@ func (gs *GameServer) IsClosed() bool {
 
 func (gs *GameServer) GetServerId() uuid.UUID {
 	return gs.serverId
+}
+
+func (gs *GameServer) GetClientConnections(userId uuid.UUID) map[uuid.UUID]*Client {
+	gs.clientsMu.RLock()
+	defer gs.clientsMu.RUnlock()
+
+	return gs.clients[userId]
 }
 
 func (gs *GameServer) Broadcast(msg []byte) error {
