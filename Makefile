@@ -6,16 +6,18 @@ module ?=
 # Dynamically determine all modules
 modules := $(shell find services libs -mindepth 1 -maxdepth 1 -type d)
 
-DB_USER := root
-DB_PORT := 5432
-DB_PASS := password
-DATABASE_NAME := $(notdir $(module)) # Set the DB name as the directory name without the path prefix e.g "auth" for module: "services/auth"
-POSTGRES_VERSION := 17
-REDIS_VERSION := 8
+POSTGRES_USER := root
+POSTGRES_PORT := 5432
+POSTGRES_PASS := password
+POSTGRES_DB_NAME := $(notdir $(module)) # Set the DB name as the directory name without the path prefix e.g "auth" for module: "services/auth"
+POSTGRES_VERSION := 17-alpine
+
+REDIS_PORT := 6379
+REDIS_VERSION := 8-alpine
 
 define compute-db-url
 	db_name=$$(basename $(1)); \
-	db_url="postgresql://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$$db_name?sslmode=disable"
+	db_url="postgresql://$(POSTGRES_USER):$(POSTGRES_PASS)@localhost:$(POSTGRES_PORT)/$$db_name?sslmode=disable"
 endef
 
 test:
@@ -50,13 +52,13 @@ db_schema:
 	dbml2sql --postgres -o ./$(module)/docs/db/db_schema.sql ./$(module)/docs/db/db.dbml
 
 postgres:
-	docker run --name postgres$(POSTGRES_VERSION) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(DB_USER) -e POSTGRES_PASSWORD=$(DB_PASS) -d postgres:$(POSTGRES_VERSION)-alpine
+	docker run --name postgres$(POSTGRES_VERSION) -p $(POSTGRES_PORT):$(POSTGRES_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASS) -d postgres:$(POSTGRES_VERSION)
 
 create_db:
-	docker exec -it postgres$(POSTGRES_VERSION) createdb --username=$(DB_USER) --owner=$(DB_USER) $(DATABASE_NAME)
+	docker exec -it postgres$(POSTGRES_VERSION) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(POSTGRES_DB_NAME)
 
 drop_db:
-	docker exec -it postgres$(POSTGRES_VERSION) dropdb $(DATABASE_NAME)
+	docker exec -it postgres$(POSTGRES_VERSION) dropdb $(POSTGRES_DB_NAME)
 
 migrate_create:
 	migrate create -ext sql -dir ./$(module)/internal/db/migration -seq $(name)
@@ -112,7 +114,7 @@ else
 endif
 
 redis:
-	docker run --name redis -p 6379:6379 -d redis:$(REDIS_VERSION)-alpine
+	docker run --name redis$(REDIS_VERSION) -p $(REDIS_PORT):$(REDIS_PORT) -d redis:$(REDIS_VERSION)
 
 mock:
 	@sh -c " \
@@ -145,4 +147,13 @@ proto:
 	@statik -src=./libs/common/docs/swagger -dest=./libs/common/docs
 	@cd ./services/proto && go install tool && go mod tidy
 
-.PHONY: test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto
+temporal-up:
+	docker compose -f docker/temporal/docker-compose.temporal.yml up -d
+
+temporal-down:
+	docker compose -f docker/temporal/docker-compose.temporal.yml down --volumes
+
+temporal-logs:
+	docker compose -f docker/temporal/docker-compose.temporal.yml logs -f
+
+.PHONY: test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs
