@@ -1,6 +1,6 @@
 module github.com/spazzle-io/spazzle-api/services/proto
 
-go 1.24.4
+go 1.25
 
 tool (
 	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
