@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -12,10 +14,12 @@ import (
 type Manager struct {
 	mu          sync.RWMutex
 	gameServers map[uuid.UUID]*GameServer
+	wfClient    workflow.Client
 }
 
-func NewManager() *Manager {
+func NewManager(wfClient workflow.Client) *Manager {
 	gameServerManager := &Manager{
+		wfClient:    wfClient,
 		gameServers: make(map[uuid.UUID]*GameServer),
 	}
 
@@ -56,7 +60,7 @@ func (sm *Manager) GetOrCreateGameServer(ctx context.Context, serverId uuid.UUID
 	}
 
 	// creating a new game server
-	gameServer = NewGameServer(ctx, serverId, nil)
+	gameServer = NewGameServer(ctx, serverId, sm.wfClient, nil)
 	sm.gameServers[serverId] = gameServer
 	sm.getLogger(serverId).Info().Msg("ws game server registered by game server manager")
 	return gameServer

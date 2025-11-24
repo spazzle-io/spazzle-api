@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 
+	mockworkflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow/mock"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
@@ -27,9 +29,6 @@ func TestServeWS(t *testing.T) {
 	validUserID := uuid.New()
 	validServerID := uuid.New()
 	validServerJoinCode := "some_valid_token"
-
-	sm := gameserver.NewManager()
-	require.NotEmpty(t, sm)
 
 	testCases := []struct {
 		name       string
@@ -114,6 +113,11 @@ func TestServeWS(t *testing.T) {
 			defer crtl.Finish()
 
 			cache := mockcache.NewMockCache(crtl)
+			wfClient := mockworkflowclient.NewMockClient(crtl)
+
+			sm := gameserver.NewManager(wfClient)
+			require.NotEmpty(t, sm)
+
 			tc.buildStubs(cache)
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

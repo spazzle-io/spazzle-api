@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/server/websocketserver"
@@ -116,6 +118,22 @@ func runGRPCServer(
 	)
 }
 
+func startTemporalWorkflow(ctx context.Context) workflow.Client {
+	go func() {
+		err := workflow.StartTemporalWorker(ctx)
+		if err != nil {
+			log.Fatal().Err(err).Msg("could not start temporal worker")
+		}
+	}()
+
+	wfClient, err := workflow.NewTemporalClient()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create temporal client")
+	}
+
+	return wfClient
+}
+
 func runGatewayServer(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
@@ -128,7 +146,8 @@ func runGatewayServer(
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
-	gameServerManager := gameserver.NewManager()
+	wfClient := startTemporalWorkflow(ctx)
+	gameServerManager := gameserver.NewManager(wfClient)
 
 	commonServer.RunGatewayServer(
 		ctx,

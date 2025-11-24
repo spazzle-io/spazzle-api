@@ -4,12 +4,20 @@ import (
 	"context"
 	"testing"
 
+	mockworkflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow/mock"
+	"go.uber.org/mock/gomock"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func createTestGameServerManager(t *testing.T) *Manager {
-	gameServerManager := NewManager()
+	crtl := gomock.NewController(t)
+	defer crtl.Finish()
+
+	wfClient := mockworkflowclient.NewMockClient(crtl)
+
+	gameServerManager := NewManager(wfClient)
 	require.NotEmpty(t, gameServerManager)
 	require.Empty(t, gameServerManager.gameServers)
 
