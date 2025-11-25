@@ -3,16 +3,19 @@ package workflow
 import (
 	"context"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+
 	"github.com/rs/zerolog/log"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
 
-func StartTemporalWorker(ctx context.Context) error {
+func StartTemporalWorker(ctx context.Context, config util.Config) error {
 	log.Info().Str("task_queue", gameServerWorkflowTaskQueueName).Msg("starting temporal worker")
 
 	c, err := client.Dial(client.Options{
-		Logger: NewTemporalLogger(log.Logger),
+		Namespace: getTemporalNamespace(config),
+		Logger:    NewTemporalLogger(log.Logger),
 	})
 	if err != nil {
 		return err

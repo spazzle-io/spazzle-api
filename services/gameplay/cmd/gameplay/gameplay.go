@@ -118,15 +118,15 @@ func runGRPCServer(
 	)
 }
 
-func startTemporalWorkflow(ctx context.Context) workflow.Client {
+func startTemporalWorkflow(ctx context.Context, config util.Config) workflow.Client {
 	go func() {
-		err := workflow.StartTemporalWorker(ctx)
+		err := workflow.StartTemporalWorker(ctx, config)
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not start temporal worker")
 		}
 	}()
 
-	wfClient, err := workflow.NewTemporalClient()
+	wfClient, err := workflow.NewTemporalClient(config)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create temporal client")
 	}
@@ -146,7 +146,7 @@ func runGatewayServer(
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
-	wfClient := startTemporalWorkflow(ctx)
+	wfClient := startTemporalWorkflow(ctx, config)
 	gameServerManager := gameserver.NewManager(wfClient)
 
 	commonServer.RunGatewayServer(
