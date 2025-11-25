@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"go.temporal.io/sdk/client"
 )
@@ -11,10 +10,8 @@ type temporalClient struct {
 }
 
 func NewTemporalClient(config util.Config) (Client, error) {
-	c, err := client.Dial(client.Options{
-		Namespace: getTemporalNamespace(config),
-		Logger:    NewTemporalLogger(log.Logger),
-	})
+	opts := getTemporalClientOpts(config)
+	c, err := client.Dial(opts)
 	if err != nil {
 		return nil, err
 	}

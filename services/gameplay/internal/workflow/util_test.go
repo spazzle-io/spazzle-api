@@ -38,3 +38,46 @@ func TestGetTemporalNamespace(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTemporalClientOpts(t *testing.T) {
+	testCases := []struct {
+		name           string
+		config         util.Config
+		hasCredentials bool
+	}{
+		{
+			name: "dev environment",
+			config: util.Config{
+				Environment:      util.Development,
+				ServiceName:      "gameplay",
+				TemporalHostPort: "some-host-port",
+				TemporalAPIKey:   "some-api-key",
+			},
+			hasCredentials: false,
+		},
+		{
+			name: "production environment",
+			config: util.Config{
+				Environment:      "production",
+				ServiceName:      "gameplay",
+				TemporalHostPort: "some-host-port",
+				TemporalAPIKey:   "some-api-key",
+			},
+			hasCredentials: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotOpts := getTemporalClientOpts(tc.config)
+			if tc.hasCredentials {
+				require.NotEmpty(t, gotOpts.HostPort)
+				require.NotEmpty(t, gotOpts.Credentials)
+				return
+			}
+
+			require.Empty(t, gotOpts.HostPort)
+			require.Empty(t, gotOpts.Credentials)
+		})
+	}
+}

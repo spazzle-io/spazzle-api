@@ -13,10 +13,8 @@ import (
 func StartTemporalWorker(ctx context.Context, config util.Config) error {
 	log.Info().Str("task_queue", gameServerWorkflowTaskQueueName).Msg("starting temporal worker")
 
-	c, err := client.Dial(client.Options{
-		Namespace: getTemporalNamespace(config),
-		Logger:    NewTemporalLogger(log.Logger),
-	})
+	opts := getTemporalClientOpts(config)
+	c, err := client.Dial(opts)
 	if err != nil {
 		return err
 	}
