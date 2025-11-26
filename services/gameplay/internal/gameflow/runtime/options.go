@@ -1,12 +1,12 @@
-package workflow
+package runtime
 
 import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
-	"go.temporal.io/sdk/client"
-
+	gameflowLogger "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/logger"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+	"go.temporal.io/sdk/client"
 )
 
 func getTemporalNamespace(config util.Config) string {
@@ -16,7 +16,7 @@ func getTemporalNamespace(config util.Config) string {
 func getTemporalClientOpts(config util.Config) client.Options {
 	opts := client.Options{
 		Namespace: getTemporalNamespace(config),
-		Logger:    NewTemporalLogger(log.Logger),
+		Logger:    gameflowLogger.NewGlobalLogger(log.Logger),
 	}
 
 	if !config.IsDevelopmentEnvironment() {

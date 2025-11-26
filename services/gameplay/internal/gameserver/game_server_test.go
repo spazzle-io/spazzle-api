@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	mockworkflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow/mock"
+	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/runtime/mock"
+
 	"go.uber.org/mock/gomock"
 
 	"github.com/google/uuid"
@@ -16,10 +17,10 @@ func createTestGameServer(t *testing.T) *GameServer {
 	crtl := gomock.NewController(t)
 	defer crtl.Finish()
 
-	wfClient := mockworkflowclient.NewMockClient(crtl)
+	gfClient := mockgameflowclient.NewMockClient(crtl)
 
 	serverId := uuid.New()
-	gameServer := NewGameServer(context.Background(), serverId, wfClient, &NewGameServerOptions{StartServer: false})
+	gameServer := NewGameServer(context.Background(), serverId, gfClient, &NewGameServerOptions{StartServer: false})
 
 	require.NotEmpty(t, gameServer)
 	require.Equal(t, serverId, gameServer.serverId)

@@ -1,4 +1,4 @@
-package workflow
+package runtime
 
 import (
 	"testing"

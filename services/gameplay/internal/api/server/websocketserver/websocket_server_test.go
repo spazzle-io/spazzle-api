@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	mockworkflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow/mock"
+	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/runtime/mock"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
@@ -113,9 +113,9 @@ func TestServeWS(t *testing.T) {
 			defer crtl.Finish()
 
 			cache := mockcache.NewMockCache(crtl)
-			wfClient := mockworkflowclient.NewMockClient(crtl)
+			gfClient := mockgameflowclient.NewMockClient(crtl)
 
-			sm := gameserver.NewManager(wfClient)
+			sm := gameserver.NewManager(gfClient)
 			require.NotEmpty(t, sm)
 
 			tc.buildStubs(cache)

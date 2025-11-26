@@ -1,28 +1,36 @@
-package workflow
+package logger
 
 import "github.com/rs/zerolog"
 
-type TemporalLogger struct {
+type Logger struct {
 	logger zerolog.Logger
 }
 
-func NewTemporalLogger(logger zerolog.Logger) *TemporalLogger {
-	return &TemporalLogger{logger: logger}
+func NewGlobalLogger(logger zerolog.Logger) *Logger {
+	return &Logger{
+		logger: logger,
+	}
 }
 
-func (l *TemporalLogger) Debug(msg string, keyVals ...interface{}) {
+func NewWorkflowLogger(logger zerolog.Logger, static map[string]interface{}) *Logger {
+	return &Logger{
+		logger: logger.With().Fields(static).Logger(),
+	}
+}
+
+func (l *Logger) Debug(msg string, keyVals ...interface{}) {
 	l.logger.Debug().Fields(toFields(keyVals)).Msg(msg)
 }
 
-func (l *TemporalLogger) Info(msg string, keyVals ...interface{}) {
+func (l *Logger) Info(msg string, keyVals ...interface{}) {
 	l.logger.Info().Fields(toFields(keyVals)).Msg(msg)
 }
 
-func (l *TemporalLogger) Warn(msg string, keyVals ...interface{}) {
+func (l *Logger) Warn(msg string, keyVals ...interface{}) {
 	l.logger.Warn().Fields(toFields(keyVals)).Msg(msg)
 }
 
-func (l *TemporalLogger) Error(msg string, keyVals ...interface{}) {
+func (l *Logger) Error(msg string, keyVals ...interface{}) {
 	l.logger.Error().Fields(toFields(keyVals)).Msg(msg)
 }
 

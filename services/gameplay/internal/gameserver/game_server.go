@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow"
+	gameFlow "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/runtime"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -41,7 +41,7 @@ type DirectMsgPayload struct {
 type GameServer struct {
 	serverId      uuid.UUID
 	instanceId    uuid.UUID
-	wfClient      workflow.Client
+	gfClient      gameFlow.Client
 	register      chan *Client
 	unregister    chan *Client
 	broadcast     chan []byte
@@ -68,7 +68,7 @@ type NewGameServerOptions struct {
 func NewGameServer(
 	ctx context.Context,
 	serverId uuid.UUID,
-	wfClient workflow.Client,
+	gfClient gameFlow.Client,
 	opts *NewGameServerOptions,
 ) *GameServer {
 	ctx, cancel := context.WithCancel(ctx)
@@ -82,7 +82,7 @@ func NewGameServer(
 	gameServer := &GameServer{
 		serverId:   serverId,
 		instanceId: uuid.New(),
-		wfClient:   wfClient,
+		gfClient:   gfClient,
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte),

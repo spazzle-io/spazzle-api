@@ -1,28 +1,32 @@
-package workflow
+package runtime
 
 import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"go.temporal.io/sdk/client"
 )
 
-type temporalClient struct {
+type Client interface {
+	Close()
+}
+
+type defaultClient struct {
 	client client.Client
 }
 
-func NewTemporalClient(config util.Config) (Client, error) {
+func NewClient(config util.Config) (Client, error) {
 	opts := getTemporalClientOpts(config)
 	c, err := client.Dial(opts)
 	if err != nil {
 		return nil, err
 	}
 
-	tc := &temporalClient{
+	tc := &defaultClient{
 		client: c,
 	}
 
 	return tc, nil
 }
 
-func (tc *temporalClient) Close() {
+func (tc *defaultClient) Close() {
 	tc.client.Close()
 }
