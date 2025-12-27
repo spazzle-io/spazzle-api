@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
@@ -50,6 +53,8 @@ func ServeWs(
 	sm *gameserver.Manager,
 	config util.Config,
 	cache commonCache.Cache,
+	gfClient gameflow.Client,
+	bus eventbus.EventBus,
 	w http.ResponseWriter,
 	r *http.Request,
 	opts *ServeWsOptions,
@@ -60,15 +65,15 @@ func ServeWs(
 		}
 	}
 
-	userId, serverId, serverJoinCode, err := extractRequestMetadata(w, r)
+	userID, serverID, serverJoinCode, err := extractRequestMetadata(w, r)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to extract metadata from ws upgrade request")
 		return nil, err
 	}
 
-	logger := log.With().Str("user_id", userId.String()).Str("server_id", serverId.String()).Logger()
+	logger := log.With().Str("user_id", userID.String()).Str("server_id", serverID.String()).Logger()
 
-	validServerJoinCode, err := fetchServerJoinCode(ctx, w, userId, serverId, config, cache)
+	validServerJoinCode, err := fetchServerJoinCode(ctx, w, userID, serverID, config, cache)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch server join code")
 		return nil, err
@@ -79,17 +84,26 @@ func ServeWs(
 		return nil, ErrUnauthorizedAccess
 	}
 
-	gameServer := sm.GetOrCreateGameServer(ctx, serverId)
+	gameServer, err := sm.GetOrCreateGameServer(ctx, bus, gfClient, serverID)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to get or create game server instance")
+		return nil, ErrInternalServerError
+	}
+
 	if gameServer.IsClosed() {
 		logger.Warn().Msg("game server already closed. attempting to create a new game server")
-		sm.RemoveGameServerIfClosed(serverId)
-		gameServer = sm.GetOrCreateGameServer(ctx, serverId)
+		sm.RemoveGameServerIfClosed(serverID)
+		gameServer, err = sm.GetOrCreateGameServer(ctx, bus, gfClient, serverID)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to get or create game server instance")
+			return nil, ErrInternalServerError
+		}
 	}
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
-		CheckOrigin:     checkOrigin(userId, config),
+		CheckOrigin:     checkOrigin(userID, config),
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -99,10 +113,10 @@ func ServeWs(
 		return nil, err
 	}
 
-	clientConns := gameServer.GetClientConnections(userId)
+	clientConns := gameServer.GetClientConnections(userID)
 	isClientSpectating := len(clientConns) > 0
 
-	client, err := gameserver.NewClient(ctx, gameServer, conn, userId, isClientSpectating, opts.StartPumps)
+	client, err := gameserver.NewClient(ctx, gameServer, conn, userID, isClientSpectating, opts.StartPumps)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create ws client")
 		if err = conn.Close(); err != nil {

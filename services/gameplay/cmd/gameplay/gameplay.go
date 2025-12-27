@@ -7,7 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	gameflow "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/runtime"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/server/websocketserver"
@@ -61,10 +63,15 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
 
+	bus, err := eventbus.New(ctx, config)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create event bus")
+	}
+
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
 	runGRPCServer(ctx, waitGroup, config, store, redisCache)
-	runGatewayServer(ctx, waitGroup, config, store, redisCache)
+	runGatewayServer(ctx, waitGroup, config, store, redisCache, bus)
 
 	err = waitGroup.Wait()
 	if err != nil {
@@ -76,6 +83,11 @@ func main() {
 	err = redisCache.Close()
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not close redis cache")
+	}
+
+	err = bus.Close()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not close event bus")
 	}
 }
 
@@ -117,20 +129,35 @@ func runGRPCServer(
 	)
 }
 
-func startGameFlow(ctx context.Context, config util.Config) gameflow.Client {
-	go func() {
-		err := gameflow.StartWorker(ctx, config)
-		if err != nil {
-			log.Fatal().Err(err).Msg("could not start gameFlow worker")
-		}
-	}()
-
+func startGameServices(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	config util.Config,
+) (gameflow.Client, *gameserver.Manager) {
 	gfClient, err := gameflow.NewClient(config)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create gameFlow client")
 	}
 
-	return gfClient
+	worker := gameflow.StartWorker(config)
+	gsManager := gameserver.NewManager()
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+
+		gsManager.Shutdown()
+		log.Info().Msg("game server manager stopped")
+
+		gfClient.Close()
+		log.Info().Msg("gameFlow client closed")
+
+		worker.Stop()
+		log.Info().Msg("gameFlow worker stopped")
+
+		return nil
+	})
+
+	return gfClient, gsManager
 }
 
 func runGatewayServer(
@@ -139,14 +166,14 @@ func runGatewayServer(
 	config util.Config,
 	store db.Store,
 	cache commonCache.Cache,
+	bus eventbus.EventBus,
 ) {
 	s, err := server.NewAPIServer(config, store, cache)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
-	gfClient := startGameFlow(ctx, config)
-	gameServerManager := gameserver.NewManager(gfClient)
+	gfClient, gsManager := startGameServices(ctx, waitGroup, config)
 
 	commonServer.RunGatewayServer(
 		ctx,
@@ -168,7 +195,7 @@ func runGatewayServer(
 		[]commonServer.HttpRouteRegistrar{
 			func(mux *http.ServeMux) {
 				mux.HandleFunc(websocketserver.WsServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
-					_, err = websocketserver.ServeWs(ctx, gameServerManager, config, cache, w, r, nil)
+					_, err = websocketserver.ServeWs(ctx, gsManager, config, cache, gfClient, bus, w, r, nil)
 					if err != nil {
 						log.Error().Err(err).Msg("could not serve server join ws")
 					}

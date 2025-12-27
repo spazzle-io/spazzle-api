@@ -53,6 +53,8 @@ func (h *Handler) JoinServer(ctx context.Context, req *pb.JoinServerRequest) (*p
 		return nil, HandleServerDBError(err)
 	}
 
+	// TODO: Validate that server is not archived
+
 	joinCode, err := websocketserver.GenerateServerJoinCode(ctx, userId, serverId, h.config, h.cache)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not generate server join code")

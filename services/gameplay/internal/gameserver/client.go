@@ -25,9 +25,9 @@ type OutgoingMessage struct {
 	// Data is the raw serialized payload to send to the client.
 	Data []byte
 	// CorrelationID uniquely identifies this message on the server side.
-	// If RequiresAck is false, CorrelationID may be empty.
+	// If RequiresWorkflowAck is false, CorrelationID may be empty.
 	CorrelationID string
-	// RequiresAck indicates whether an acknowledgment message should be sent to the GameServer workflow
+	// RequiresWorkflowAck indicates whether an acknowledgment message should be sent to the GameServer workflow
 	// to notify whether the message was successfully delivered to the client. Note that an individual
 	// acknowledgment message will be sent for each recipient of the message.
 	//
@@ -36,12 +36,12 @@ type OutgoingMessage struct {
 	//
 	// If the write fails or isn't able to be performed, a best-effort attempt may be made to send a
 	// failure acknowledgment, but it is not guaranteed.
-	RequiresAck bool
+	RequiresWorkflowAck bool
 }
 
 type Client struct {
-	userId       uuid.UUID
-	connId       uuid.UUID
+	userID       uuid.UUID
+	connID       uuid.UUID
 	gameServer   *GameServer
 	conn         *websocket.Conn
 	send         chan OutgoingMessage
@@ -52,15 +52,15 @@ func NewClient(
 	ctx context.Context,
 	gameServer *GameServer,
 	conn *websocket.Conn,
-	userId uuid.UUID,
+	userID uuid.UUID,
 	isSpectating bool,
 	startPumps bool,
 ) (*Client, error) {
-	connId, err := uuid.NewRandom()
+	connID, err := uuid.NewRandom()
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("user_id", userId.String()).
+			Str("user_id", userID.String()).
 			Msg("failed to generate ws client connection id")
 		return nil, err
 	}
@@ -69,8 +69,8 @@ func NewClient(
 		gameServer:   gameServer,
 		conn:         conn,
 		send:         make(chan OutgoingMessage, ClientSendChanBufSize),
-		userId:       userId,
-		connId:       connId,
+		userID:       userID,
+		connID:       connID,
 		isSpectating: isSpectating,
 	}
 
@@ -86,8 +86,8 @@ func NewClient(
 
 func (c *Client) getLogger() *zerolog.Logger {
 	logger := log.With().
-		Str("user_id", c.userId.String()).
-		Str("conn_id", c.connId.String()).
+		Str("user_id", c.userID.String()).
+		Str("conn_id", c.connID.String()).
 		Str("server_id", c.gameServer.GetServerId().String()).
 		Logger()
 
@@ -131,10 +131,9 @@ func (c *Client) readPump(ctx context.Context) {
 				return
 			}
 
-			// TODO: Handle different message types
-			err = c.gameServer.Broadcast(message)
+			err = handleClientMessage(c, message)
 			if err != nil {
-				c.getLogger().Warn().Err(err).Msg("failed to broadcast ws message")
+				c.getLogger().Warn().Err(err).Msg("failed to handle client ws message")
 				return
 			}
 		}
@@ -174,7 +173,7 @@ func (c *Client) writePump(ctx context.Context) {
 			if err != nil {
 				c.getLogger().Warn().Err(err).Msg("failed to send message to client ws connection")
 
-				if outgoingMsg.RequiresAck {
+				if outgoingMsg.RequiresWorkflowAck {
 					// TODO: Notify workflow that message send has failed
 					_ = struct{}{}
 				}
@@ -182,7 +181,7 @@ func (c *Client) writePump(ctx context.Context) {
 				return
 			}
 
-			if outgoingMsg.RequiresAck {
+			if outgoingMsg.RequiresWorkflowAck {
 				// TODO: Notify workflow that message send has succeeded
 				_ = struct{}{}
 			}

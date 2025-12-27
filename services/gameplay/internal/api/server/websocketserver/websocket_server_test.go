@@ -11,7 +11,9 @@ import (
 	"sync"
 	"testing"
 
-	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/runtime/mock"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
+	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
@@ -34,7 +36,7 @@ func TestServeWS(t *testing.T) {
 		name       string
 		query      url.Values
 		config     util.Config
-		buildStubs func(cache *mockcache.MockCache)
+		buildStubs func(bus *mockeventbus.MockEventBus, session *mockeventbus.MockSession, gfClient *mockgameflowclient.MockClient, cache *mockcache.MockCache)
 		shouldErr  bool
 	}{
 		{
@@ -44,7 +46,7 @@ func TestServeWS(t *testing.T) {
 				Environment:    "production",
 				AllowedOrigins: []string{"https://spazzle.io"},
 			},
-			buildStubs: func(cache *mockcache.MockCache) {
+			buildStubs: func(bus *mockeventbus.MockEventBus, session *mockeventbus.MockSession, gfClient *mockgameflowclient.MockClient, cache *mockcache.MockCache) {
 				cache.EXPECT().
 					Get(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -54,6 +56,36 @@ func TestServeWS(t *testing.T) {
 					Del(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(nil)
+
+				gfClient.EXPECT().
+					Game(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(uuid.New(), nil)
+
+				bus.EXPECT().
+					Session(gomock.Any()).
+					Times(1).
+					Return(session, nil)
+
+				session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				gfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Any(), gomock.Any()).
+					AnyTimes().
+					Return(nil)
+
+				gfClient.EXPECT().
+					AddPlayers(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return()
 			},
 			shouldErr: false,
 		},
@@ -64,8 +96,9 @@ func TestServeWS(t *testing.T) {
 				Environment:    "production",
 				AllowedOrigins: []string{"https://spazzle.io"},
 			},
-			buildStubs: func(cache *mockcache.MockCache) {},
-			shouldErr:  true,
+			buildStubs: func(bus *mockeventbus.MockEventBus, session *mockeventbus.MockSession, gfClient *mockgameflowclient.MockClient, cache *mockcache.MockCache) {
+			},
+			shouldErr: true,
 		},
 		{
 			name:  "error fetching server join code",
@@ -74,7 +107,7 @@ func TestServeWS(t *testing.T) {
 				Environment:    "production",
 				AllowedOrigins: []string{"https://spazzle.io"},
 			},
-			buildStubs: func(cache *mockcache.MockCache) {
+			buildStubs: func(bus *mockeventbus.MockEventBus, session *mockeventbus.MockSession, gfClient *mockgameflowclient.MockClient, cache *mockcache.MockCache) {
 				cache.EXPECT().
 					Get(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -89,7 +122,7 @@ func TestServeWS(t *testing.T) {
 				Environment:    "production",
 				AllowedOrigins: []string{"https://spazzle.io"},
 			},
-			buildStubs: func(cache *mockcache.MockCache) {
+			buildStubs: func(bus *mockeventbus.MockEventBus, session *mockeventbus.MockSession, gfClient *mockgameflowclient.MockClient, cache *mockcache.MockCache) {
 				cache.EXPECT().
 					Get(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -113,16 +146,18 @@ func TestServeWS(t *testing.T) {
 			defer crtl.Finish()
 
 			cache := mockcache.NewMockCache(crtl)
+			bus := mockeventbus.NewMockEventBus(crtl)
+			session := mockeventbus.NewMockSession(crtl)
 			gfClient := mockgameflowclient.NewMockClient(crtl)
 
-			sm := gameserver.NewManager(gfClient)
+			sm := gameserver.NewManager()
 			require.NotEmpty(t, sm)
 
-			tc.buildStubs(cache)
+			tc.buildStubs(bus, session, gfClient, cache)
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				defer wg.Done()
-				_, err := ServeWs(context.Background(), sm, tc.config, cache, w, r, &ServeWsOptions{StartPumps: false})
+				_, err := ServeWs(context.Background(), sm, tc.config, cache, gfClient, bus, w, r, &ServeWsOptions{StartPumps: false})
 				if tc.shouldErr {
 					require.Error(t, err)
 					return

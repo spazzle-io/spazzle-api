@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -23,6 +25,8 @@ func NewRedisCache(connURL string) (Cache, error) {
 	rc := &RedisCache{
 		client: redis.NewClient(opts),
 	}
+
+	log.Info().Msg("created redis cache")
 
 	return rc, nil
 }
@@ -62,5 +66,12 @@ func (rc *RedisCache) Del(ctx context.Context, key string) error {
 }
 
 func (rc *RedisCache) Close() error {
-	return rc.client.Close()
+	err := rc.client.Close()
+	if err != nil {
+		return fmt.Errorf("could not close redis cache: %w", err)
+	}
+
+	log.Info().Msg("closed redis cache")
+
+	return nil
 }

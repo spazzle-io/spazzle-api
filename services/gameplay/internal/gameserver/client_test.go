@@ -9,14 +9,14 @@ import (
 )
 
 func createTestClient(t *testing.T, isSpectating bool, startPumps bool) *Client {
-	gameServer := createTestGameServer(t)
+	_, _, _, gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 
 	client, err := NewClient(context.Background(), gameServer, nil, uuid.New(), isSpectating, startPumps)
 	require.NoError(t, err)
 	require.NotEmpty(t, client)
-	require.NotEmpty(t, client.userId)
-	require.NotEmpty(t, client.connId)
+	require.NotEmpty(t, client.userID)
+	require.NotEmpty(t, client.connID)
 	require.NotEmpty(t, client.gameServer)
 	require.Equal(t, isSpectating, client.isSpectating)
 

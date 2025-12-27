@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrSessionClosed = errors.New("redis event but session is closed")
+	ErrSessionClosed = errors.New("redis event bus session is closed")
 	ErrPublishFailed = errors.New("failed to publish message to event bus")
 )
 
