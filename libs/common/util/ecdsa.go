@@ -55,7 +55,7 @@ func ParsePublicKeyFromPEM(publicKeyPEM string) (*ecdsa.PublicKey, error) {
 
 	block, _ := pem.Decode([]byte(publicKeyPEM))
 	if block == nil {
-		return nil, fmt.Errorf("error decoding PEM block")
+		return nil, errors.New("error decoding PEM block")
 	}
 
 	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -65,7 +65,7 @@ func ParsePublicKeyFromPEM(publicKeyPEM string) (*ecdsa.PublicKey, error) {
 
 	ecdsaPubKey, ok := pubKey.(*ecdsa.PublicKey)
 	if !ok {
-		return nil, fmt.Errorf("error converting to ECDSA public key")
+		return nil, errors.New("error converting to ECDSA public key")
 	}
 
 	return ecdsaPubKey, nil

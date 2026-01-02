@@ -64,72 +64,68 @@ func TestRedisCache_Get(t *testing.T) {
 
 	cache := newRedisCache(t)
 
-	testCases := []struct {
-		name       string
-		key        string
-		value      interface{}
-		checkValue func(t *testing.T, res interface{}, err error, initialVal interface{})
-	}{
-		{
-			name:  "Success - nil",
-			key:   "test_key:get:nil",
-			value: nil,
-			checkValue: func(t *testing.T, res interface{}, err error, _ interface{}) {
-				require.NoError(t, err)
-				require.Nil(t, res)
-			},
-		},
-		{
-			name:  "Success - string",
-			key:   "test_key:get:string",
-			value: "test_val",
-			checkValue: func(t *testing.T, res interface{}, err error, initialVal interface{}) {
-				require.NoError(t, err)
-				require.NotEmpty(t, res)
+	t.Run("Success - not found", func(t *testing.T) {
+		var result string
+		err := cache.Get(context.Background(), "test_key:get:notfound", &result)
+		require.ErrorIs(t, err, ErrKeyNotFound)
+		require.Empty(t, result)
+	})
 
-				cachedVal, ok := res.(string)
-				require.True(t, ok)
-				require.Equal(t, initialVal, cachedVal)
-			},
-		},
-		{
-			name:  "Success - int",
-			key:   "test_key:get:int",
-			value: 420,
-			checkValue: func(t *testing.T, res interface{}, err error, initialVal interface{}) {
-				require.NoError(t, err)
-				require.NotEmpty(t, res)
+	t.Run("Success - string", func(t *testing.T) {
+		key := "test_key:get:string"
+		expected := "test_val"
 
-				cachedVal, ok := res.(float64)
-				require.True(t, ok)
-				require.Equal(t, initialVal, int(cachedVal))
-			},
-		},
-	}
+		err := cache.Set(context.Background(), key, expected, 30*time.Second)
+		require.NoError(t, err)
 
-	for i := range testCases {
-		tc := testCases[i]
+		var result string
+		err = cache.Get(context.Background(), key, &result)
+		require.NoError(t, err)
+		require.Equal(t, expected, result)
+	})
 
-		t.Run(tc.name, func(t *testing.T) {
-			err := cache.Set(context.Background(), tc.key, tc.value, 30*time.Second)
-			require.NoError(t, err)
+	t.Run("Success - int", func(t *testing.T) {
+		key := "test_key:get:int"
+		expected := 420
 
-			val, err := cache.Get(context.Background(), tc.key)
-			tc.checkValue(t, val, err, tc.value)
-		})
-	}
-}
+		err := cache.Set(context.Background(), key, expected, 30*time.Second)
+		require.NoError(t, err)
 
-func TestRedisCache_Get_KeyNotFound(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping redis cache test in short mode")
-	}
+		var result int
+		err = cache.Get(context.Background(), key, &result)
+		require.NoError(t, err)
+		require.Equal(t, expected, result)
+	})
 
-	cache := newRedisCache(t)
+	t.Run("Success - slice", func(t *testing.T) {
+		key := "test_key:get:slice"
+		expected := []string{"a", "b", "c"}
 
-	val, err := cache.Get(context.Background(), "test_key:not_set_in_cache")
-	require.NoError(t, err)
-	require.Nil(t, val)
+		err := cache.Set(context.Background(), key, expected, 30*time.Second)
+		require.NoError(t, err)
+
+		var result []string
+		err = cache.Get(context.Background(), key, &result)
+		require.NoError(t, err)
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("Success - struct", func(t *testing.T) {
+		key := "test_key:get:struct"
+		type testStruct struct {
+			Name  string `json:"name"`
+			Count int    `json:"count"`
+		}
+		expected := testStruct{Name: "test", Count: 42}
+
+		err := cache.Set(context.Background(), key, expected, 30*time.Second)
+		require.NoError(t, err)
+
+		var result testStruct
+		err = cache.Get(context.Background(), key, &result)
+		require.NoError(t, err)
+		require.Equal(t, expected, result)
+	})
 }
 
 func TestRedisCache_Del(t *testing.T) {
@@ -139,68 +135,23 @@ func TestRedisCache_Del(t *testing.T) {
 
 	cache := newRedisCache(t)
 
-	testCases := []struct {
-		name             string
-		key              string
-		value            interface{}
-		shouldSetKey     bool
-		checkDeleteError func(t *testing.T, deleteErr error)
-	}{
-		{
-			name:         "Success - nil",
-			key:          "test_key:del:nil",
-			value:        nil,
-			shouldSetKey: true,
-			checkDeleteError: func(t *testing.T, deleteErr error) {
-				require.NoError(t, deleteErr)
-			},
-		},
-		{
-			name:         "Success - string",
-			key:          "test_key:del:string",
-			value:        "test_val",
-			shouldSetKey: true,
-			checkDeleteError: func(t *testing.T, deleteErr error) {
-				require.NoError(t, deleteErr)
-			},
-		},
-		{
-			name:         "Success - int",
-			key:          "test_key:del:int",
-			value:        420,
-			shouldSetKey: true,
-			checkDeleteError: func(t *testing.T, deleteErr error) {
-				require.NoError(t, deleteErr)
-			},
-		},
-		{
-			name:         "Success - key not in cache",
-			key:          "test_key:del:not-in-cache",
-			value:        "test_val",
-			shouldSetKey: false,
-			checkDeleteError: func(t *testing.T, deleteErr error) {
-				require.NoError(t, deleteErr)
-			},
-		},
-	}
+	t.Run("Success - key exists", func(t *testing.T) {
+		key := "test_key:del:exists"
 
-	for i := range testCases {
-		tc := testCases[i]
+		err := cache.Set(context.Background(), key, "test_val", 30*time.Second)
+		require.NoError(t, err)
 
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.shouldSetKey {
-				err := cache.Set(context.Background(), tc.key, tc.value, 30*time.Second)
-				require.NoError(t, err)
+		err = cache.Del(context.Background(), key)
+		require.NoError(t, err)
 
-				val, getErr := cache.Get(context.Background(), tc.key)
-				if tc.value != nil {
-					require.NotEmpty(t, val)
-				}
-				require.NoError(t, getErr)
-			}
+		var result string
+		err = cache.Get(context.Background(), key, &result)
+		require.ErrorIs(t, err, ErrKeyNotFound)
+		require.Empty(t, result)
+	})
 
-			delErr := cache.Del(context.Background(), tc.key)
-			tc.checkDeleteError(t, delErr)
-		})
-	}
+	t.Run("Success - key does not exist", func(t *testing.T) {
+		err := cache.Del(context.Background(), "test_key:del:notfound")
+		require.NoError(t, err)
+	})
 }

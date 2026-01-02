@@ -81,9 +81,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -139,9 +142,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -220,9 +226,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(nil, errors.New("some cache error"))
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = ""
+						return errors.New("some cache error")
+					})
 			},
 			checkResponse: func(t *testing.T, res *pb.AuthenticateResponse, err error) {
 				require.Error(t, err)
@@ -240,9 +249,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -261,9 +273,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -287,9 +302,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -318,9 +336,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -349,9 +370,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -402,9 +426,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).
@@ -434,9 +461,12 @@ func TestAuthenticate(t *testing.T) {
 			inputCtx: context.WithValue(context.Background(), commonMiddleware.AuthenticatedService, "users"),
 			buildStubs: func(store *mockdb.MockStore, cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(siwePayload.Message, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = siwePayload.Message
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), gomock.Any()).

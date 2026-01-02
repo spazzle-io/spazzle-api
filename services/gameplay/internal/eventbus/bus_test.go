@@ -133,7 +133,7 @@ func TestReplay(t *testing.T) {
 
 	var publishedIDs []string
 	for i := 0; i < 5; i++ {
-		msg := Message{
+		msg := PublishMessage{
 			Type: "replay_event",
 		}
 		id, err := session.Publish(context.Background(), GameEventsStreamType, msg)
@@ -161,7 +161,7 @@ func TestReplay_WithLimit(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err := session.Publish(context.Background(), GameEventsStreamType, Message{Type: "event"})
+		_, err := session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "event"})
 		require.NoError(t, err)
 	}
 
@@ -185,7 +185,7 @@ func TestReplay_Pagination(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err := session.Publish(context.Background(), GameEventsStreamType, Message{Type: "event"})
+		_, err := session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "event"})
 		require.NoError(t, err)
 	}
 

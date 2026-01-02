@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/word"
 
 	serveradmin "github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/server-admin"
@@ -18,6 +23,17 @@ import (
 	"github.com/ulule/limiter/v3"
 )
 
+type APIServerConfig struct {
+	Config      util.Config
+	Store       db.Store
+	Cache       commonCache.Cache
+	Bus         eventbus.EventBus
+	GfClient    gameflow.Client
+	GsManager   *gameserver.Manager
+	WordStore   wordstore.Store
+	AuthService services.AuthGrpcService
+}
+
 type APIServer struct {
 	ServerHandler      server.Handler
 	ServerAdminHandler serveradmin.Handler
@@ -26,18 +42,29 @@ type APIServer struct {
 
 var once sync.Once
 
-func NewAPIServer(config util.Config, store db.Store, cache commonCache.Cache) (*APIServer, error) {
-	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
-	if err != nil {
-		return nil, fmt.Errorf("could not create auth service gRPC client: %w", err)
-	}
+func NewAPIServer(cfg *APIServerConfig) (*APIServer, error) {
+	serverHandler := server.New(&server.HandlerConfig{
+		Config:      cfg.Config,
+		Store:       cfg.Store,
+		Cache:       cfg.Cache,
+		AuthService: cfg.AuthService,
+	})
+	serverAdminHandler := serveradmin.New(&serveradmin.HandlerConfig{
+		Config:      cfg.Config,
+		Store:       cfg.Store,
+		Cache:       cfg.Cache,
+		AuthService: cfg.AuthService,
+	})
+	wordHandler := word.New(&word.HandlerConfig{
+		Config:      cfg.Config,
+		Store:       cfg.Store,
+		Cache:       cfg.Cache,
+		WordStore:   cfg.WordStore,
+		AuthService: cfg.AuthService,
+	})
 
-	serverHandler := server.New(config, store, cache, authService)
-	serverAdminHandler := serveradmin.New(config, store, cache, authService)
-	wordHandler := word.New(config, store, cache, authService)
-
-	err = setupRateLimiter(
-		config.ServiceName, config.RedisConnURL,
+	err := setupRateLimiter(
+		cfg.Config.ServiceName, cfg.Config.RedisConnURL,
 		serverHandler.RateLimits(), serverAdminHandler.RateLimits(), wordHandler.RateLimits(),
 	)
 	if err != nil {

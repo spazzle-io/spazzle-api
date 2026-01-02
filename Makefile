@@ -24,13 +24,17 @@ test:
 ifdef module
 	@echo "Running tests for module: $(module)"
 	@coverprofile_base_name=$(subst /,-,$(module))-coverage.out; \
-	go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$(module)/...
+	count_flag=; \
+    if [ "$(short)" = "false" ]; then count_flag="-count=1"; fi; \
+	go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) $$count_flag ./$(module)/...
 else
 	@echo "Running tests for all modules"
-	@for mod in $(modules); do \
+	@count_flag=; \
+    if [ "$(short)" = "false" ]; then count_flag="-count=1"; fi; \
+	for mod in $(modules); do \
 		echo "Testing $$mod..."; \
 		coverprofile_base_name=$$(echo $$mod | tr '/' '-')-coverage.out; \
-		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) ./$$mod/... || exit 1; \
+		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) $$count_flag ./$$mod/... || exit 1; \
 	done
 endif
 	@$(MAKE) merge-coverage

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -88,7 +87,7 @@ func (s *redisSession) Unsubscribe(streamType StreamType) {
 	}
 }
 
-func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg Message) (string, error) {
+func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg PublishMessage) (string, error) {
 	s.mu.Lock()
 	if s.closed {
 		s.mu.Unlock()
@@ -96,7 +95,16 @@ func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg M
 	}
 	s.mu.Unlock()
 
-	fields, err := encodeMessage(msg)
+	eventMsg := Message{
+		Timestamp:      msg.Timestamp,
+		StreamType:     streamType,
+		Type:           msg.Type,
+		Payload:        msg.Payload,
+		TargetClientID: msg.TargetClientID,
+		CorrelationID:  msg.CorrelationID,
+	}
+
+	fields, err := encodeMessage(eventMsg)
 	if err != nil {
 		return "", err
 	}
@@ -111,13 +119,6 @@ func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg M
 	}
 
 	return id, nil
-}
-
-func (s *redisSession) PublishTargeted(ctx context.Context, streamType StreamType, clientID uuid.UUID, correlationID uuid.UUID, msg Message) (string, error) {
-	msg.TargetClientID = &clientID
-	msg.CorrelationID = &correlationID
-
-	return s.Publish(ctx, streamType, msg)
 }
 
 func (s *redisSession) Close() {

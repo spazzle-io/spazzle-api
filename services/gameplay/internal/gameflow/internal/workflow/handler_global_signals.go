@@ -3,6 +3,7 @@ package workflow
 import (
 	"fmt"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
@@ -22,6 +23,10 @@ func registerGlobalSignalHandlers(ctx workflow.Context, state *GameState, notify
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
 		handleGameServerInstanceUnregisterSignal(ctx, state, logger)
+	})
+
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		handleEventAckSignal(ctx, state, notifyCh, logger)
 	})
 }
 
@@ -142,6 +147,44 @@ func handleGameServerInstanceUnregisterSignal(ctx workflow.Context, state *GameS
 		}
 
 		pruneGameServerInstances(ctx, state, logger)
+	})
+
+	for {
+		selector.Select(ctx)
+	}
+}
+
+func handleEventAckSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+	logger.Info(fmt.Sprintf("started %s global signal handler", SignalEventAck))
+
+	ch := workflow.GetSignalChannel(ctx, SignalEventAck)
+	selector := workflow.NewSelector(ctx)
+
+	selector.AddReceive(ch, func(c workflow.ReceiveChannel, more bool) {
+		var sig gameevents.EventAckPayload
+
+		c.Receive(ctx, &sig)
+
+		pending, exists := state.PendingAcks[sig.CorrelationID]
+		if !exists {
+			logger.Warn(
+				"received ACK for an unknown correlation ID",
+				"correlation_id", sig.CorrelationID,
+				"instance_id", sig.InstanceID,
+			)
+			return
+		}
+
+		pending.ReceivedFrom[sig.InstanceID] = sig.Status
+		logger.Info(
+			"received event ACK",
+			"correlation_id", sig.CorrelationID,
+			"instance_id", sig.InstanceID,
+			"status", sig.Status,
+			"received_count", len(pending.ReceivedFrom),
+		)
+
+		notifyCh.Send(ctx, struct{}{})
 	})
 
 	for {

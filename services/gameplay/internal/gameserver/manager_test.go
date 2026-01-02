@@ -1,8 +1,11 @@
 package gameserver
 
 import (
-	"context"
 	"testing"
+
+	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
@@ -30,15 +33,24 @@ func TestGetOrCreateGameServer(t *testing.T) {
 	crtl := gomock.NewController(t)
 	defer crtl.Finish()
 
+	store := mockdb.NewMockStore(crtl)
 	bus := mockeventbus.NewMockEventBus(crtl)
 	session := mockeventbus.NewMockSession(crtl)
 	gfClient := mockgameflowclient.NewMockClient(crtl)
+	wordStore := mockwordstore.NewMockStore(crtl)
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	serverID := uuid.New()
 	gameID := uuid.New()
+
+	store.EXPECT().
+		GetServerById(gomock.Any(), gomock.Any()).
+		Times(1).
+		Return(db.Server{
+			NumDrawingOptions: 3,
+		}, nil)
 
 	gfClient.EXPECT().
 		Game(gomock.Eq(serverID), gomock.Any()).
@@ -68,11 +80,18 @@ func TestGetOrCreateGameServer(t *testing.T) {
 		AnyTimes().
 		Return(nil)
 
-	gsCall1, err := sm.GetOrCreateGameServer(context.Background(), bus, gfClient, serverID)
+	config := &Config{
+		Store:     store,
+		Bus:       bus,
+		GfClient:  gfClient,
+		WordStore: wordStore,
+	}
+
+	gsCall1, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)
 	require.NotEmpty(t, gsCall1)
 
-	gsCall2, err := sm.GetOrCreateGameServer(context.Background(), bus, gfClient, serverID)
+	gsCall2, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)
 	require.NotEmpty(t, gsCall2)
 
@@ -83,15 +102,24 @@ func TestRemoveGameServerIfClosed(t *testing.T) {
 	crtl := gomock.NewController(t)
 	defer crtl.Finish()
 
+	store := mockdb.NewMockStore(crtl)
 	bus := mockeventbus.NewMockEventBus(crtl)
 	session := mockeventbus.NewMockSession(crtl)
 	gfClient := mockgameflowclient.NewMockClient(crtl)
+	wordStore := mockwordstore.NewMockStore(crtl)
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	serverID := uuid.New()
 	gameID := uuid.New()
+
+	store.EXPECT().
+		GetServerById(gomock.Any(), gomock.Eq(serverID)).
+		Times(1).
+		Return(db.Server{
+			NumDrawingOptions: 3,
+		}, nil)
 
 	gfClient.EXPECT().
 		Game(gomock.Eq(serverID), gomock.Any()).
@@ -136,7 +164,14 @@ func TestRemoveGameServerIfClosed(t *testing.T) {
 		Times(1).
 		Return()
 
-	gs, err := sm.GetOrCreateGameServer(context.Background(), bus, gfClient, serverID)
+	config := &Config{
+		Store:     store,
+		Bus:       bus,
+		GfClient:  gfClient,
+		WordStore: wordStore,
+	}
+
+	gs, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)
 	gs.shutdown()
 
@@ -151,15 +186,24 @@ func TestManagerShutdown(t *testing.T) {
 	crtl := gomock.NewController(t)
 	defer crtl.Finish()
 
+	store := mockdb.NewMockStore(crtl)
 	bus := mockeventbus.NewMockEventBus(crtl)
 	session := mockeventbus.NewMockSession(crtl)
 	gfClient := mockgameflowclient.NewMockClient(crtl)
+	wordStore := mockwordstore.NewMockStore(crtl)
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	serverID := uuid.New()
 	gameID := uuid.New()
+
+	store.EXPECT().
+		GetServerById(gomock.Any(), gomock.Eq(serverID)).
+		Times(1).
+		Return(db.Server{
+			NumDrawingOptions: 3,
+		}, nil)
 
 	gfClient.EXPECT().
 		Game(gomock.Eq(serverID), gomock.Any()).
@@ -204,7 +248,14 @@ func TestManagerShutdown(t *testing.T) {
 		Times(1).
 		Return()
 
-	gs, err := sm.GetOrCreateGameServer(context.Background(), bus, gfClient, serverID)
+	config := &Config{
+		Store:     store,
+		Bus:       bus,
+		GfClient:  gfClient,
+		WordStore: wordStore,
+	}
+
+	gs, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)
 	gs.shutdown()
 

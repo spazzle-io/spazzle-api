@@ -29,7 +29,7 @@ func TestPublish(t *testing.T) {
 	session, err := bus.Session(game)
 	require.NoError(t, err)
 
-	msg := Message{
+	msg := PublishMessage{
 		Type:    "test_event",
 		Payload: json.RawMessage(`{"key":"value"}`),
 	}
@@ -52,7 +52,7 @@ func TestPublish_AfterClose(t *testing.T) {
 
 	session.Close()
 
-	msg := Message{
+	msg := PublishMessage{
 		Type:    "test_event",
 		Payload: json.RawMessage(`{"key":"value"}`),
 	}
@@ -61,30 +61,6 @@ func TestPublish_AfterClose(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrSessionClosed)
 	require.Empty(t, messageID)
-}
-
-func TestPublishTargeted(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping event bus test in short mode")
-	}
-
-	bus := newEventBus(t)
-	game := newGameIdentifier()
-
-	session, err := bus.Session(game)
-	require.NoError(t, err)
-
-	clientID := uuid.New()
-	correlationID := uuid.New()
-
-	msg := Message{
-		Type:    "targeted_event",
-		Payload: json.RawMessage(`{}`),
-	}
-
-	messageID, err := session.PublishTargeted(context.Background(), GameEventsStreamType, clientID, correlationID, msg)
-	require.NoError(t, err)
-	require.NotEmpty(t, messageID)
 }
 
 func TestSubscribe(t *testing.T) {
@@ -110,7 +86,7 @@ func TestSubscribe(t *testing.T) {
 	err = session.Subscribe(context.Background(), GameEventsStreamType, StartFromNow(), handler)
 	require.NoError(t, err)
 
-	msg := Message{
+	msg := PublishMessage{
 		Type:    "test_event",
 		Payload: json.RawMessage(`{"test":"data"}`),
 	}
@@ -152,7 +128,7 @@ func TestSubscribe_MultipleMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		msg := Message{
+		msg := PublishMessage{
 			Type:    "test_event",
 			Payload: json.RawMessage(`{}`),
 		}
@@ -179,7 +155,7 @@ func TestSubscribe_FromBeginning(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
-		msg := Message{
+		msg := PublishMessage{
 			Type:    "pre_subscribe_event",
 			Payload: json.RawMessage(`{}`),
 		}
@@ -217,7 +193,7 @@ func TestSubscribe_FromNow_MidStream(t *testing.T) {
 	session, err := bus.Session(game)
 	require.NoError(t, err)
 
-	msg := Message{
+	msg := PublishMessage{
 		Type:    "pre_subscribe_event",
 		Payload: json.RawMessage(`{}`),
 	}
@@ -237,7 +213,7 @@ func TestSubscribe_FromNow_MidStream(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
-		msg := Message{
+		msg := PublishMessage{
 			Type:    "post_subscribe_event",
 			Payload: json.RawMessage(`{}`),
 		}
@@ -286,7 +262,7 @@ func TestSubscribe_NoOpIfAlreadySubscribed(t *testing.T) {
 	err = session.Subscribe(context.Background(), GameEventsStreamType, StartFromNow(), handler2)
 	require.NoError(t, err)
 
-	_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "test"})
+	_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "test"})
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -344,7 +320,7 @@ func TestUnsubscribe(t *testing.T) {
 	err = session.Subscribe(context.Background(), GameEventsStreamType, StartFromNow(), handler)
 	require.NoError(t, err)
 
-	_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "event1"})
+	_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "event1"})
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -355,7 +331,7 @@ func TestUnsubscribe(t *testing.T) {
 
 	session.Unsubscribe(GameEventsStreamType)
 
-	_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "event2"})
+	_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "event2"})
 	require.NoError(t, err)
 
 	time.Sleep(200 * time.Millisecond)
@@ -440,7 +416,7 @@ func TestClose_StopsSubscription(t *testing.T) {
 
 	session2, err := bus.Session(game)
 	require.NoError(t, err)
-	_, err = session2.Publish(context.Background(), GameEventsStreamType, Message{Type: "after_close"})
+	_, err = session2.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "after_close"})
 	require.NoError(t, err)
 
 	time.Sleep(500 * time.Millisecond)

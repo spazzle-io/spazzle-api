@@ -1,7 +1,7 @@
 package workflow
 
 import (
-	"fmt"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 
 	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
@@ -9,7 +9,7 @@ import (
 
 func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
 	logger.Info(
-		fmt.Sprintf("entering %s phase", PhaseWaiting),
+		"entering waiting phase",
 		"min_num_players_to_start", state.MinNumPlayersToStart,
 		"current_num_players", len(state.Players),
 	)
@@ -31,7 +31,7 @@ func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflo
 			Select(ctx)
 	}
 
-	state.Phase = PhasePrepareRound
+	state.Phase = types.PhasePrepareRound
 }
 
 func hasEnoughPlayers(state *GameState) bool {

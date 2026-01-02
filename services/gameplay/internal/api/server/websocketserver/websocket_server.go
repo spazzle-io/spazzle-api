@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
 
@@ -40,6 +43,16 @@ var (
 	ErrUnauthorizedAccess         = errors.New("authorization failed. Please verify your credentials and try again")
 )
 
+type WsHandler struct {
+	Config    util.Config
+	Store     db.Store
+	Cache     commonCache.Cache
+	GfClient  gameflow.Client
+	Bus       eventbus.EventBus
+	GsManager *gameserver.Manager
+	WordStore wordstore.Store
+}
+
 // ServeWsOptions defines optional behaviors for the ServeWs function.
 // It allows callers to customize how the WebSocket connection is initialized.
 type ServeWsOptions struct {
@@ -48,13 +61,8 @@ type ServeWsOptions struct {
 	StartPumps bool
 }
 
-func ServeWs(
+func (h *WsHandler) ServeWs(
 	ctx context.Context,
-	sm *gameserver.Manager,
-	config util.Config,
-	cache commonCache.Cache,
-	gfClient gameflow.Client,
-	bus eventbus.EventBus,
 	w http.ResponseWriter,
 	r *http.Request,
 	opts *ServeWsOptions,
@@ -65,7 +73,7 @@ func ServeWs(
 		}
 	}
 
-	userID, serverID, serverJoinCode, err := extractRequestMetadata(w, r)
+	userID, serverID, serverJoinCode, err := h.extractRequestMetadata(w, r)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to extract metadata from ws upgrade request")
 		return nil, err
@@ -73,18 +81,27 @@ func ServeWs(
 
 	logger := log.With().Str("user_id", userID.String()).Str("server_id", serverID.String()).Logger()
 
-	validServerJoinCode, err := fetchServerJoinCode(ctx, w, userID, serverID, config, cache)
+	validServerJoinCode, err := fetchServerJoinCode(ctx, w, userID, serverID, h.Config, h.Cache)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch server join code")
 		return nil, err
 	}
-	if !strings.EqualFold(validServerJoinCode, serverJoinCode) {
+	if validServerJoinCode != serverJoinCode {
 		logger.Error().Msg("server join code mismatch")
 		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
 		return nil, ErrUnauthorizedAccess
 	}
 
-	gameServer, err := sm.GetOrCreateGameServer(ctx, bus, gfClient, serverID)
+	gameServerConfig := &gameserver.Config{
+		Env:       h.Config,
+		Store:     h.Store,
+		Cache:     h.Cache,
+		Bus:       h.Bus,
+		GfClient:  h.GfClient,
+		WordStore: h.WordStore,
+	}
+
+	gameServer, err := h.GsManager.GetOrCreateGameServer(serverID, gameServerConfig)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get or create game server instance")
 		return nil, ErrInternalServerError
@@ -92,8 +109,8 @@ func ServeWs(
 
 	if gameServer.IsClosed() {
 		logger.Warn().Msg("game server already closed. attempting to create a new game server")
-		sm.RemoveGameServerIfClosed(serverID)
-		gameServer, err = sm.GetOrCreateGameServer(ctx, bus, gfClient, serverID)
+		h.GsManager.RemoveGameServerIfClosed(serverID)
+		gameServer, err = h.GsManager.GetOrCreateGameServer(serverID, gameServerConfig)
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to get or create game server instance")
 			return nil, ErrInternalServerError
@@ -103,7 +120,7 @@ func ServeWs(
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
-		CheckOrigin:     checkOrigin(userID, config),
+		CheckOrigin:     h.checkOrigin(userID),
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -138,23 +155,23 @@ func ServeWs(
 	return client, nil
 }
 
-func extractRequestMetadata(
+func (h *WsHandler) extractRequestMetadata(
 	w http.ResponseWriter,
 	r *http.Request,
-) (userId uuid.UUID, serverId uuid.UUID, serverJoinCode string, err error) {
-	userIdStr := r.URL.Query().Get("user_id")
-	serverIdStr := r.URL.Query().Get("server_id")
+) (userID uuid.UUID, serverID uuid.UUID, serverJoinCode string, err error) {
+	userIDStr := r.URL.Query().Get("user_id")
+	serverIDStr := r.URL.Query().Get("server_id")
 
-	if userIdStr == "" {
+	if userIDStr == "" {
 		log.Error().Msg("missing user ID in ws upgrade request")
 		http.Error(w, ErrMissingUserID.Error(), http.StatusBadRequest)
 		err = ErrMissingUserID
 		return
 	}
 
-	logger := log.With().Str("user_id", userIdStr).Logger()
+	logger := log.With().Str("user_id", userIDStr).Logger()
 
-	userId, err = uuid.Parse(userIdStr)
+	userID, err = uuid.Parse(userIDStr)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to parse user ID from ws upgrade request")
 		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
@@ -162,16 +179,16 @@ func extractRequestMetadata(
 		return
 	}
 
-	if serverIdStr == "" {
+	if serverIDStr == "" {
 		logger.Error().Msg("missing server ID in ws upgrade request")
 		http.Error(w, ErrMissingServerID.Error(), http.StatusBadRequest)
 		err = ErrMissingServerID
 		return
 	}
 
-	logger = logger.With().Str("server_id", serverIdStr).Logger()
+	logger = logger.With().Str("server_id", serverIDStr).Logger()
 
-	serverId, err = uuid.Parse(serverIdStr)
+	serverID, err = uuid.Parse(serverIDStr)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to parse server ID from ws upgrade request")
 		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
@@ -199,26 +216,26 @@ func extractRequestMetadata(
 	return
 }
 
-func checkOrigin(userId uuid.UUID, config util.Config) func(r *http.Request) bool {
+func (h *WsHandler) checkOrigin(userID uuid.UUID) func(r *http.Request) bool {
 	return func(r *http.Request) (isValid bool) {
 		origin := r.Header.Get("Origin")
 		defer func() {
 			log.Debug().
 				Str("origin", origin).
-				Str("user_id", userId.String()).
+				Str("user_id", userID.String()).
 				Bool("is_valid", isValid).
-				Bool("in_dev_env", config.IsDevelopmentEnvironment()).
+				Bool("in_dev_env", h.Config.IsDevelopmentEnvironment()).
 				Msg("validated ws upgrade request origin")
 		}()
 		if origin == "" {
 			return true
 		}
 
-		if config.IsDevelopmentEnvironment() {
+		if h.Config.IsDevelopmentEnvironment() {
 			return true
 		}
 
-		allowedOrigins := config.AllowedOrigins
+		allowedOrigins := h.Config.AllowedOrigins
 
 		parsedOrigin, err := url.Parse(origin)
 		if err != nil {
@@ -244,19 +261,19 @@ func checkOrigin(userId uuid.UUID, config util.Config) func(r *http.Request) boo
 	}
 }
 
-func getServerJoinCodeCacheKey(userId uuid.UUID, serverId uuid.UUID, config util.Config) string {
+func getServerJoinCodeCacheKey(userID uuid.UUID, serverID uuid.UUID, config util.Config) string {
 	return fmt.Sprintf("%s-%s:%s:%s",
 		config.ServiceName,
 		serverJoinCodeCachePrefix,
-		serverId.String(),
-		userId.String(),
+		serverID.String(),
+		userID.String(),
 	)
 }
 
 func GenerateServerJoinCode(
 	ctx context.Context,
-	userId uuid.UUID,
-	serverId uuid.UUID,
+	userID uuid.UUID,
+	serverID uuid.UUID,
 	config util.Config,
 	cache commonCache.Cache,
 ) (string, error) {
@@ -265,7 +282,7 @@ func GenerateServerJoinCode(
 		return "", fmt.Errorf("could not generate server join code: %w", err)
 	}
 
-	cacheKey := getServerJoinCodeCacheKey(userId, serverId, config)
+	cacheKey := getServerJoinCodeCacheKey(userID, serverID, config)
 	err = cache.Set(ctx, cacheKey, joinCode, ServerJoinCodeCacheTTL)
 	if err != nil {
 		return "", fmt.Errorf("could not cache server join code: %w", err)
@@ -277,30 +294,25 @@ func GenerateServerJoinCode(
 func fetchServerJoinCode(
 	ctx context.Context,
 	w http.ResponseWriter,
-	userId uuid.UUID,
-	serverId uuid.UUID,
+	userID uuid.UUID,
+	serverID uuid.UUID,
 	config util.Config,
 	cache commonCache.Cache,
 ) (string, error) {
-	logger := log.With().Str("user_id", userId.String()).Str("server_id", serverId.String()).Logger()
+	logger := log.With().Str("user_id", userID.String()).Str("server_id", serverID.String()).Logger()
 
-	cacheKey := getServerJoinCodeCacheKey(userId, serverId, config)
-	res, err := cache.Get(ctx, cacheKey)
+	cacheKey := getServerJoinCodeCacheKey(userID, serverID, config)
+
+	var joinCode string
+	err := cache.Get(ctx, cacheKey, &joinCode)
 	if err != nil {
+		if errors.Is(err, commonCache.ErrKeyNotFound) {
+			logger.Error().Msg("server join code not found in cache")
+			http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
+			return "", ErrUnauthorizedAccess
+		}
+
 		logger.Error().Err(err).Msg("could not fetch server join code from cache")
-		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
-		return "", ErrInternalServerError
-	}
-
-	if res == nil {
-		logger.Error().Msg("server join code not found in cache")
-		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
-		return "", ErrUnauthorizedAccess
-	}
-
-	joinCode, ok := res.(string)
-	if !ok {
-		logger.Error().Msg("could not cast server join code to string")
 		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
 		return "", ErrInternalServerError
 	}

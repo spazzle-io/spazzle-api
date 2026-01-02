@@ -1,11 +1,7 @@
 package gameserver
 
 import (
-	"context"
 	"sync"
-
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -38,10 +34,8 @@ func (sm *Manager) getLogger(serverId uuid.UUID) *zerolog.Logger {
 }
 
 func (sm *Manager) GetOrCreateGameServer(
-	ctx context.Context,
-	bus eventbus.EventBus,
-	gfClient gameflow.Client,
 	serverID uuid.UUID,
+	cfg *Config,
 ) (*GameServer, error) {
 	// quick lookup of the game server on a read lock
 	sm.mu.RLock()
@@ -64,7 +58,7 @@ func (sm *Manager) GetOrCreateGameServer(
 	}
 
 	// creating a new game server
-	gameServer, err := NewGameServer(serverID, bus, gfClient, nil)
+	gameServer, err := NewGameServer(serverID, cfg, nil)
 	if err != nil {
 		sm.getLogger(serverID).Error().Err(err).Msg("failed to create game server")
 		return nil, err

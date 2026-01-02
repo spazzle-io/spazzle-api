@@ -10,9 +10,13 @@ import (
 )
 
 func TestEncodeMessage(t *testing.T) {
+	correlationID := uuid.New()
+
 	msg := Message{
-		Type:    "test_event",
-		Payload: json.RawMessage(`{"key":"value"}`),
+		Type:          "test_event",
+		StreamType:    GameEventsStreamType,
+		Payload:       json.RawMessage(`{"key":"value"}`),
+		CorrelationID: correlationID,
 	}
 
 	fields, err := encodeMessage(msg)
@@ -29,19 +33,25 @@ func TestEncodeMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "test_event", decoded.Type)
+	require.Equal(t, GameEventsStreamType, decoded.StreamType)
+	require.Equal(t, correlationID, decoded.CorrelationID)
 	require.Equal(t, json.RawMessage(`{"key":"value"}`), decoded.Payload)
+
+	require.Empty(t, decoded.TargetClientID)
 	require.False(t, decoded.Timestamp.IsZero())
 }
 
 func TestEncodeMessageWithTargetFields(t *testing.T) {
 	clientID := uuid.New()
 	correlationID := uuid.New()
+	now := time.Now().UTC()
 
 	msg := Message{
 		Type:           "targeted_event",
+		Timestamp:      now,
 		Payload:        json.RawMessage(`{}`),
-		TargetClientID: &clientID,
-		CorrelationID:  &correlationID,
+		TargetClientID: clientID,
+		CorrelationID:  correlationID,
 	}
 	fields, err := encodeMessage(msg)
 	require.NoError(t, err)
@@ -51,8 +61,9 @@ func TestEncodeMessageWithTargetFields(t *testing.T) {
 	err = json.Unmarshal(data, &decoded)
 	require.NoError(t, err)
 
-	require.Equal(t, &clientID, decoded.TargetClientID)
-	require.Equal(t, &correlationID, decoded.CorrelationID)
+	require.Equal(t, now, decoded.Timestamp)
+	require.Equal(t, clientID, decoded.TargetClientID)
+	require.Equal(t, correlationID, decoded.CorrelationID)
 }
 
 func TestEncodeMessageWithNilPayload(t *testing.T) {
@@ -75,9 +86,10 @@ func TestEncodeMessageWithNilPayload(t *testing.T) {
 func TestDecodeMessageFromString(t *testing.T) {
 	timestamp := time.Now().UTC().Truncate(time.Second)
 	data := messageData{
-		Type:      "test_event",
-		Timestamp: timestamp,
-		Payload:   json.RawMessage(`{"foo":"bar"}`),
+		Type:       "test_event",
+		Timestamp:  timestamp,
+		StreamType: DrawingUpdatesStreamType,
+		Payload:    json.RawMessage(`{"foo":"bar"}`),
 	}
 	jsonBytes, _ := json.Marshal(data)
 
@@ -90,6 +102,7 @@ func TestDecodeMessageFromString(t *testing.T) {
 
 	require.Equal(t, "1234-0", msg.ID)
 	require.Equal(t, "test_event", msg.Type)
+	require.Equal(t, DrawingUpdatesStreamType, msg.StreamType)
 	require.Equal(t, timestamp.Unix(), msg.Timestamp.Unix())
 	require.Equal(t, json.RawMessage(`{"foo":"bar"}`), msg.Payload)
 }
@@ -97,9 +110,10 @@ func TestDecodeMessageFromString(t *testing.T) {
 func TestDecodeMessageFromBytes(t *testing.T) {
 	timestamp := time.Now().UTC().Truncate(time.Second)
 	data := messageData{
-		Type:      "test_event",
-		Timestamp: timestamp,
-		Payload:   json.RawMessage(`{"foo":"bar"}`),
+		Type:       "test_event",
+		StreamType: GameEventsStreamType,
+		Timestamp:  timestamp,
+		Payload:    json.RawMessage(`{"foo":"bar"}`),
 	}
 	jsonBytes, _ := json.Marshal(data)
 
@@ -112,6 +126,7 @@ func TestDecodeMessageFromBytes(t *testing.T) {
 
 	require.Equal(t, "1234-0", msg.ID)
 	require.Equal(t, "test_event", msg.Type)
+	require.Equal(t, GameEventsStreamType, msg.StreamType)
 }
 
 func TestDecodeMessageWithTargetFields(t *testing.T) {
@@ -122,8 +137,8 @@ func TestDecodeMessageWithTargetFields(t *testing.T) {
 		Type:           "targeted_event",
 		Timestamp:      time.Now().UTC(),
 		Payload:        json.RawMessage(`{}`),
-		TargetClientID: &clientID,
-		CorrelationID:  &correlationID,
+		TargetClientID: clientID,
+		CorrelationID:  correlationID,
 	}
 	jsonBytes, _ := json.Marshal(data)
 
@@ -134,8 +149,8 @@ func TestDecodeMessageWithTargetFields(t *testing.T) {
 	msg, err := decodeMessage("1234-0", fields)
 	require.NoError(t, err)
 
-	require.Equal(t, &clientID, msg.TargetClientID)
-	require.Equal(t, &correlationID, msg.CorrelationID)
+	require.Equal(t, clientID, msg.TargetClientID)
+	require.Equal(t, correlationID, msg.CorrelationID)
 }
 
 func TestDecodeMessageMissingDataField(t *testing.T) {
@@ -185,8 +200,8 @@ func TestEncodeDecodeRoundTrip(t *testing.T) {
 	original := Message{
 		Type:           "round_trip_test",
 		Payload:        json.RawMessage(`{"nested":{"key":"value"},"array":[1,2,3]}`),
-		TargetClientID: &clientID,
-		CorrelationID:  &correlationID,
+		TargetClientID: clientID,
+		CorrelationID:  correlationID,
 	}
 
 	fields, err := encodeMessage(original)
@@ -215,6 +230,9 @@ func TestEncodeDecodeWithNilOptionalFields(t *testing.T) {
 	decoded, err := decodeMessage("1-0", fields)
 	require.NoError(t, err)
 
-	require.Nil(t, decoded.TargetClientID)
-	require.Nil(t, decoded.CorrelationID)
+	require.Empty(t, decoded.TargetClientID)
+
+	require.NotEmpty(t, decoded.ID)
+	require.NotEmpty(t, decoded.Timestamp)
+	require.NotEmpty(t, decoded.CorrelationID)
 }

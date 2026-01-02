@@ -1,0 +1,123 @@
+package workflow
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
+	"go.temporal.io/sdk/workflow"
+)
+
+const EventDeliveryTimeout = time.Second * 5
+
+func waitForEventAck(
+	ctx workflow.Context,
+	state *GameState,
+	correlationID uuid.UUID,
+	deliveryTimeout time.Duration,
+	notifyCh workflow.Channel,
+) (eventDelivered bool, err error) {
+	pendingAcks := state.PendingAcks[correlationID]
+	numGameServerInstances := len(state.GameServerInstances)
+
+	if numGameServerInstances == 0 {
+		return false, errors.New("no game server instances registered")
+	}
+
+	timerCtx, cancelTimer := workflow.WithCancel(ctx)
+	defer cancelTimer()
+
+	timerFuture := workflow.NewTimer(timerCtx, deliveryTimeout)
+	timedOut := false
+
+	for {
+		for _, ackStatus := range pendingAcks.ReceivedFrom {
+			if ackStatus == gameevents.AckStatusDelivered {
+				return true, nil
+			}
+		}
+
+		if len(pendingAcks.ReceivedFrom) >= numGameServerInstances {
+			for _, ackStatus := range pendingAcks.ReceivedFrom {
+				if ackStatus == gameevents.AckStatusFailed {
+					return false, errors.New("event not delivered successfully")
+				}
+			}
+			return false, nil
+		}
+
+		if timedOut {
+			return false, errors.New("timed out waiting for event acknowledgement")
+		}
+
+		selector := workflow.NewSelector(ctx)
+
+		selector.AddReceive(notifyCh, func(c workflow.ReceiveChannel, more bool) {
+			var tmp struct{}
+			c.Receive(ctx, &tmp)
+		})
+
+		selector.AddFuture(timerFuture, func(f workflow.Future) {
+			timedOut = true
+		})
+
+		selector.Select(ctx)
+	}
+}
+
+func sendGameEvent(
+	ctx workflow.Context,
+	state *GameState,
+	notifyCh workflow.Channel,
+	eventType string,
+	eventPayload json.RawMessage,
+	targetClientID uuid.UUID,
+	waitForAck bool,
+) (eventDelivered bool, err error) {
+	correlationID, err := generateUUID(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to generate correlation ID: %w", err)
+	}
+
+	if waitForAck {
+		state.PendingAcks[correlationID] = &PendingAck{
+			CorrelationID: correlationID,
+			ReceivedFrom:  make(map[uuid.UUID]gameevents.AckStatus),
+			CreatedAt:     workflow.Now(ctx).UTC(),
+		}
+		defer delete(state.PendingAcks, correlationID)
+	}
+
+	var a *activities.Activities
+
+	eventMsg := eventbus.PublishMessage{
+		Type:           eventType,
+		Payload:        eventPayload,
+		TargetClientID: targetClientID,
+		CorrelationID:  correlationID,
+	}
+
+	publishGameEventParams := activities.PublishGameEventParams{
+		GameServerID: getGameServerID(ctx),
+		GameID:       getGameID(ctx),
+		StreamType:   eventbus.GameEventsStreamType,
+		Msg:          eventMsg,
+	}
+	var publishGameEventResult activities.PublishGameEventResult
+
+	err = workflow.ExecuteActivity(ctx, a.PublishGameEvent, publishGameEventParams).Get(ctx, &publishGameEventResult)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute publish game event activity: %w", err)
+	}
+
+	if !waitForAck {
+		return false, nil
+	}
+
+	return waitForEventAck(ctx, state, correlationID, EventDeliveryTimeout, notifyCh)
+}

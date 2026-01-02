@@ -13,7 +13,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	gameflow "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
+	gameevents "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+	types "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,6 +40,20 @@ func NewMockClient(ctrl *gomock.Controller) *MockClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
+}
+
+// AcknowledgeGameEvent mocks base method.
+func (m *MockClient) AcknowledgeGameEvent(gameServerID uuid.UUID, payload gameevents.EventAckPayload) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AcknowledgeGameEvent", gameServerID, payload)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AcknowledgeGameEvent indicates an expected call of AcknowledgeGameEvent.
+func (mr *MockClientMockRecorder) AcknowledgeGameEvent(gameServerID, payload any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AcknowledgeGameEvent", reflect.TypeOf((*MockClient)(nil).AcknowledgeGameEvent), gameServerID, payload)
 }
 
 // AddPlayers mocks base method.
@@ -78,7 +93,7 @@ func (mr *MockClientMockRecorder) Flush() *gomock.Call {
 }
 
 // Game mocks base method.
-func (m *MockClient) Game(gameServerID uuid.UUID, input gameflow.GameInput) (uuid.UUID, error) {
+func (m *MockClient) Game(gameServerID uuid.UUID, input types.GameInput) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Game", gameServerID, input)
 	ret0, _ := ret[0].(uuid.UUID)
@@ -90,6 +105,21 @@ func (m *MockClient) Game(gameServerID uuid.UUID, input gameflow.GameInput) (uui
 func (mr *MockClientMockRecorder) Game(gameServerID, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Game", reflect.TypeOf((*MockClient)(nil).Game), gameServerID, input)
+}
+
+// GetGameState mocks base method.
+func (m *MockClient) GetGameState(gameServerID uuid.UUID) (*types.GameStateView, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameState", gameServerID)
+	ret0, _ := ret[0].(*types.GameStateView)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameState indicates an expected call of GetGameState.
+func (mr *MockClientMockRecorder) GetGameState(gameServerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameState", reflect.TypeOf((*MockClient)(nil).GetGameState), gameServerID)
 }
 
 // HeartbeatGameServerInstance mocks base method.
@@ -116,6 +146,20 @@ func (m *MockClient) RemovePlayers(gameServerID uuid.UUID, playerIDs []uuid.UUID
 func (mr *MockClientMockRecorder) RemovePlayers(gameServerID, playerIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePlayers", reflect.TypeOf((*MockClient)(nil).RemovePlayers), gameServerID, playerIDs)
+}
+
+// SelectWord mocks base method.
+func (m *MockClient) SelectWord(gameServerID uuid.UUID, word string, selectionID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectWord", gameServerID, word, selectionID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SelectWord indicates an expected call of SelectWord.
+func (mr *MockClientMockRecorder) SelectWord(gameServerID, word, selectionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectWord", reflect.TypeOf((*MockClient)(nil).SelectWord), gameServerID, word, selectionID)
 }
 
 // UnregisterGameServerInstance mocks base method.

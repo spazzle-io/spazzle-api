@@ -251,9 +251,12 @@ func TestFetchSIWEMessage(t *testing.T) {
 					Return(nil)
 
 				cache.EXPECT().
-					Get(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress)).
+					Get(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any()).
 					Times(1).
-					Return("some_valid_payload", nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = "some_valid_payload"
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress)).
@@ -289,9 +292,12 @@ func TestFetchSIWEMessage(t *testing.T) {
 					Return(nil)
 
 				cache.EXPECT().
-					Get(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress)).
+					Get(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any()).
 					Times(1).
-					Return(nil, errors.New("SIWE message not found"))
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = ""
+						return errors.New("SIWE message not found")
+					})
 			},
 			checkResponse: func(message string, err error) {
 				require.Error(t, err)
@@ -308,9 +314,12 @@ func TestFetchSIWEMessage(t *testing.T) {
 					Return(nil)
 
 				cache.EXPECT().
-					Get(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress)).
+					Get(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress), gomock.Any()).
 					Times(1).
-					Return("some_valid_payload", nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = "some_valid_payload"
+						return nil
+					})
 
 				cache.EXPECT().
 					Del(gomock.Any(), fmt.Sprintf("%s-%s:%s", "test", prefix, testWalletAddress)).

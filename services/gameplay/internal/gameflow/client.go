@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/workflow"
@@ -93,6 +95,20 @@ func (c *client) Game(gameServerID uuid.UUID, input types.GameInput) (gameID uui
 	return gameID, nil
 }
 
+func (c *client) GetGameState(gameServerID uuid.UUID) (state *types.GameStateView, err error) {
+	response, err := c.temporal.QueryWorkflow(c.ctx, gameServerID.String(), "", workflow.QueryGetGameState)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query workflow for game state: %w", err)
+	}
+
+	var gameStateView types.GameStateView
+	if err := response.Get(&gameStateView); err != nil {
+		return nil, fmt.Errorf("failed to extract queried game state: %w", err)
+	}
+
+	return &gameStateView, nil
+}
+
 func (c *client) AddPlayers(gameServerID uuid.UUID, playerIDs []uuid.UUID) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -105,6 +121,19 @@ func (c *client) RemovePlayers(gameServerID uuid.UUID, playerIDs []uuid.UUID) {
 	defer c.mu.Unlock()
 
 	c.signalBuffer.removePlayers[gameServerID] = append(c.signalBuffer.removePlayers[gameServerID], playerIDs...)
+}
+
+func (c *client) SelectWord(gameServerID uuid.UUID, word string, selectionID uuid.UUID) error {
+	return c.temporal.SignalWorkflow(
+		c.ctx,
+		gameServerID.String(),
+		"",
+		workflow.SignalWordSelected,
+		workflow.WordSelectedSignal{
+			Word:        word,
+			SelectionID: selectionID,
+		},
+	)
 }
 
 func (c *client) HeartbeatGameServerInstance(gameServerID uuid.UUID, gameServerInstanceID uuid.UUID) error {
@@ -128,6 +157,16 @@ func (c *client) UnregisterGameServerInstance(gameServerID uuid.UUID, gameServer
 		workflow.GameServerInstanceUnregisterSignal{
 			InstanceID: gameServerInstanceID,
 		},
+	)
+}
+
+func (c *client) AcknowledgeGameEvent(gameServerID uuid.UUID, payload gameevents.EventAckPayload) error {
+	return c.temporal.SignalWorkflow(
+		c.ctx,
+		gameServerID.String(),
+		"",
+		workflow.SignalEventAck,
+		payload,
 	)
 }
 

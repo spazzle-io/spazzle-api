@@ -2,7 +2,10 @@ package gameserver
 
 import (
 	"context"
+	"encoding/json"
 	"time"
+
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -18,33 +21,12 @@ const (
 	ClientSendChanBufSize = 256
 )
 
-// OutgoingMessage represents a message that the GameServer sends to a client
-// over the WebSocket connection. It supports optional delivery acknowledgment to the
-// GameServer workflow.
-type OutgoingMessage struct {
-	// Data is the raw serialized payload to send to the client.
-	Data []byte
-	// CorrelationID uniquely identifies this message on the server side.
-	// If RequiresWorkflowAck is false, CorrelationID may be empty.
-	CorrelationID string
-	// RequiresWorkflowAck indicates whether an acknowledgment message should be sent to the GameServer workflow
-	// to notify whether the message was successfully delivered to the client. Note that an individual
-	// acknowledgment message will be sent for each recipient of the message.
-	//
-	// If the message is successfully written to the client's WebSocket,
-	// an acknowledgment is guaranteed to be sent.
-	//
-	// If the write fails or isn't able to be performed, a best-effort attempt may be made to send a
-	// failure acknowledgment, but it is not guaranteed.
-	RequiresWorkflowAck bool
-}
-
 type Client struct {
 	userID       uuid.UUID
 	connID       uuid.UUID
 	gameServer   *GameServer
 	conn         *websocket.Conn
-	send         chan OutgoingMessage
+	send         chan *OutgoingMessage
 	isSpectating bool
 }
 
@@ -56,21 +38,12 @@ func NewClient(
 	isSpectating bool,
 	startPumps bool,
 ) (*Client, error) {
-	connID, err := uuid.NewRandom()
-	if err != nil {
-		log.Error().
-			Err(err).
-			Str("user_id", userID.String()).
-			Msg("failed to generate ws client connection id")
-		return nil, err
-	}
-
 	client := Client{
 		gameServer:   gameServer,
 		conn:         conn,
-		send:         make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 		userID:       userID,
-		connID:       connID,
+		connID:       uuid.New(),
 		isSpectating: isSpectating,
 	}
 
@@ -131,11 +104,7 @@ func (c *Client) readPump(ctx context.Context) {
 				return
 			}
 
-			err = handleClientMessage(c, message)
-			if err != nil {
-				c.getLogger().Warn().Err(err).Msg("failed to handle client ws message")
-				return
-			}
+			c.gameServer.handleClientWsMessage(c, message)
 		}
 	}
 }
@@ -169,21 +138,25 @@ func (c *Client) writePump(ctx context.Context) {
 				return
 			}
 
-			_, err = w.Write(outgoingMsg.Data)
+			messagePayload, err := json.Marshal(outgoingMsg.WsMessage)
+			if err != nil {
+				c.getLogger().Warn().Err(err).Msg("failed to marshal ws message payload")
+				return
+			}
+
+			_, err = w.Write(messagePayload)
 			if err != nil {
 				c.getLogger().Warn().Err(err).Msg("failed to send message to client ws connection")
-
 				if outgoingMsg.RequiresWorkflowAck {
-					// TODO: Notify workflow that message send has failed
-					_ = struct{}{}
+					ackReason := "failed to send message to client ws connection"
+					c.gameServer.ackGameEvent(outgoingMsg.CorrelationID, gameevents.AckStatusFailed, ackReason)
 				}
-
 				return
 			}
 
 			if outgoingMsg.RequiresWorkflowAck {
-				// TODO: Notify workflow that message send has succeeded
-				_ = struct{}{}
+				ackReason := "sent message to client ws connection"
+				c.gameServer.ackGameEvent(outgoingMsg.CorrelationID, gameevents.AckStatusDelivered, ackReason)
 			}
 
 			if err := w.Close(); err != nil {

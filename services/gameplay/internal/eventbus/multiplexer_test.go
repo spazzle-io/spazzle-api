@@ -46,10 +46,10 @@ func TestMultipleGamesOnSameBus(t *testing.T) {
 	err = session2.Subscribe(context.Background(), GameEventsStreamType, StartFromNow(), handler2)
 	require.NoError(t, err)
 
-	_, err = session1.Publish(context.Background(), GameEventsStreamType, Message{Type: "game1_event"})
+	_, err = session1.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "game1_event"})
 	require.NoError(t, err)
 
-	_, err = session2.Publish(context.Background(), GameEventsStreamType, Message{Type: "game2_event"})
+	_, err = session2.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "game2_event"})
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -96,10 +96,10 @@ func TestSubscribeToBothStreamTypes(t *testing.T) {
 	err = session.Subscribe(context.Background(), DrawingUpdatesStreamType, StartFromNow(), drawingUpdatesHandler)
 	require.NoError(t, err)
 
-	_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "game_event"})
+	_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "game_event"})
 	require.NoError(t, err)
 
-	_, err = session.Publish(context.Background(), DrawingUpdatesStreamType, Message{Type: "drawing_update"})
+	_, err = session.Publish(context.Background(), DrawingUpdatesStreamType, PublishMessage{Type: "drawing_update"})
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -138,7 +138,7 @@ func TestMessageOrderPreserved(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = session.Publish(context.Background(), GameEventsStreamType, Message{
+		_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{
 			Type:    "ordered_event",
 			Payload: json.RawMessage(`{"order":` + string(rune('0'+i)) + `}`),
 		})
@@ -183,7 +183,7 @@ func TestMultiplexerHandlesUnsubscribeMidStream(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
-		_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "before_unsub"})
+		_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "before_unsub"})
 		require.NoError(t, err)
 	}
 
@@ -196,7 +196,7 @@ func TestMultiplexerHandlesUnsubscribeMidStream(t *testing.T) {
 	session.Unsubscribe(GameEventsStreamType)
 
 	for i := 0; i < 3; i++ {
-		_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "after_unsub"})
+		_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "after_unsub"})
 		require.NoError(t, err)
 	}
 
@@ -230,7 +230,7 @@ func TestMultiplexerContextCancellation(t *testing.T) {
 	err = session.Subscribe(ctx, GameEventsStreamType, StartFromNow(), handler)
 	require.NoError(t, err)
 
-	_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "before_cancel"})
+	_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "before_cancel"})
 	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
@@ -243,7 +243,7 @@ func TestMultiplexerContextCancellation(t *testing.T) {
 
 	time.Sleep(200 * time.Millisecond)
 
-	_, err = session.Publish(context.Background(), GameEventsStreamType, Message{Type: "after_cancel"})
+	_, err = session.Publish(context.Background(), GameEventsStreamType, PublishMessage{Type: "after_cancel"})
 	require.NoError(t, err)
 
 	time.Sleep(200 * time.Millisecond)
@@ -277,7 +277,7 @@ func TestHighVolumeMessages(t *testing.T) {
 
 	messageCount := 100
 	for i := 0; i < messageCount; i++ {
-		_, err = session.Publish(context.Background(), DrawingUpdatesStreamType, Message{
+		_, err = session.Publish(context.Background(), DrawingUpdatesStreamType, PublishMessage{
 			Type:    "stroke",
 			Payload: json.RawMessage(`{"x":100,"y":200}`),
 		})
@@ -289,4 +289,67 @@ func TestHighVolumeMessages(t *testing.T) {
 		defer mu.Unlock()
 		return len(received) == messageCount
 	}, 5*time.Second, 50*time.Millisecond)
+}
+
+func TestMultiplexerCalculateBackoff(t *testing.T) {
+	retryBaseDelay := 100 * time.Millisecond
+	retryMaxDelay := 800 * time.Millisecond
+	maxRetries := 5
+
+	multiplexer := multiplexer{
+		config: Config{
+			RetryBaseDelay: retryBaseDelay,
+			RetryMaxDelay:  retryMaxDelay,
+			MaxRetries:     maxRetries,
+		},
+	}
+
+	testCases := []struct {
+		name              string
+		consecutiveErrors int
+		expectedBackoff   time.Duration
+	}{
+		{
+			name:              "zero errors",
+			consecutiveErrors: 0,
+			expectedBackoff:   retryBaseDelay,
+		},
+		{
+			name:              "one error",
+			consecutiveErrors: 1,
+			expectedBackoff:   retryBaseDelay,
+		},
+		{
+			name:              "two errors",
+			consecutiveErrors: 2,
+			expectedBackoff:   200 * time.Millisecond,
+		},
+		{
+			name:              "three errors",
+			consecutiveErrors: 3,
+			expectedBackoff:   400 * time.Millisecond,
+		},
+		{
+			name:              "four errors",
+			consecutiveErrors: 4,
+			expectedBackoff:   800 * time.Millisecond,
+		},
+		{
+			name:              "five errors",
+			consecutiveErrors: 4,
+			expectedBackoff:   800 * time.Millisecond,
+		},
+		{
+			name:              "beyond max retries",
+			consecutiveErrors: 40,
+			expectedBackoff:   800 * time.Millisecond,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			backoff := multiplexer.calculateBackoff(tc.consecutiveErrors)
+			require.Equal(t, tc.expectedBackoff, backoff)
+		})
+	}
 }

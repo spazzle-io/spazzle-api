@@ -15,7 +15,15 @@ func getTestConfig() util.Config {
 }
 
 func newTestHandler(store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
+	// TODO: Get rid of newTestHandler func and have tests inject their own HandlerConfig into New
 	config := getTestConfig()
 
-	return New(config, store, cache, authService)
+	handlerCfg := &HandlerConfig{
+		Config:      config,
+		Store:       store,
+		Cache:       cache,
+		AuthService: authService,
+	}
+
+	return New(handlerCfg)
 }

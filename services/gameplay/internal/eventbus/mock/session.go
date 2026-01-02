@@ -13,7 +13,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	uuid "github.com/google/uuid"
 	eventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -69,7 +68,7 @@ func (mr *MockSessionMockRecorder) GameIdentifier() *gomock.Call {
 }
 
 // Publish mocks base method.
-func (m *MockSession) Publish(ctx context.Context, streamType eventbus.StreamType, msg eventbus.Message) (string, error) {
+func (m *MockSession) Publish(ctx context.Context, streamType eventbus.StreamType, msg eventbus.PublishMessage) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Publish", ctx, streamType, msg)
 	ret0, _ := ret[0].(string)
@@ -81,21 +80,6 @@ func (m *MockSession) Publish(ctx context.Context, streamType eventbus.StreamTyp
 func (mr *MockSessionMockRecorder) Publish(ctx, streamType, msg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockSession)(nil).Publish), ctx, streamType, msg)
-}
-
-// PublishTargeted mocks base method.
-func (m *MockSession) PublishTargeted(ctx context.Context, streamType eventbus.StreamType, clientID, correlationID uuid.UUID, msg eventbus.Message) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublishTargeted", ctx, streamType, clientID, correlationID, msg)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PublishTargeted indicates an expected call of PublishTargeted.
-func (mr *MockSessionMockRecorder) PublishTargeted(ctx, streamType, clientID, correlationID, msg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishTargeted", reflect.TypeOf((*MockSession)(nil).PublishTargeted), ctx, streamType, clientID, correlationID, msg)
 }
 
 // Subscribe mocks base method.

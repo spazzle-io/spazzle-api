@@ -13,18 +13,28 @@ const redisFieldData = "data"
 type messageData struct {
 	Type           string          `json:"type"`
 	Timestamp      time.Time       `json:"timestamp"`
+	StreamType     StreamType      `json:"stream"`
 	Payload        json.RawMessage `json:"payload"`
-	TargetClientID *uuid.UUID      `json:"target_client_id,omitempty"`
-	CorrelationID  *uuid.UUID      `json:"correlation_id,omitempty"`
+	TargetClientID uuid.UUID       `json:"target_client_id"`
+	CorrelationID  uuid.UUID       `json:"correlation_id"`
 }
 
 func encodeMessage(msg Message) (map[string]interface{}, error) {
 	data := messageData{
 		Type:           msg.Type,
-		Timestamp:      time.Now().UTC(),
+		Timestamp:      msg.Timestamp,
+		StreamType:     msg.StreamType,
 		Payload:        msg.Payload,
 		TargetClientID: msg.TargetClientID,
 		CorrelationID:  msg.CorrelationID,
+	}
+
+	if data.CorrelationID == uuid.Nil {
+		data.CorrelationID = uuid.New()
+	}
+
+	if data.Timestamp.IsZero() {
+		data.Timestamp = time.Now().UTC()
 	}
 
 	jsonBytes, err := json.Marshal(data)
@@ -62,6 +72,7 @@ func decodeMessage(id string, fields map[string]interface{}) (Message, error) {
 		ID:             id,
 		Type:           data.Type,
 		Timestamp:      data.Timestamp,
+		StreamType:     data.StreamType,
 		Payload:        data.Payload,
 		TargetClientID: data.TargetClientID,
 		CorrelationID:  data.CorrelationID,

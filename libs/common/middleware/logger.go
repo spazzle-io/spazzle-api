@@ -3,7 +3,7 @@ package middleware
 import (
 	"bufio"
 	"context"
-	"fmt"
+	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -78,7 +78,7 @@ func (rec *ResponseRecorder) Write(body []byte) (int, error) {
 func (rec *ResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj, ok := rec.ResponseWriter.(http.Hijacker)
 	if !ok {
-		return nil, nil, fmt.Errorf("underlying ResponseWriter does not support hijacking")
+		return nil, nil, errors.New("underlying ResponseWriter does not support hijacking")
 	}
 	return hj.Hijack()
 }

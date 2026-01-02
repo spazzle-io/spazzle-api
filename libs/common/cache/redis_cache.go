@@ -39,21 +39,15 @@ func (rc *RedisCache) Set(ctx context.Context, key string, value interface{}, ex
 	return rc.client.Set(ctx, key, serializedValue, expiration).Err()
 }
 
-func (rc *RedisCache) Get(ctx context.Context, key string) (interface{}, error) {
+func (rc *RedisCache) Get(ctx context.Context, key string, dest interface{}) error {
 	res, err := rc.client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return nil, nil
+		return ErrKeyNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("could not get value: %w", err)
+		return fmt.Errorf("could not get value: %w", err)
 	}
 
-	var deserializedValue interface{}
-	err = json.Unmarshal([]byte(res), &deserializedValue)
-	if err != nil {
-		return nil, fmt.Errorf("could not deserialize value: %w", err)
-	}
-
-	return deserializedValue, nil
+	return json.Unmarshal([]byte(res), dest)
 }
 
 func (rc *RedisCache) Del(ctx context.Context, key string) error {

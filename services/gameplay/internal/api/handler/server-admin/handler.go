@@ -11,6 +11,13 @@ import (
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 )
 
+type HandlerConfig struct {
+	Config      util.Config
+	Store       db.Store
+	Cache       commonCache.Cache
+	AuthService services.AuthGrpcService
+}
+
 type Handler struct {
 	pb.UnimplementedServerAdminServiceServer
 
@@ -20,12 +27,12 @@ type Handler struct {
 	authService services.AuthGrpcService
 }
 
-func New(config util.Config, store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
+func New(cfg *HandlerConfig) *Handler {
 	return &Handler{
-		config:      config,
-		store:       store,
-		cache:       cache,
-		authService: authService,
+		config:      cfg.Config,
+		store:       cfg.Store,
+		cache:       cfg.Cache,
+		authService: cfg.AuthService,
 	}
 }
 

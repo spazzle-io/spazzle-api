@@ -2,34 +2,54 @@ package gameflow
 
 import (
 	"github.com/rs/zerolog/log"
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/workflow"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 	temporalclient "go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
 
-func StartWorker(config util.Config) worker.Worker {
+type Worker struct {
+	worker worker.Worker
+
+	Config    util.Config
+	Store     db.Store
+	Bus       eventbus.EventBus
+	WordStore wordstore.Store
+}
+
+func (w *Worker) Start() {
 	log.Info().Str("task_queue", types.GameWorkflowTaskQueue).Msg("starting gameFlow worker")
 
-	opts := getTemporalClientOpts(config)
+	opts := getTemporalClientOpts(w.Config)
 	c, err := temporalclient.Dial(opts)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to temporal")
-		return nil
+		return
 	}
 
-	w := worker.New(c, types.GameWorkflowTaskQueue, worker.Options{})
+	wk := worker.New(c, types.GameWorkflowTaskQueue, worker.Options{})
 
-	w.RegisterWorkflow(workflow.GameWorkflow)
-	w.RegisterActivity(&activities.Activities{})
+	wk.RegisterWorkflow(workflow.GameWorkflow)
+	wk.RegisterActivity(&activities.Activities{
+		Store:     w.Store,
+		Bus:       w.Bus,
+		WordStore: w.WordStore,
+	})
 
 	go func() {
-		if err := w.Run(nil); err != nil {
+		if err := wk.Run(nil); err != nil {
 			log.Fatal().Err(err).Msg("gameFlow worker fatal error")
 		}
 	}()
 
-	return w
+	w.worker = wk
+}
+
+func (w *Worker) Stop() {
+	w.worker.Stop()
 }

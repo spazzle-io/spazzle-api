@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +30,10 @@ func GameWorkflow(ctx workflow.Context, params GameWorkflowParams) (types.GameOu
 	logger.Info("started game workflow")
 
 	state := initializeGameState(ctx, params.State, params.Input)
+	err := registerWorkflowQueries(ctx, state)
+	if err != nil {
+		return types.GameOutput{}, fmt.Errorf("failed to register workflow queries: %w", err)
+	}
 
 	notifyCh := workflow.NewChannel(ctx)
 
@@ -36,10 +41,16 @@ func GameWorkflow(ctx workflow.Context, params GameWorkflowParams) (types.GameOu
 
 	for {
 		switch state.Phase {
-		case PhaseWaiting:
+		case types.PhaseWaiting:
 			handlePhaseWaiting(ctx, state, notifyCh, logger)
 
-		case PhasePrepareRound:
+		case types.PhasePrepareRound:
+			handlePhasePrepareRound(ctx, state, notifyCh, logger)
+
+		case types.PhaseInRound:
+			handlePhaseInRound(ctx, state, notifyCh, logger)
+
+		case types.PhaseEndRound:
 			// return GameWorkflowResult{}, workflow.NewContinueAsNewError(
 			//	ctx,
 			//	GameWorkflow,
@@ -48,7 +59,6 @@ func GameWorkflow(ctx workflow.Context, params GameWorkflowParams) (types.GameOu
 			//		Input: params.Input,
 			//	},
 			//)
-			handlePhasePrepareRound(ctx, state, notifyCh, logger)
 			return types.GameOutput{}, nil
 		}
 	}
@@ -60,15 +70,22 @@ func initializeGameState(ctx workflow.Context, state *GameState, input types.Gam
 	}
 
 	return &GameState{
-		Phase:       PhaseWaiting,
+		Phase:       types.PhaseWaiting,
+		SubPhase:    types.SubPhaseNone,
 		RoundNumber: DefaultRoundNumber,
 		StartedAt:   workflow.Now(ctx).UTC(),
 
 		Players:              make(map[uuid.UUID]*PlayerState),
-		MinNumPlayersToStart: input.MinNumPlayersToStart,
+		MinNumPlayersToStart: DefaultMinNumPlayersToStart,
+		NumDrawingOptions:    input.NumDrawingOptions,
+
+		PastArtists: make(map[uuid.UUID]bool),
+		PendingAcks: make(map[uuid.UUID]*PendingAck),
 
 		GameServerInstances:             make(map[uuid.UUID]*GameServerInstanceState),
 		GameServerInstancesLastPrunedAt: workflow.Now(ctx).UTC(),
 		GameServerInstanceTimeout:       types.GameServerInstanceTimeout,
+
+		PlayerReports: make(map[uuid.UUID]map[uuid.UUID]bool),
 	}
 }

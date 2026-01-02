@@ -40,13 +40,22 @@ func (p StartPosition) String() string {
 	return p.position
 }
 
-type Message struct {
-	ID             string
+type PublishMessage struct {
 	Timestamp      time.Time
 	Type           string
 	Payload        json.RawMessage
-	TargetClientID *uuid.UUID
-	CorrelationID  *uuid.UUID
+	TargetClientID uuid.UUID
+	CorrelationID  uuid.UUID
+}
+
+type Message struct {
+	ID             string
+	Timestamp      time.Time
+	StreamType     StreamType
+	Type           string
+	Payload        json.RawMessage
+	TargetClientID uuid.UUID
+	CorrelationID  uuid.UUID
 }
 
 type MessageHandler func(ctx context.Context, msg Message)
@@ -69,8 +78,7 @@ type Session interface {
 	Subscribe(ctx context.Context, streamType StreamType, startFrom StartPosition, handler MessageHandler) error
 	Unsubscribe(streamType StreamType)
 
-	Publish(ctx context.Context, streamType StreamType, msg Message) (messageID string, err error)
-	PublishTargeted(ctx context.Context, streamType StreamType, clientID uuid.UUID, correlationID uuid.UUID, msg Message) (messageID string, err error)
+	Publish(ctx context.Context, streamType StreamType, msg PublishMessage) (messageID string, err error)
 
 	Close()
 }
