@@ -3,6 +3,7 @@ package gameserver
 import (
 	"context"
 	"encoding/json"
+	"sync/atomic"
 	"time"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
@@ -15,19 +16,35 @@ import (
 
 const (
 	WriteWait             = 5 * time.Second
-	PongWait              = 50 * time.Second
-	PingPeriod            = (PongWait * 9) / 10 // 45 seconds
-	MaxMessageSize        = 1 << 18             // 0.25 MB
+	MaxMessageSize        = 1 << 18 // 0.25 MB
 	ClientSendChanBufSize = 256
 )
 
+type TimingProfile struct {
+	PongWait   time.Duration
+	PingPeriod time.Duration
+}
+
+var (
+	DefaultTiming = TimingProfile{
+		PongWait:   50 * time.Second,
+		PingPeriod: 45 * time.Second,
+	}
+	AggressiveTiming = TimingProfile{
+		PongWait:   10 * time.Second,
+		PingPeriod: 9 * time.Second,
+	}
+)
+
 type Client struct {
-	userID       uuid.UUID
-	connID       uuid.UUID
-	gameServer   *GameServer
-	conn         *websocket.Conn
-	send         chan *OutgoingMessage
-	isSpectating bool
+	userID        uuid.UUID
+	connID        uuid.UUID
+	gameServer    *GameServer
+	conn          *websocket.Conn
+	send          chan *OutgoingMessage
+	isSpectating  bool
+	timingUpdate  chan TimingProfile
+	currentTiming atomic.Pointer[TimingProfile]
 }
 
 type clientOptions struct {
@@ -62,7 +79,11 @@ func NewClient(
 		userID:       userID,
 		connID:       uuid.New(),
 		isSpectating: isSpectating,
+		timingUpdate: make(chan TimingProfile, 1),
 	}
+
+	defaultTiming := DefaultTiming
+	client.currentTiming.Store(&defaultTiming)
 
 	if !options.disablePumps {
 		go client.readPump(ctx)
@@ -84,6 +105,14 @@ func (c *Client) getLogger() *zerolog.Logger {
 	return &logger
 }
 
+func (c *Client) UpdateTiming(profile TimingProfile) {
+	select {
+	case c.timingUpdate <- profile:
+	default:
+		c.getLogger().Debug().Msg("timing update dropped, client may be disconnected")
+	}
+}
+
 func (c *Client) readPump(ctx context.Context) {
 	defer func() {
 		_ = c.gameServer.Unregister(c)
@@ -91,14 +120,14 @@ func (c *Client) readPump(ctx context.Context) {
 	}()
 
 	c.conn.SetReadLimit(MaxMessageSize)
-	err := c.conn.SetReadDeadline(time.Now().UTC().Add(PongWait))
+	err := c.conn.SetReadDeadline(time.Now().UTC().Add(c.currentTiming.Load().PongWait))
 	if err != nil {
 		c.getLogger().Warn().Err(err).Msg("failed to set ws read deadline")
 		return
 	}
 
 	c.conn.SetPongHandler(func(string) error {
-		err := c.conn.SetReadDeadline(time.Now().UTC().Add(PongWait))
+		err := c.conn.SetReadDeadline(time.Now().UTC().Add(c.currentTiming.Load().PongWait))
 		if err != nil {
 			c.getLogger().Warn().Err(err).Msg("failed to set ws read deadline on pong")
 			return err
@@ -127,7 +156,7 @@ func (c *Client) readPump(ctx context.Context) {
 }
 
 func (c *Client) writePump(ctx context.Context) {
-	ticker := time.NewTicker(PingPeriod)
+	ticker := time.NewTicker(c.currentTiming.Load().PingPeriod)
 
 	defer func() {
 		ticker.Stop()
@@ -180,6 +209,35 @@ func (c *Client) writePump(ctx context.Context) {
 				c.getLogger().Warn().Err(err).Msg("failed to close client ws writer")
 				return
 			}
+
+		case newTiming := <-c.timingUpdate:
+			timing := newTiming
+			c.currentTiming.Store(&timing)
+			ticker.Reset(timing.PingPeriod)
+
+			err := c.conn.SetWriteDeadline(time.Now().UTC().Add(WriteWait))
+			if err != nil {
+				c.getLogger().Warn().Err(err).Msg("failed to set ws write deadline after timing update")
+				return
+			}
+
+			err = c.conn.WriteMessage(websocket.PingMessage, nil)
+			if err != nil {
+				c.getLogger().Warn().Err(err).Msg("failed to send ping to client ws connection after timing update")
+				return
+			}
+
+			err = c.conn.SetReadDeadline(time.Now().UTC().Add(timing.PongWait))
+			if err != nil {
+				c.getLogger().Warn().Err(err).Msg("failed to set ws read deadline after timing update")
+				return
+			}
+
+			c.getLogger().Info().
+				Dur("pong_wait", timing.PongWait).
+				Dur("ping_period", timing.PingPeriod).
+				Msg("updated client timing")
+
 		case <-ticker.C:
 			err := c.conn.SetWriteDeadline(time.Now().UTC().Add(WriteWait))
 			if err != nil {
@@ -192,6 +250,7 @@ func (c *Client) writePump(ctx context.Context) {
 				c.getLogger().Warn().Err(err).Msg("failed to send ping to client ws connection")
 				return
 			}
+
 		case <-ctx.Done():
 			return
 		}
