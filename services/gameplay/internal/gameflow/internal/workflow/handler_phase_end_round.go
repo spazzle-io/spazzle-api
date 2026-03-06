@@ -88,6 +88,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel,
 		state.Phase = types.PhaseEndGame
 	} else {
 		state.CurrentRound++
+		logger = log.With(logger, "Round", state.CurrentRound)
 		state.Phase = types.PhasePrepareRound
 	}
 
