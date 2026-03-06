@@ -1,16 +1,14 @@
 package workflow
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/workflow"
 )
 
 func getGameServerID(ctx workflow.Context) uuid.UUID {
 	return uuid.MustParse(workflow.GetInfo(ctx).WorkflowExecution.ID)
-}
-
-func getGameID(ctx workflow.Context) uuid.UUID {
-	return uuid.MustParse(workflow.GetInfo(ctx).WorkflowExecution.RunID)
 }
 
 func generateUUID(ctx workflow.Context) (uuid.UUID, error) {
@@ -22,4 +20,10 @@ func generateUUID(ctx workflow.Context) (uuid.UUID, error) {
 	err := encodedCorrelationID.Get(&correlationID)
 
 	return correlationID, err
+}
+
+func sortedUUIDs[V any](m map[uuid.UUID]V) []uuid.UUID {
+	return workflow.DeterministicKeysFunc(m, func(a, b uuid.UUID) int {
+		return strings.Compare(a.String(), b.String())
+	})
 }

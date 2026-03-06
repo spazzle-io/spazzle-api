@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
+
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 	"github.com/stretchr/testify/require"
@@ -106,7 +107,7 @@ func TestGetWordChoices(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, _, gameServer := createTestGameServer(t)
+			_, gameServer := createTestGameServer(t)
 			require.NotEmpty(t, gameServer)
 
 			ctrl := gomock.NewController(t)
@@ -160,7 +161,7 @@ func TestChooseWord(t *testing.T) {
 					})
 
 				gfClient.EXPECT().
-					SelectWord(gomock.Any(), gomock.Any(), gomock.Any()).
+					SelectWord(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq("car")).
 					Times(1).
 					Return(nil)
 			},
@@ -225,7 +226,7 @@ func TestChooseWord(t *testing.T) {
 					})
 
 				gfClient.EXPECT().
-					SelectWord(gomock.Any(), gomock.Any(), gomock.Any()).
+					SelectWord(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq("car")).
 					Times(1).
 					Return(errors.New("could not select word"))
 			},
@@ -237,27 +238,14 @@ func TestChooseWord(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, _, gameServer := createTestGameServer(t)
-			require.NotEmpty(t, gameServer)
+			mocks, gs := createInitializedTestGameServer(t)
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			cache := mockcache.NewMockCache(ctrl)
-			gfClient := mockgameflowclient.NewMockClient(ctrl)
+			tc.buildStubs(mocks.Cache, mocks.GfClient)
 
-			tc.buildStubs(cache, gfClient)
-
-			gameServer.Config = Config{
-				Cache:     cache,
-				GfClient:  gfClient,
-				Store:     gameServer.Store,
-				WordStore: gameServer.WordStore,
-				Env:       gameServer.Env,
-				Bus:       gameServer.Bus,
-			}
-
-			err := gameServer.chooseWord(tc.selectedWord)
+			err := gs.chooseWord(tc.selectedWord)
 
 			if tc.expectErr {
 				require.Error(t, err)

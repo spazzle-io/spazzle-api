@@ -59,7 +59,7 @@ func (gs *GameServer) chooseWord(word string) error {
 		return ErrWordNotInChoices
 	}
 
-	if err = gs.GfClient.SelectWord(gs.serverID, word, gs.getWorkflowSelectionID()); err != nil {
+	if err = gs.GfClient.SelectWord(gs.serverID, gs.getGameID(), gs.getCurrentRound(), word); err != nil {
 		return fmt.Errorf("failed to select word: %w", err)
 	}
 

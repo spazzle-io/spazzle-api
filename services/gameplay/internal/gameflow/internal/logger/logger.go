@@ -52,18 +52,3 @@ func toFields(keyVals []interface{}) map[string]interface{} {
 	}
 	return fields
 }
-
-// WithFields returns a new Temporal logger with additional fields.
-func WithFields(l temporallogger.Logger, fields map[string]interface{}) temporallogger.Logger {
-	withLogger, ok := l.(temporallogger.WithLogger)
-	if !ok {
-		return l
-	}
-
-	keyVals := make([]interface{}, 0, len(fields)*2)
-	for k, v := range fields {
-		keyVals = append(keyVals, k, v)
-	}
-
-	return withLogger.With(keyVals...)
-}

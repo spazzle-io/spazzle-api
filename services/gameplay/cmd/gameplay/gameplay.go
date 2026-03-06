@@ -184,7 +184,7 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server
 		[]commonServer.HttpRouteRegistrar{
 			func(mux *http.ServeMux) {
 				mux.HandleFunc(websocketserver.WsServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
-					_, err = wsHandler.ServeWs(ctx, w, r, nil)
+					_, err = wsHandler.ServeWs(ctx, w, r)
 					if err != nil {
 						log.Error().Err(err).Msg("could not serve server join ws")
 					}

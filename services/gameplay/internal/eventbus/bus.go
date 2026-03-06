@@ -64,7 +64,6 @@ func (b *redisEventBus) Session(game GameIdentifier) (Session, error) {
 	}
 
 	if session, ok := b.sessions[game]; ok {
-		session.getLogger().Info().Msg("retrieved existing event bus session")
 		return session, nil
 	}
 

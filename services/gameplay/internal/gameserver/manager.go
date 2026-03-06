@@ -58,7 +58,7 @@ func (sm *Manager) GetOrCreateGameServer(
 	}
 
 	// creating a new game server
-	gameServer, err := NewGameServer(serverID, cfg, nil)
+	gameServer, err := NewGameServer(serverID, cfg)
 	if err != nil {
 		sm.getLogger(serverID).Error().Err(err).Msg("failed to create game server")
 		return nil, err

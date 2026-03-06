@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -19,10 +18,25 @@ func handlePhasePrepareRound(ctx workflow.Context, state *GameState, notifyCh wo
 		err := prepareRound(ctx, state, notifyCh, logger)
 		if err != nil {
 			logger.Warn("failed to prepare round", "error", err)
+
+			if state.CurrentRound > DefaultRoundNumber {
+				logger.Info("ending game due to prepare round failure")
+				state.Phase = types.PhaseEndRound
+				return
+			}
+		}
+
+		if state.IsTerminated {
+			state.Phase = types.PhaseEndRound
+			return
 		}
 
 		if state.Phase != types.PhasePrepareRound {
 			return
+		}
+
+		if err = workflow.Sleep(ctx, phaseCooldownDuration); err != nil {
+			logger.Warn("failed to cooldown after prepare round phase attempt", "error", err)
 		}
 	}
 }
@@ -33,49 +47,62 @@ func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Chan
 		return errors.New("not enough players. returning to waiting phase")
 	}
 
-	artistID := state.CurrentArtist
-	if artistID == uuid.Nil {
-		artistID, err = selectArtist(ctx, state, logger)
-		if err != nil {
-			return fmt.Errorf("failed to select artist: %w", err)
-		}
+	artistID, err := selectAndNotifyArtist(ctx, state, notifyCh, logger)
+	if err != nil || artistID == uuid.Nil {
+		return fmt.Errorf("failed to select and notify artist: %w", err)
 	}
-
-	artistSelectedPayload, err := json.Marshal(&gameevents.ArtistSelectedPayload{
-		ArtistID:    artistID,
-		RoundNumber: state.RoundNumber,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal artist selected payload: %w", err)
-	}
-
-	eventDelivered, err := sendGameEvent(
-		ctx, state, notifyCh, gameevents.TypeArtistSelected, artistSelectedPayload, artistID, true,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to send artist selected event: %w", err)
-	}
-
-	if !eventDelivered {
-		if state.CurrentArtist != uuid.Nil {
-			// TODO: Fine state.CurrentArtist
-			state.CurrentArtist = uuid.Nil
-			return errors.New("previously selected artist left the game")
-		}
-
-		return errors.New("failed to deliver artist selected event")
-	}
-
-	state.CurrentArtist = artistID
 
 	if !hasEnoughPlayers(state) {
 		state.Phase = types.PhaseWaiting
 		return errors.New("not enough players. returning to waiting phase")
 	}
 
+	state.CurrentArtist = artistID
 	state.Phase = types.PhaseInRound
 
-	logger.Info("selected artist", "artist_id", artistID, "round_number", state.RoundNumber)
-
+	logger.Info("selected artist", "artist_id", artistID)
 	return nil
+}
+
+func selectAndNotifyArtist(
+	ctx workflow.Context,
+	state *GameState,
+	notifyCh workflow.Channel,
+	logger log.Logger,
+) (artistID uuid.UUID, err error) {
+	for {
+		artistID = state.CurrentArtist
+		if artistID == uuid.Nil {
+			artistID, err = selectArtist(ctx, state, logger)
+			if err != nil {
+				return uuid.Nil, fmt.Errorf("failed to select artist: %w", err)
+			}
+		}
+
+		payload := gameevents.ArtistSelectedPayload{
+			ArtistID:     artistID,
+			CurrentRound: state.CurrentRound,
+		}
+		delivered, err := sendGameEvent(
+			ctx, state, notifyCh, gameevents.TypeArtistSelected, payload, artistID, true,
+		)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to send artist selected event: %w", err)
+		}
+
+		if delivered {
+			logger.Info("artist selected and notified", "artist_id", artistID)
+			return artistID, nil
+		}
+
+		if state.CurrentArtist != uuid.Nil {
+			// TODO: Fine state.CurrentArtist
+			state.CurrentArtist = uuid.Nil
+			logger.Warn("previously selected artist fined for leaving the game", "artist_id", artistID)
+		}
+
+		if artist, exists := state.Players[artistID]; exists {
+			artist.IsConnected = false
+		}
+	}
 }

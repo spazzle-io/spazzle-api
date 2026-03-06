@@ -3,48 +3,38 @@ package gameserver
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSendError(t *testing.T) {
-	_, _, _, gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
-	client := createTestClient(t, false)
-	require.NotEmpty(t, client)
-
-	directMsgCh := make(chan *DirectMsgPayload, 1)
-
-	go func() {
-		select {
-		case msg := <-gameServer.directMsg:
-			directMsgCh <- msg
-		case <-time.After(1 * time.Second):
-			directMsgCh <- nil
-		}
-	}()
-
-	gameServer.sendError(client, ErrCodeServerError, "server error")
-
-	sentMsg := <-directMsgCh
-
-	expectedRecipients := []DirectMsgRecipient{
-		{
-			UserID:            client.userID,
-			ConnIDs:           []uuid.UUID{client.connID},
-			ExcludeSpectators: false,
-		},
+	client := &Client{
+		userID:     uuid.New(),
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
-	require.NotNil(t, sentMsg)
-	require.Equal(t, TypeClientError, sentMsg.Msg.Type)
-	require.Equal(t, expectedRecipients, sentMsg.Recipients)
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
+
+	gameServer.addClient(client)
+	gameServer.sendError(client, ErrCodeServerError, "server error")
+
+	<-client.send // Discarding connection_info msg
+	errorMsg := <-client.send
+
+	require.NotNil(t, errorMsg)
+	require.Equal(t, TypeClientError, errorMsg.Type)
 
 	var payload ClientError
-	err := json.Unmarshal(sentMsg.Msg.Payload, &payload)
+	err := json.Unmarshal(errorMsg.Payload, &payload)
 	require.NoError(t, err)
 
 	require.Equal(t, ErrCodeServerError, payload.Code)

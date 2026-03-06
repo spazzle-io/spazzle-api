@@ -7,11 +7,13 @@ WITH next_index AS (
 INSERT INTO words (server_id, word, word_idx)
 SELECT
     sqlc.arg(server_id)::uuid,
-    w.word,
+    BTRIM(REGEXP_REPLACE(REGEXP_REPLACE(w.word, '[\t\n\r]+', ' ', 'g'), ' +', ' ', 'g'), E' \t\n\r'),
     next_index.start_index + ROW_NUMBER() OVER () - 1
 FROM next_index
 JOIN (
-    SELECT unnest(sqlc.arg(words)::text[]) AS word
+    SELECT word
+    FROM unnest(sqlc.arg(words)::text[]) AS word
+    WHERE LENGTH(BTRIM(word, E' \t\n\r')) > 0
 ) AS w ON true
 ON CONFLICT (server_id, word) DO NOTHING;
 

@@ -30,14 +30,31 @@ type Client struct {
 	isSpectating bool
 }
 
+type clientOptions struct {
+	disablePumps bool
+}
+
+type ClientOption func(*clientOptions)
+
+func WithoutPumps() ClientOption {
+	return func(o *clientOptions) {
+		o.disablePumps = true
+	}
+}
+
 func NewClient(
 	ctx context.Context,
 	gameServer *GameServer,
 	conn *websocket.Conn,
 	userID uuid.UUID,
 	isSpectating bool,
-	startPumps bool,
+	opts ...ClientOption,
 ) (*Client, error) {
+	options := &clientOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	client := Client{
 		gameServer:   gameServer,
 		conn:         conn,
@@ -47,7 +64,7 @@ func NewClient(
 		isSpectating: isSpectating,
 	}
 
-	if startPumps {
+	if !options.disablePumps {
 		go client.readPump(ctx)
 		go client.writePump(ctx)
 	}

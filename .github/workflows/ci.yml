@@ -53,6 +53,11 @@ jobs:
           sudo mv migrate /usr/bin/
           which migrate
 
+      - name: install-temporal-workflow-check
+        run: |
+          go install go.temporal.io/sdk/contrib/tools/workflowcheck@latest
+          workflowcheck -V=full
+
       - name: run-db-migrations
         run: make migrate_up
 

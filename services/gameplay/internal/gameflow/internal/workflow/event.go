@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -36,18 +35,19 @@ func waitForEventAck(
 	timedOut := false
 
 	for {
-		for _, ackStatus := range pendingAcks.ReceivedFrom {
+		for _, instanceID := range sortedUUIDs(pendingAcks.ReceivedFrom) {
+			ackStatus := pendingAcks.ReceivedFrom[instanceID]
+
 			if ackStatus == gameevents.AckStatusDelivered {
 				return true, nil
+			}
+
+			if ackStatus == gameevents.AckStatusFailed {
+				return false, errors.New("event not delivered successfully")
 			}
 		}
 
 		if len(pendingAcks.ReceivedFrom) >= numGameServerInstances {
-			for _, ackStatus := range pendingAcks.ReceivedFrom {
-				if ackStatus == gameevents.AckStatusFailed {
-					return false, errors.New("event not delivered successfully")
-				}
-			}
 			return false, nil
 		}
 
@@ -70,12 +70,12 @@ func waitForEventAck(
 	}
 }
 
-func sendGameEvent(
+func sendGameEvent[T any](
 	ctx workflow.Context,
 	state *GameState,
 	notifyCh workflow.Channel,
 	eventType string,
-	eventPayload json.RawMessage,
+	payload T,
 	targetClientID uuid.UUID,
 	waitForAck bool,
 ) (eventDelivered bool, err error) {
@@ -95,18 +95,14 @@ func sendGameEvent(
 
 	var a *activities.Activities
 
-	eventMsg := eventbus.PublishMessage{
-		Type:           eventType,
-		Payload:        eventPayload,
+	publishGameEventParams := activities.PublishGameEventParams{
+		GameServerID:   getGameServerID(ctx),
+		GameID:         state.GameID,
+		StreamType:     eventbus.GameEventsStreamType,
 		TargetClientID: targetClientID,
 		CorrelationID:  correlationID,
-	}
-
-	publishGameEventParams := activities.PublishGameEventParams{
-		GameServerID: getGameServerID(ctx),
-		GameID:       getGameID(ctx),
-		StreamType:   eventbus.GameEventsStreamType,
-		Msg:          eventMsg,
+		EventType:      eventType,
+		EventPayload:   payload,
 	}
 	var publishGameEventResult activities.PublishGameEventResult
 

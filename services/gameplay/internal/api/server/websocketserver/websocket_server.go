@@ -41,9 +41,25 @@ var (
 	ErrMissingUserID              = errors.New("missing user ID")
 	ErrMissingServerID            = errors.New("missing server ID")
 	ErrUnauthorizedAccess         = errors.New("authorization failed. Please verify your credentials and try again")
+	ErrInvalidRole                = errors.New("invalid role")
+	ErrInvalidUserID              = errors.New("invalid user ID")
+	ErrInvalidServerID            = errors.New("invalid server ID")
+)
+
+type Role string
+
+const (
+	Player    Role = "player"
+	Moderator Role = "moderator"
+	Spectator Role = "spectator"
 )
 
 type WsHandler struct {
+	role           Role
+	userID         uuid.UUID
+	serverID       uuid.UUID
+	serverJoinCode string
+
 	Config    util.Config
 	Store     db.Store
 	Cache     commonCache.Cache
@@ -53,40 +69,43 @@ type WsHandler struct {
 	WordStore wordstore.Store
 }
 
-// ServeWsOptions defines optional behaviors for the ServeWs function.
-// It allows callers to customize how the WebSocket connection is initialized.
-type ServeWsOptions struct {
-	// When true (default), ServeWs will automatically start the client's
-	// read and write goroutines. This configuration is primarily intended for unit testing.
-	StartPumps bool
+type serveWsOptions struct {
+	disablePumps bool
+}
+
+type ServeWsOption func(*serveWsOptions)
+
+func WithoutPumps() ServeWsOption {
+	return func(o *serveWsOptions) {
+		o.disablePumps = true
+	}
 }
 
 func (h *WsHandler) ServeWs(
 	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
-	opts *ServeWsOptions,
+	opts ...ServeWsOption,
 ) (*gameserver.Client, error) {
-	if opts == nil {
-		opts = &ServeWsOptions{
-			StartPumps: true,
-		}
+	options := &serveWsOptions{}
+	for _, opt := range opts {
+		opt(options)
 	}
 
-	userID, serverID, serverJoinCode, err := h.extractRequestMetadata(w, r)
+	err := h.extractRequestMetadata(ctx, w, r)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to extract metadata from ws upgrade request")
 		return nil, err
 	}
 
-	logger := log.With().Str("user_id", userID.String()).Str("server_id", serverID.String()).Logger()
+	logger := log.With().Str("user_id", h.userID.String()).Str("server_id", h.serverID.String()).Logger()
 
-	validServerJoinCode, err := fetchServerJoinCode(ctx, w, userID, serverID, h.Config, h.Cache)
+	validServerJoinCode, err := fetchServerJoinCode(ctx, w, h.userID, h.serverID, h.Config, h.Cache)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch server join code")
 		return nil, err
 	}
-	if validServerJoinCode != serverJoinCode {
+	if validServerJoinCode != h.serverJoinCode {
 		logger.Error().Msg("server join code mismatch")
 		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
 		return nil, ErrUnauthorizedAccess
@@ -101,7 +120,7 @@ func (h *WsHandler) ServeWs(
 		WordStore: h.WordStore,
 	}
 
-	gameServer, err := h.GsManager.GetOrCreateGameServer(serverID, gameServerConfig)
+	gameServer, err := h.GsManager.GetOrCreateGameServer(h.serverID, gameServerConfig)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get or create game server instance")
 		return nil, ErrInternalServerError
@@ -109,8 +128,8 @@ func (h *WsHandler) ServeWs(
 
 	if gameServer.IsClosed() {
 		logger.Warn().Msg("game server already closed. attempting to create a new game server")
-		h.GsManager.RemoveGameServerIfClosed(serverID)
-		gameServer, err = h.GsManager.GetOrCreateGameServer(serverID, gameServerConfig)
+		h.GsManager.RemoveGameServerIfClosed(h.serverID)
+		gameServer, err = h.GsManager.GetOrCreateGameServer(h.serverID, gameServerConfig)
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to get or create game server instance")
 			return nil, ErrInternalServerError
@@ -118,9 +137,10 @@ func (h *WsHandler) ServeWs(
 	}
 
 	upgrader := websocket.Upgrader{
-		ReadBufferSize:  4096,
-		WriteBufferSize: 4096,
-		CheckOrigin:     h.checkOrigin(userID),
+		ReadBufferSize:    4096,
+		WriteBufferSize:   4096,
+		EnableCompression: true,
+		CheckOrigin:       h.checkOrigin(h.userID),
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -130,10 +150,14 @@ func (h *WsHandler) ServeWs(
 		return nil, err
 	}
 
-	clientConns := gameServer.GetClientConnections(userID)
-	isClientSpectating := len(clientConns) > 0
+	isClientSpectating := h.role != Player
 
-	client, err := gameserver.NewClient(ctx, gameServer, conn, userID, isClientSpectating, opts.StartPumps)
+	var clientOpts []gameserver.ClientOption
+	if options.disablePumps {
+		clientOpts = append(clientOpts, gameserver.WithoutPumps())
+	}
+
+	client, err := gameserver.NewClient(ctx, gameServer, conn, h.userID, isClientSpectating, clientOpts...)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create ws client")
 		if err = conn.Close(); err != nil {
@@ -155,65 +179,114 @@ func (h *WsHandler) ServeWs(
 	return client, nil
 }
 
-func (h *WsHandler) extractRequestMetadata(
-	w http.ResponseWriter,
-	r *http.Request,
-) (userID uuid.UUID, serverID uuid.UUID, serverJoinCode string, err error) {
+func (h *WsHandler) extractRequestMetadata(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	var err error
+
+	role := r.URL.Query().Get("role")
 	userIDStr := r.URL.Query().Get("user_id")
 	serverIDStr := r.URL.Query().Get("server_id")
 
 	if userIDStr == "" {
 		log.Error().Msg("missing user ID in ws upgrade request")
 		http.Error(w, ErrMissingUserID.Error(), http.StatusBadRequest)
-		err = ErrMissingUserID
-		return
+		return ErrMissingUserID
 	}
 
 	logger := log.With().Str("user_id", userIDStr).Logger()
 
-	userID, err = uuid.Parse(userIDStr)
+	h.userID, err = uuid.Parse(userIDStr)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to parse user ID from ws upgrade request")
-		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
-		err = ErrInternalServerError
-		return
+		http.Error(w, ErrInvalidUserID.Error(), http.StatusBadRequest)
+		return ErrInvalidUserID
 	}
 
 	if serverIDStr == "" {
 		logger.Error().Msg("missing server ID in ws upgrade request")
 		http.Error(w, ErrMissingServerID.Error(), http.StatusBadRequest)
-		err = ErrMissingServerID
-		return
+		return ErrMissingServerID
 	}
 
 	logger = logger.With().Str("server_id", serverIDStr).Logger()
 
-	serverID, err = uuid.Parse(serverIDStr)
+	h.serverID, err = uuid.Parse(serverIDStr)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to parse server ID from ws upgrade request")
-		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
-		err = ErrInternalServerError
-		return
+		http.Error(w, ErrInvalidServerID.Error(), http.StatusBadRequest)
+		return ErrInvalidServerID
+	}
+
+	h.role, err = ParseRole(role)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	if h.role == Moderator {
+		if err := h.authorizeModerator(ctx); err != nil {
+			status := http.StatusUnauthorized
+			if errors.Is(err, ErrInternalServerError) {
+				status = http.StatusInternalServerError
+			}
+			http.Error(w, err.Error(), status)
+			return err
+		}
 	}
 
 	authHeader := r.Header.Get(commonMiddleware.AuthorizationHeader)
 	if authHeader == "" {
 		logger.Error().Msg("missing authorization header in ws upgrade request")
 		http.Error(w, ErrMissingAuthorizationHeader.Error(), http.StatusUnauthorized)
-		err = ErrMissingAuthorizationHeader
-		return
+		return ErrMissingAuthorizationHeader
 	}
 
 	if !strings.HasPrefix(strings.ToLower(authHeader), commonMiddleware.AuthorizationBearer) {
 		logger.Error().Msg("invalid authorization header in ws upgrade request")
 		http.Error(w, ErrInvalidAuthorizationHeader.Error(), http.StatusUnauthorized)
-		err = ErrInvalidAuthorizationHeader
-		return
+		return ErrInvalidAuthorizationHeader
 	}
 
-	serverJoinCode = strings.TrimSpace(authHeader[len(commonMiddleware.AuthorizationBearer):])
+	h.serverJoinCode = strings.TrimSpace(authHeader[len(commonMiddleware.AuthorizationBearer):])
 
-	return
+	return nil
+}
+
+func ParseRole(queryVal string) (Role, error) {
+	role := strings.TrimSpace(strings.ToLower(queryVal))
+
+	switch role {
+	case "", string(Player):
+		return Player, nil
+	case string(Spectator):
+		return Spectator, nil
+	case string(Moderator):
+		return Moderator, nil
+	default:
+		return "", ErrInvalidRole
+	}
+}
+
+func (h *WsHandler) authorizeModerator(ctx context.Context) error {
+	logger := log.With().
+		Str("user_id", h.userID.String()).
+		Str("server_id", h.serverID.String()).
+		Logger()
+
+	permissions, err := h.Store.GetServerUserPermissions(ctx, db.GetServerUserPermissionsParams{
+		ServerID: h.serverID,
+		UserID:   h.userID,
+	})
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to get server user permissions")
+		return ErrInternalServerError
+	}
+
+	if !permissions.HasElevatedPermissions {
+		logger.Warn().Msg("user attempted to join as moderator without elevated permissions")
+		return ErrUnauthorizedAccess
+	}
+
+	return nil
 }
 
 func (h *WsHandler) checkOrigin(userID uuid.UUID) func(r *http.Request) bool {

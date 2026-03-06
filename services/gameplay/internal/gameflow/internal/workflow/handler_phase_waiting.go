@@ -2,24 +2,22 @@ package workflow
 
 import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
-
 	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
 func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
-	logger.Info(
-		"entering waiting phase",
-		"min_num_players_to_start", state.MinNumPlayersToStart,
-		"current_num_players", len(state.Players),
-	)
+	logger.Info("entering waiting phase")
 
 	for {
 		if hasEnoughPlayers(state) {
-			logger.Info(
-				"enough players are present in workflow to proceed",
-				"current_num_players", len(state.Players),
-			)
+			logger.Info("enough players are present in workflow to proceed")
+			state.Phase = types.PhasePrepareRound
+			break
+		}
+
+		if state.IsTerminated {
+			state.Phase = types.PhaseEndRound
 			break
 		}
 
@@ -30,10 +28,16 @@ func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflo
 			}).
 			Select(ctx)
 	}
-
-	state.Phase = types.PhasePrepareRound
 }
 
 func hasEnoughPlayers(state *GameState) bool {
-	return len(state.Players) >= int(state.MinNumPlayersToStart)
+	var activePlayers int
+	for _, playerID := range sortedUUIDs(state.Players) {
+		player := state.Players[playerID]
+		if player.IsConnected && !player.IsEjected {
+			activePlayers++
+		}
+	}
+
+	return activePlayers >= int(state.MinNumPlayersToStart)
 }

@@ -11,45 +11,55 @@ import (
 
 const (
 	DefaultRoundNumber          = 1
-	DefaultMinNumPlayersToStart = 1
+	DefaultMinNumPlayersToStart = 2
+
+	phaseCooldownDuration = time.Second * 1
 )
 
 type GameState struct {
-	Phase       types.Phase
-	SubPhase    types.SubPhase
-	RoundNumber uint8
-	StartedAt   time.Time
-	SelectionID uuid.UUID
+	GameID       uuid.UUID
+	IsTerminated bool
 
-	Players              map[uuid.UUID]*PlayerState
+	Phase         types.Phase
+	SubPhase      types.SubPhase
+	NumRounds     int32
+	CurrentRound  uint8
+	StartedAt     time.Time
+	GamePot       string
+	StakePerGame  string
+	StakePerRound string
+
+	Players              map[uuid.UUID]*PlayerGameState
 	MinNumPlayersToStart uint8
-	NumDrawingOptions    int32
+	DrawingDuration      time.Duration
 
-	CurrentWord     types.Word
-	CurrentArtist   uuid.UUID
-	NextArtist      uuid.UUID
-	CorrectGuesses  []CorrectGuess
-	CorrectGuessers []uuid.UUID
+	CurrentWord      types.Word
+	CurrentArtist    uuid.UUID
+	NextArtist       uuid.UUID
+	DrawingStartedAt time.Time
+	CorrectGuesses   map[uint8][]types.CorrectGuess
+	CorrectGuessers  map[uint8]map[uuid.UUID]bool
 
 	PastArtists map[uuid.UUID]bool
 	PendingAcks map[uuid.UUID]*PendingAck
 
 	GameServerInstances             map[uuid.UUID]*GameServerInstanceState
 	GameServerInstancesLastPrunedAt time.Time
-	GameServerInstanceTimeout       time.Duration
 
-	PlayerReports map[uuid.UUID]map[uuid.UUID]bool
+	PlayerReports  map[uuid.UUID]map[uuid.UUID]bool
+	EjectedPlayers map[uuid.UUID]bool
 }
 
-type CorrectGuess struct {
-	PlayerID  uuid.UUID
-	Timestamp time.Time
-}
-
-type PlayerState struct {
-	PlayerID    uuid.UUID
-	IsConnected bool
-	JoinedAt    time.Time
+type PlayerGameState struct {
+	PlayerID     uuid.UUID
+	Points       int64
+	StakeLost    string
+	RoundsPlayed uint8
+	IsConnected  bool
+	IsEjected    bool
+	JoinedAt     time.Time
+	LeftAt       time.Time
+	EjectedAt    time.Time
 }
 
 type GameServerInstanceState struct {

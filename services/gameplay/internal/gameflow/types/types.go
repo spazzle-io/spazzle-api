@@ -16,7 +16,10 @@ const (
 )
 
 type GameInput struct {
-	NumDrawingOptions int32
+	GameID          uuid.UUID
+	NumRounds       int32
+	DrawingDuration time.Duration
+	StakePerGame    string
 }
 
 type GameOutput struct{}
@@ -41,6 +44,7 @@ const (
 )
 
 type Token struct {
+	Text   string
 	Length int
 }
 
@@ -49,10 +53,28 @@ type Word struct {
 	Tokens []Token
 }
 
+type CorrectGuess struct {
+	PlayerID  uuid.UUID
+	Timestamp time.Time
+}
+
+type PlayerReport struct {
+	ReporterID uuid.UUID
+	ReportedID uuid.UUID
+}
+
+type PlayerEjection struct {
+	PlayerID  uuid.UUID
+	EjectorID uuid.UUID
+}
+
 type GameStateView struct {
-	Phase         Phase
-	SubPhase      SubPhase
-	RoundNumber   uint8
-	CurrentArtist uuid.UUID
-	CurrentWord   Word
+	GameID            uuid.UUID
+	Phase             Phase
+	SubPhase          SubPhase
+	CurrentRound      uint8
+	CurrentArtist     uuid.UUID
+	CurrentWord       Word
+	Players           map[uuid.UUID]bool
+	NumCorrectGuesses map[uint8]int
 }

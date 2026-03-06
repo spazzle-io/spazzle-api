@@ -9,10 +9,11 @@ import (
 )
 
 func createTestClient(t *testing.T, isSpectating bool) *Client {
-	_, _, _, gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	t.Helper()
 
-	client, err := NewClient(context.Background(), gameServer, nil, uuid.New(), isSpectating, false)
+	_, gameServer := createInitializedTestGameServer(t)
+
+	client, err := NewClient(context.Background(), gameServer, nil, uuid.New(), isSpectating, WithoutPumps())
 	require.NoError(t, err)
 	require.NotEmpty(t, client)
 	require.NotEmpty(t, client.userID)

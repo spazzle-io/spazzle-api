@@ -220,10 +220,10 @@ func TestGenerateSIWEPayload(t *testing.T) {
 				AllowedOrigins: []string{"http://localhost:3000", "https://spazzle.io"},
 			}
 
-			crtl := gomock.NewController(t)
-			defer crtl.Finish()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			cache := mockcache.NewMockCache(crtl)
+			cache := mockcache.NewMockCache(ctrl)
 			tc.buildStubs(cache)
 
 			payload, err := GenerateSIWEPayload(
@@ -351,10 +351,10 @@ func TestFetchSIWEMessage(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			crtl := gomock.NewController(t)
-			defer crtl.Finish()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			cache := mockcache.NewMockCache(crtl)
+			cache := mockcache.NewMockCache(ctrl)
 			tc.buildStubs(cache)
 
 			payload, err := GenerateSIWEPayload(

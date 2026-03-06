@@ -1,15 +1,15 @@
 -- SQL dump generated using DBML (dbml-lang.org)
 -- Database: PostgreSQL
--- Generated at: 2025-08-16T00:28:13.792Z
+-- Generated at: 2026-01-05T06:12:55.501Z
 
 CREATE TABLE "servers" (
   "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "name" varchar NOT NULL,
+  "name" text NOT NULL,
   "owner_id" UUID NOT NULL,
   "num_admins" int NOT NULL DEFAULT 0,
   "num_custom_words" int NOT NULL DEFAULT 0,
   "is_publicly_visible" boolean NOT NULL DEFAULT true,
-  "server_address" varchar NOT NULL,
+  "server_address" text NOT NULL,
   "stake_per_game" numeric NOT NULL,
   "num_rounds_per_game" int NOT NULL,
   "round_duration_secs" int NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE "words" (
   "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
   "word_idx" int NOT NULL,
   "server_id" UUID NOT NULL,
-  "word" varchar NOT NULL,
+  "word" text NOT NULL,
   "added_at" timestamptz NOT NULL DEFAULT (now())
 );
 

@@ -7,8 +7,8 @@ Project users_service {
 
 Table users {
   id UUID [default: `gen_random_uuid()`, pk]
-  wallet_address varchar [unique, not null]
-  gamer_tag varchar [unique]
+  wallet_address text [unique, not null]
+  gamer_tag text [unique]
   created_at timestamptz [not null, default: `now()`]
 
   indexes {

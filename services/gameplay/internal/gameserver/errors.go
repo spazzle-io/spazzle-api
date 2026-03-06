@@ -11,9 +11,18 @@ type ClientErrorCode string
 const (
 	TypeClientError = "error"
 
+	ErrCodeJoinError      ClientErrorCode = "join_error"
 	ErrCodeInvalidRequest ClientErrorCode = "invalid_request"
 	ErrCodeNotFound       ClientErrorCode = "not_found"
 	ErrCodeServerError    ClientErrorCode = "server_error"
+)
+
+type JoinErrorReason string
+
+const (
+	JoinErrorReasonUnknown          JoinErrorReason = "UNKNOWN"
+	JoinErrorReasonGameServerClosed JoinErrorReason = "GAME_SERVER_CLOSED"
+	JoinErrorReasonGameEnding       JoinErrorReason = "GAME_ENDING"
 )
 
 type ClientError struct {
@@ -22,16 +31,18 @@ type ClientError struct {
 }
 
 func (gs *GameServer) sendError(c *Client, code ClientErrorCode, message string) {
+	logger := gs.loggerWithClient(c)
+
 	payload, err := json.Marshal(ClientError{
 		Code:    code,
 		Message: message,
 	})
 	if err != nil {
-		gs.getLogger(gs.getGameID(), c).Error().Err(err).Msg("could not marshal client error payload")
+		logger.Error().Err(err).Msg("could not marshal client error payload")
 		return
 	}
 
-	err = gs.SendDirectMsg(&DirectMsgPayload{
+	gs.dispatchDirectMsg(&DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{
 			{
 				UserID:  c.userID,
@@ -46,7 +57,4 @@ func (gs *GameServer) sendError(c *Client, code ClientErrorCode, message string)
 			RequiresWorkflowAck: false,
 		},
 	})
-	if err != nil {
-		gs.getLogger(gs.getGameID(), c).Error().Err(err).Msg("error sending ws client error message")
-	}
 }

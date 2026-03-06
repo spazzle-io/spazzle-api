@@ -14,10 +14,18 @@ import (
 
 func getEligibleArtists(state *GameState) []uuid.UUID {
 	eligibleArtists := make([]uuid.UUID, 0)
-	for playerID, player := range state.Players {
-		if player.IsConnected && !state.PastArtists[playerID] {
-			eligibleArtists = append(eligibleArtists, playerID)
+	for _, playerID := range sortedUUIDs(state.Players) {
+		player := state.Players[playerID]
+
+		if !player.IsConnected || player.IsEjected {
+			continue
 		}
+
+		if state.PastArtists[playerID] {
+			continue
+		}
+
+		eligibleArtists = append(eligibleArtists, playerID)
 	}
 
 	return eligibleArtists

@@ -1,20 +1,32 @@
 package workflow
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
+)
 
 const (
-	SignalPlayersJoin                  = "players-join"
-	SignalPlayersLeave                 = "players-leave"
-	SignalGameServerInstanceHeartbeat  = "game-server-instance-heartbeat"
-	SignalGameServerUnregisterInstance = "game-server-unregister-instance"
-	SignalEventAck                     = "event-ack"
-	SignalWordSelected                 = "word-selected"
-	SignalCorrectGuesses               = "correct-guesses"
-	SignalPlayerReport                 = "player-report"
-	SignalArtistDisconnect             = "artist-disconnect"
+	SignalPlayersJoin        = "players-join"
+	SignalPlayersLeave       = "players-leave"
+	SignalPlayersReported    = "players-reported"
+	SignalPlayersEjected     = "players-ejected"
+	SignalClearPlayerReports = "clear-player-reports"
+
+	SignalGameServerInstanceHeartbeat    = "game-server-instance-heartbeat"
+	SignalGameServerInstanceUnregistered = "game-server-instance-unregistered"
+
+	SignalEventAck = "event-ack"
+
+	SignalWordSelected   = "word-selected"
+	SignalCorrectGuesses = "correct-guesses"
+
+	SignalArtistDisconnected = "artist-disconnected"
+
+	SignalTerminateGame = "terminate-game"
 )
 
 type PlayersJoinSignal struct {
+	GameID    uuid.UUID
 	PlayerIDs []uuid.UUID
 }
 
@@ -22,29 +34,45 @@ type PlayersLeaveSignal struct {
 	PlayerIDs []uuid.UUID
 }
 
+type PlayersEjectedSignal struct {
+	Ejections []types.PlayerEjection
+}
+
+type ClearPlayerReportsSignal struct {
+	PlayerIDs []uuid.UUID
+}
+
+type PlayersReportedSignal struct {
+	Reports []types.PlayerReport
+}
+
 type GameServerInstanceHeartbeatSignal struct {
 	InstanceID uuid.UUID
 }
 
-type GameServerInstanceUnregisterSignal struct {
+type GameServerInstanceUnregisteredSignal struct {
 	InstanceID uuid.UUID
 }
 
 type WordSelectedSignal struct {
-	Word        string
-	SelectionID uuid.UUID
+	GameID       uuid.UUID
+	CurrentRound uint8
+	Word         string
 }
 
 type CorrectGuessesSignal struct {
-	Guesses []CorrectGuess
+	GameID       uuid.UUID
+	CurrentRound uint8
+	Guesses      []types.CorrectGuess
 }
 
-type PlayerReportSignal struct {
-	ReporterID     uuid.UUID
-	ReportedID     uuid.UUID
-	EscalateReport bool
+type ArtistDisconnectedSignal struct {
+	GameID       uuid.UUID
+	CurrentRound uint8
+	ArtistID     uuid.UUID
 }
 
-type ArtistDisconnectSignal struct {
-	ArtistID uuid.UUID
+type TerminateGameSignal struct {
+	GameID uuid.UUID
+	Reason string
 }

@@ -20,13 +20,26 @@ define compute-db-url
 	db_url="postgresql://$(POSTGRES_USER):$(POSTGRES_PASS)@localhost:$(POSTGRES_PORT)/$$db_name?sslmode=disable"
 endef
 
+run-module-target:
+	@if [ -f ./$(module)/Makefile ]; then \
+		if grep -qE '^[^#]*\<$(target)\>[: ]' ./$(module)/Makefile; then \
+			echo "Running $(target) in $(module)"; \
+			$(MAKE) -C ./$(module) $(target); \
+		else \
+			echo "$(target) target not found in $(module)"; \
+		fi; \
+	else \
+		echo "Makefile not found in $(module)"; \
+	fi
+
 test:
 ifdef module
 	@echo "Running tests for module: $(module)"
 	@coverprofile_base_name=$(subst /,-,$(module))-coverage.out; \
 	count_flag=; \
     if [ "$(short)" = "false" ]; then count_flag="-count=1"; fi; \
-	go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) $$count_flag ./$(module)/...
+	go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) $$count_flag ./$(module)/... || exit 1; \
+	$(MAKE) run-module-target module=$(module) target=verify || exit 1;
 else
 	@echo "Running tests for all modules"
 	@count_flag=; \
@@ -35,6 +48,7 @@ else
 		echo "Testing $$mod..."; \
 		coverprofile_base_name=$$(echo $$mod | tr '/' '-')-coverage.out; \
 		go test -v -race -cover -coverprofile=$$coverprofile_base_name -covermode=atomic -short=$(short) $$count_flag ./$$mod/... || exit 1; \
+		$(MAKE) run-module-target module=$$mod target=verify || exit 1; \
 	done
 endif
 	@$(MAKE) merge-coverage
@@ -121,17 +135,7 @@ redis:
 	docker run --name redis$(REDIS_VERSION) -p $(REDIS_PORT):$(REDIS_PORT) -d redis:$(REDIS_VERSION)
 
 mock:
-	@sh -c " \
-		if [ -f ./$(module)/Makefile ]; then \
-			if grep -qE '^[^#]*\<mock\>[: ]' ./$(module)/Makefile; then \
-				echo 'Running make mock in $(module)'; \
-				make -C ./$(module) mock; \
-			else \
-				echo 'mock target not found in $(module)/Makefile'; \
-			fi; \
-		else \
-			echo 'Makefile not found in $(module)'; \
-		fi"
+	@$(MAKE) run-module-target module=$(module) target=mock
 
 sqlc:
 	cd ./$(module) && sqlc generate
@@ -160,4 +164,4 @@ temporal-down:
 temporal-logs:
 	docker compose -f docker/temporal/docker-compose.temporal.yml logs -f
 
-.PHONY: test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs
+.PHONY: run-module-target test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs

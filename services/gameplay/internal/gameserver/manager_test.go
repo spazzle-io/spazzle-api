@@ -3,16 +3,9 @@ package gameserver
 import (
 	"testing"
 
-	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
-	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
-
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
-	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
-	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
+	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,62 +23,14 @@ func TestCreateGameServerManager(t *testing.T) {
 }
 
 func TestGetOrCreateGameServer(t *testing.T) {
-	crtl := gomock.NewController(t)
-	defer crtl.Finish()
-
-	store := mockdb.NewMockStore(crtl)
-	bus := mockeventbus.NewMockEventBus(crtl)
-	session := mockeventbus.NewMockSession(crtl)
-	gfClient := mockgameflowclient.NewMockClient(crtl)
-	wordStore := mockwordstore.NewMockStore(crtl)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	serverID := uuid.New()
-	gameID := uuid.New()
-
-	store.EXPECT().
-		GetServerById(gomock.Any(), gomock.Any()).
-		Times(1).
-		Return(db.Server{
-			NumDrawingOptions: 3,
-		}, nil)
-
-	gfClient.EXPECT().
-		Game(gomock.Eq(serverID), gomock.Any()).
-		Times(1).
-		Return(gameID, nil)
-
-	bus.EXPECT().
-		Session(gomock.Eq(eventbus.GameIdentifier{
-			GameID:       gameID,
-			GameServerID: serverID,
-		})).
-		Times(1).
-		Return(session, nil)
-
-	session.EXPECT().
-		Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.StartFromNow()), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	session.EXPECT().
-		Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Eq(eventbus.StartFromNow()), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	gfClient.EXPECT().
-		HeartbeatGameServerInstance(gomock.Eq(serverID), gomock.Any()).
-		AnyTimes().
-		Return(nil)
-
-	config := &Config{
-		Store:     store,
-		Bus:       bus,
-		GfClient:  gfClient,
-		WordStore: wordStore,
-	}
+	config := &Config{}
 
 	gsCall1, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)
@@ -99,77 +44,14 @@ func TestGetOrCreateGameServer(t *testing.T) {
 }
 
 func TestRemoveGameServerIfClosed(t *testing.T) {
-	crtl := gomock.NewController(t)
-	defer crtl.Finish()
-
-	store := mockdb.NewMockStore(crtl)
-	bus := mockeventbus.NewMockEventBus(crtl)
-	session := mockeventbus.NewMockSession(crtl)
-	gfClient := mockgameflowclient.NewMockClient(crtl)
-	wordStore := mockwordstore.NewMockStore(crtl)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	serverID := uuid.New()
-	gameID := uuid.New()
-
-	store.EXPECT().
-		GetServerById(gomock.Any(), gomock.Eq(serverID)).
-		Times(1).
-		Return(db.Server{
-			NumDrawingOptions: 3,
-		}, nil)
-
-	gfClient.EXPECT().
-		Game(gomock.Eq(serverID), gomock.Any()).
-		Times(1).
-		Return(gameID, nil)
-
-	bus.EXPECT().
-		Session(gomock.Eq(eventbus.GameIdentifier{
-			GameID:       gameID,
-			GameServerID: serverID,
-		})).
-		Times(1).
-		Return(session, nil)
-
-	session.EXPECT().
-		Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.StartFromNow()), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	session.EXPECT().
-		Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Eq(eventbus.StartFromNow()), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	gfClient.EXPECT().
-		HeartbeatGameServerInstance(gomock.Eq(serverID), gomock.Any()).
-		AnyTimes().
-		Return(nil)
-
-	session.EXPECT().
-		Close().
-		Times(1).
-		Return()
-
-	gfClient.EXPECT().
-		UnregisterGameServerInstance(gomock.Eq(serverID), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	gfClient.EXPECT().
-		Flush().
-		Times(1).
-		Return()
-
-	config := &Config{
-		Store:     store,
-		Bus:       bus,
-		GfClient:  gfClient,
-		WordStore: wordStore,
-	}
+	config := &Config{}
 
 	gs, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)
@@ -183,77 +65,14 @@ func TestRemoveGameServerIfClosed(t *testing.T) {
 }
 
 func TestManagerShutdown(t *testing.T) {
-	crtl := gomock.NewController(t)
-	defer crtl.Finish()
-
-	store := mockdb.NewMockStore(crtl)
-	bus := mockeventbus.NewMockEventBus(crtl)
-	session := mockeventbus.NewMockSession(crtl)
-	gfClient := mockgameflowclient.NewMockClient(crtl)
-	wordStore := mockwordstore.NewMockStore(crtl)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
 	serverID := uuid.New()
-	gameID := uuid.New()
-
-	store.EXPECT().
-		GetServerById(gomock.Any(), gomock.Eq(serverID)).
-		Times(1).
-		Return(db.Server{
-			NumDrawingOptions: 3,
-		}, nil)
-
-	gfClient.EXPECT().
-		Game(gomock.Eq(serverID), gomock.Any()).
-		Times(1).
-		Return(gameID, nil)
-
-	bus.EXPECT().
-		Session(gomock.Eq(eventbus.GameIdentifier{
-			GameID:       gameID,
-			GameServerID: serverID,
-		})).
-		Times(1).
-		Return(session, nil)
-
-	session.EXPECT().
-		Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.StartFromNow()), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	session.EXPECT().
-		Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Eq(eventbus.StartFromNow()), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	gfClient.EXPECT().
-		HeartbeatGameServerInstance(gomock.Eq(serverID), gomock.Any()).
-		AnyTimes().
-		Return(nil)
-
-	session.EXPECT().
-		Close().
-		Times(1).
-		Return()
-
-	gfClient.EXPECT().
-		UnregisterGameServerInstance(gomock.Eq(serverID), gomock.Any()).
-		Times(1).
-		Return(nil)
-
-	gfClient.EXPECT().
-		Flush().
-		Times(1).
-		Return()
-
-	config := &Config{
-		Store:     store,
-		Bus:       bus,
-		GfClient:  gfClient,
-		WordStore: wordStore,
-	}
+	config := &Config{}
 
 	gs, err := sm.GetOrCreateGameServer(serverID, config)
 	require.NoError(t, err)

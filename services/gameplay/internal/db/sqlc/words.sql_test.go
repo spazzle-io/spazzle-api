@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 
@@ -20,7 +21,7 @@ func TestAddWordsToServer(t *testing.T) {
 	server := createTestServer(t, uuid.New())
 	require.NotEmpty(t, server)
 
-	words := []string{gofakeit.Noun(), gofakeit.Name(), gofakeit.School(), gofakeit.PetName()}
+	words := []string{"bob", "server", "hair tie", "a b c"}
 	params := AddWordsToServerParams{
 		ServerID: server.ID,
 		Words:    words,
@@ -31,11 +32,107 @@ func TestAddWordsToServer(t *testing.T) {
 	require.NotEmpty(t, res)
 	require.Equal(t, int64(4), res.RowsAffected())
 
-	// ensure we can't have duplicates but db handles it silently
+	listParams := ListWordsParams{
+		ServerID: server.ID,
+		PageSize: 4,
+	}
+	fetchedWords, err := testStore.ListWords(context.Background(), listParams)
+	require.NoError(t, err)
+	require.NotEmpty(t, fetchedWords)
+	require.Len(t, fetchedWords, 4)
+
+	var storedWords []string
+	for _, fetchedWord := range fetchedWords {
+		storedWords = append(storedWords, fetchedWord.Word)
+	}
+
+	sort.Strings(words)
+	sort.Strings(storedWords)
+
+	require.Equal(t, words, storedWords)
+}
+
+func TestAddWordsToServer_DuplicateWords(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server := createTestServer(t, uuid.New())
+	require.NotEmpty(t, server)
+
+	words := []string{"bob", "server", "hair tie", "a b c"}
+	params := AddWordsToServerParams{
+		ServerID: server.ID,
+		Words:    words,
+	}
+
+	res, err := testStore.AddWordsToServer(context.Background(), params)
+	require.NoError(t, err)
+	require.NotEmpty(t, res)
+	require.Equal(t, int64(4), res.RowsAffected())
+
 	res, err = testStore.AddWordsToServer(context.Background(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, res)
 	require.Equal(t, int64(0), res.RowsAffected())
+}
+
+func TestAddWordsToServer_EmptyWords(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server := createTestServer(t, uuid.New())
+	require.NotEmpty(t, server)
+
+	words := []string{"", " ", "\n", "\t", "\n\t"}
+	params := AddWordsToServerParams{
+		ServerID: server.ID,
+		Words:    words,
+	}
+
+	res, err := testStore.AddWordsToServer(context.Background(), params)
+	require.NoError(t, err)
+	require.NotEmpty(t, res)
+	require.Equal(t, int64(0), res.RowsAffected())
+}
+
+func TestAddWordsToServer_Whitespace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server := createTestServer(t, uuid.New())
+	require.NotEmpty(t, server)
+
+	res, err := testStore.AddWordsToServer(context.Background(), AddWordsToServerParams{
+		ServerID: server.ID,
+		Words:    []string{" a  ", " ", "\n b", "\tc", "\n\td", "\nb\t\no\rb\r", "\nbr  \tu   h\n"},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, res)
+	require.Equal(t, int64(6), res.RowsAffected())
+
+	listParams := ListWordsParams{
+		ServerID: server.ID,
+		PageSize: 6,
+	}
+	fetchedWords, err := testStore.ListWords(context.Background(), listParams)
+	require.NoError(t, err)
+	require.NotEmpty(t, fetchedWords)
+	require.Len(t, fetchedWords, 6)
+
+	var storedWords []string
+	for _, fetchedWord := range fetchedWords {
+		storedWords = append(storedWords, fetchedWord.Word)
+	}
+
+	expectedWords := []string{"a", "b", "c", "d", "b o b", "br u h"}
+
+	sort.Strings(expectedWords)
+	sort.Strings(storedWords)
+
+	require.Equal(t, expectedWords, storedWords)
 }
 
 func TestListWords(t *testing.T) {

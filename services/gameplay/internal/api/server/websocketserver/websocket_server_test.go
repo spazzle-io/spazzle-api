@@ -11,12 +11,13 @@ import (
 	"sync"
 	"testing"
 
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
-	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
 	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
 
@@ -67,39 +68,44 @@ func TestServeWS(t *testing.T) {
 
 				store.EXPECT().
 					GetServerById(gomock.Any(), gomock.Eq(validServerID)).
-					Times(1).
+					AnyTimes().
 					Return(db.Server{
 						NumDrawingOptions: 3,
 					}, nil)
 
 				gfClient.EXPECT().
 					Game(gomock.Any(), gomock.Any()).
-					Times(1).
+					AnyTimes().
 					Return(uuid.New(), nil)
 
-				bus.EXPECT().
-					Session(gomock.Any()).
-					Times(1).
-					Return(session, nil)
-
-				session.EXPECT().
-					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(nil)
-
-				session.EXPECT().
-					Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(nil)
-
 				gfClient.EXPECT().
-					HeartbeatGameServerInstance(gomock.Any(), gomock.Any()).
+					HeartbeatGameServerInstance(gomock.Any(), gomock.Any(), gomock.Any()).
 					AnyTimes().
 					Return(nil)
 
 				gfClient.EXPECT().
-					AddPlayers(gomock.Any(), gomock.Any()).
-					Times(1).
+					GetGameState(gomock.Any()).
+					AnyTimes().
+					Return(nil, nil)
+
+				bus.EXPECT().
+					Session(gomock.Any()).
+					AnyTimes().
+					Return(session, nil)
+
+				session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
+					AnyTimes().
+					Return(nil)
+
+				session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Any(), gomock.Any()).
+					AnyTimes().
+					Return(nil)
+
+				gfClient.EXPECT().
+					AddPlayers(gomock.Any(), gomock.Any(), gomock.Any()).
+					AnyTimes().
 					Return()
 			},
 			shouldErr: false,
@@ -186,15 +192,15 @@ func TestServeWS(t *testing.T) {
 			var wg sync.WaitGroup
 			wg.Add(1)
 
-			crtl := gomock.NewController(t)
-			defer crtl.Finish()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			store := mockdb.NewMockStore(crtl)
-			cache := mockcache.NewMockCache(crtl)
-			bus := mockeventbus.NewMockEventBus(crtl)
-			session := mockeventbus.NewMockSession(crtl)
-			gfClient := mockgameflowclient.NewMockClient(crtl)
-			wordStore := mockwordstore.NewMockStore(crtl)
+			store := mockdb.NewMockStore(ctrl)
+			cache := mockcache.NewMockCache(ctrl)
+			bus := mockeventbus.NewMockEventBus(ctrl)
+			session := mockeventbus.NewMockSession(ctrl)
+			gfClient := mockgameflowclient.NewMockClient(ctrl)
+			wordStore := mockwordstore.NewMockStore(ctrl)
 
 			sm := gameserver.NewManager()
 			require.NotEmpty(t, sm)
@@ -213,7 +219,7 @@ func TestServeWS(t *testing.T) {
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				defer wg.Done()
-				_, err := wsHandler.ServeWs(context.Background(), w, r, &ServeWsOptions{StartPumps: false})
+				_, err := wsHandler.ServeWs(context.Background(), w, r, WithoutPumps())
 				if tc.shouldErr {
 					require.Error(t, err)
 					return
@@ -247,8 +253,10 @@ func TestExtractRequestMetadata(t *testing.T) {
 
 	testCases := []struct {
 		name             string
+		buildStubs       func(store *mockdb.MockStore)
 		query            url.Values
 		authHeader       string
+		expectedRole     Role
 		expectedUserID   uuid.UUID
 		expectedServerID uuid.UUID
 		expectedJoinCode string
@@ -257,16 +265,65 @@ func TestExtractRequestMetadata(t *testing.T) {
 	}{
 		{
 			name:             "success",
+			buildStubs:       func(store *mockdb.MockStore) {},
+			query:            url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}, "role": {"player"}},
+			authHeader:       fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
+			expectedStatus:   http.StatusOK,
+			expectedErr:      nil,
+			expectedRole:     Player,
+			expectedUserID:   validUserID,
+			expectedServerID: validServerID,
+			expectedJoinCode: validToken,
+		},
+		{
+			name:             "success - role not provided",
+			buildStubs:       func(store *mockdb.MockStore) {},
 			query:            url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}},
 			authHeader:       fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
 			expectedStatus:   http.StatusOK,
 			expectedErr:      nil,
+			expectedRole:     Player,
+			expectedUserID:   validUserID,
+			expectedServerID: validServerID,
+			expectedJoinCode: validToken,
+		},
+		{
+			name: "success - moderator",
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), db.GetServerUserPermissionsParams{
+						ServerID: validServerID,
+						UserID:   validUserID,
+					}).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						HasElevatedPermissions: true,
+					}, nil)
+			},
+			query:            url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}, "role": {"moderator"}},
+			authHeader:       fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
+			expectedStatus:   http.StatusOK,
+			expectedErr:      nil,
+			expectedRole:     Moderator,
+			expectedUserID:   validUserID,
+			expectedServerID: validServerID,
+			expectedJoinCode: validToken,
+		},
+		{
+			name:             "success - spectator",
+			buildStubs:       func(store *mockdb.MockStore) {},
+			query:            url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}, "role": {"spectator"}},
+			authHeader:       fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
+			expectedStatus:   http.StatusOK,
+			expectedErr:      nil,
+			expectedRole:     Spectator,
 			expectedUserID:   validUserID,
 			expectedServerID: validServerID,
 			expectedJoinCode: validToken,
 		},
 		{
 			name:           "missing user id",
+			buildStubs:     func(store *mockdb.MockStore) {},
 			query:          url.Values{"server_id": {validServerID.String()}},
 			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
 			expectedStatus: http.StatusBadRequest,
@@ -274,27 +331,73 @@ func TestExtractRequestMetadata(t *testing.T) {
 		},
 		{
 			name:           "missing server id",
+			buildStubs:     func(store *mockdb.MockStore) {},
 			query:          url.Values{"user_id": {validUserID.String()}},
 			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
 			expectedStatus: http.StatusBadRequest,
 			expectedErr:    ErrMissingServerID,
 		},
 		{
+			name:           "invalid user id",
+			buildStubs:     func(store *mockdb.MockStore) {},
+			query:          url.Values{"server_id": {validServerID.String()}, "user_id": {"fake-user-id"}},
+			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
+			expectedStatus: http.StatusBadRequest,
+			expectedErr:    ErrInvalidUserID,
+		},
+		{
 			name:           "invalid server id",
+			buildStubs:     func(store *mockdb.MockStore) {},
 			query:          url.Values{"user_id": {validUserID.String()}, "server_id": {"fake-server-id"}},
+			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
+			expectedStatus: http.StatusBadRequest,
+			expectedErr:    ErrInvalidServerID,
+		},
+		{
+			name:           "failed to parse role",
+			buildStubs:     func(store *mockdb.MockStore) {},
+			query:          url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}, "role": {"invalid"}},
+			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
+			expectedStatus: http.StatusBadRequest,
+			expectedErr:    ErrInvalidRole,
+		},
+		{
+			name: "failed to authorize moderator - internal server error",
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), db.GetServerUserPermissionsParams{
+						ServerID: validServerID,
+						UserID:   validUserID,
+					}).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{}, errors.New("internal server error"))
+			},
+			query:          url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}, "role": {"moderator"}},
 			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
 			expectedStatus: http.StatusInternalServerError,
 			expectedErr:    ErrInternalServerError,
 		},
 		{
-			name:           "invalid user id",
-			query:          url.Values{"server_id": {validServerID.String()}, "user_id": {"fake-user-id"}},
+			name: "failed to authorize moderator - unauthorized",
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetServerUserPermissions(gomock.Any(), db.GetServerUserPermissionsParams{
+						ServerID: validServerID,
+						UserID:   validUserID,
+					}).
+					Times(1).
+					Return(db.GetServerUserPermissionsRow{
+						HasElevatedPermissions: false,
+					}, nil)
+			},
+			query:          url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}, "role": {"moderator"}},
 			authHeader:     fmt.Sprintf("%s %s", commonMiddleware.AuthorizationBearer, validToken),
-			expectedStatus: http.StatusInternalServerError,
-			expectedErr:    ErrInternalServerError,
+			expectedStatus: http.StatusUnauthorized,
+			expectedErr:    ErrUnauthorizedAccess,
 		},
 		{
 			name:           "missing authorization header",
+			buildStubs:     func(store *mockdb.MockStore) {},
 			query:          url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}},
 			authHeader:     "",
 			expectedStatus: http.StatusUnauthorized,
@@ -302,6 +405,7 @@ func TestExtractRequestMetadata(t *testing.T) {
 		},
 		{
 			name:           "invalid authorization header format",
+			buildStubs:     func(store *mockdb.MockStore) {},
 			query:          url.Values{"user_id": {validUserID.String()}, "server_id": {validServerID.String()}},
 			authHeader:     fmt.Sprintf("invalid %s", validToken),
 			expectedStatus: http.StatusUnauthorized,
@@ -311,14 +415,24 @@ func TestExtractRequestMetadata(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+
+			wsHandler := &WsHandler{
+				Store: store,
+			}
+
+			tc.buildStubs(store)
+
 			req := httptest.NewRequest(http.MethodGet, "/ws?"+tc.query.Encode(), nil)
 			if tc.authHeader != "" {
 				req.Header.Set(commonMiddleware.AuthorizationHeader, tc.authHeader)
 			}
 			rec := httptest.NewRecorder()
 
-			wsHandler := &WsHandler{}
-			userID, serverID, joinCode, err := wsHandler.extractRequestMetadata(rec, req)
+			err := wsHandler.extractRequestMetadata(context.Background(), rec, req)
 
 			if tc.expectedErr != nil {
 				require.Error(t, err)
@@ -328,9 +442,10 @@ func TestExtractRequestMetadata(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedUserID, userID)
-			require.Equal(t, tc.expectedServerID, serverID)
-			require.Equal(t, tc.expectedJoinCode, joinCode)
+			require.Equal(t, tc.expectedRole, wsHandler.role)
+			require.Equal(t, tc.expectedUserID, wsHandler.userID)
+			require.Equal(t, tc.expectedServerID, wsHandler.serverID)
+			require.Equal(t, tc.expectedJoinCode, wsHandler.serverJoinCode)
 			require.Equal(t, http.StatusOK, rec.Code)
 		})
 	}
@@ -498,14 +613,14 @@ func TestGenerateServerJoinCode(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			crtl := gomock.NewController(t)
-			defer crtl.Finish()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
 			config := util.Config{
 				ServiceName: "test",
 			}
 
-			cache := mockcache.NewMockCache(crtl)
+			cache := mockcache.NewMockCache(ctrl)
 			tc.buildStubs(cache)
 
 			joinCode, err := GenerateServerJoinCode(context.Background(), uuid.New(), uuid.New(), config, cache)
@@ -599,14 +714,14 @@ func TestFetchServerJoinCode(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			crtl := gomock.NewController(t)
-			defer crtl.Finish()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
 			config := util.Config{
 				ServiceName: "test",
 			}
 
-			cache := mockcache.NewMockCache(crtl)
+			cache := mockcache.NewMockCache(ctrl)
 			tc.buildStubs(cache)
 
 			recorder := httptest.NewRecorder()
