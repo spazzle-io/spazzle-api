@@ -1,235 +1,721 @@
 package gameserver
 
 import (
-	"context"
+	"errors"
+	"math/big"
 	"testing"
 	"time"
 
-	mockworkflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow/mock"
-	"go.uber.org/mock/gomock"
-
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
+	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
-func createTestGameServer(t *testing.T) *GameServer {
-	crtl := gomock.NewController(t)
-	defer crtl.Finish()
+type MockConfig struct {
+	Store     *mockdb.MockStore
+	Cache     *mockcache.MockCache
+	Bus       *mockeventbus.MockEventBus
+	Session   *mockeventbus.MockSession
+	GfClient  *mockgameflowclient.MockClient
+	WordStore *mockwordstore.MockStore
+}
 
-	wfClient := mockworkflowclient.NewMockClient(crtl)
+func createTestGameServer(t *testing.T) (*MockConfig, *GameServer) {
+	t.Helper()
 
-	serverId := uuid.New()
-	gameServer := NewGameServer(context.Background(), serverId, wfClient, &NewGameServerOptions{StartServer: false})
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
 
+	serverID := uuid.New()
+
+	env := util.Config{
+		ServiceName: "test",
+		Environment: util.Development,
+	}
+
+	mockConfig := &MockConfig{
+		Store:     mockdb.NewMockStore(ctrl),
+		Cache:     mockcache.NewMockCache(ctrl),
+		Bus:       mockeventbus.NewMockEventBus(ctrl),
+		Session:   mockeventbus.NewMockSession(ctrl),
+		GfClient:  mockgameflowclient.NewMockClient(ctrl),
+		WordStore: mockwordstore.NewMockStore(ctrl),
+	}
+
+	config := &Config{
+		Env:       env,
+		Store:     mockConfig.Store,
+		Cache:     mockConfig.Cache,
+		Bus:       mockConfig.Bus,
+		GfClient:  mockConfig.GfClient,
+		WordStore: mockConfig.WordStore,
+	}
+
+	gameServer, err := NewGameServer(serverID, config, WithoutBackgroundWorkers())
+	require.NoError(t, err)
 	require.NotEmpty(t, gameServer)
-	require.Equal(t, serverId, gameServer.serverId)
+	require.Equal(t, serverID, gameServer.serverID)
+	require.NotEmpty(t, gameServer.instanceID)
+	require.Empty(t, gameServer.gameID)
 
-	return gameServer
+	return mockConfig, gameServer
+}
+
+func createInitializedTestGameServer(t *testing.T) (*MockConfig, *GameServer) {
+	t.Helper()
+
+	mockConfig, gameServer := createTestGameServer(t)
+	require.NotNil(t, gameServer)
+
+	gameServer.gameID = uuid.New()
+	gameServer.currentRound = 1
+	gameServer.currentArtist = uuid.New()
+	gameServer.currentWord = "current word"
+	gameServer.activePlayers = map[uuid.UUID]bool{
+		uuid.New(): true,
+		uuid.New(): true,
+	}
+	gameServer.busSession = mockConfig.Session
+	gameServer.isGameActive.Store(true)
+
+	return mockConfig, gameServer
 }
 
 func TestCreateGameServer(t *testing.T) {
-	gameServer := createTestGameServer(t)
+	_, gameServer := createTestGameServer(t)
 	require.NotEmpty(t, gameServer)
 }
 
+func TestInitializeGame(t *testing.T) {
+	gameID := uuid.New()
+
+	dbServer := db.Server{
+		NumRoundsPerGame:  10,
+		RoundDurationSecs: 75,
+		StakePerGame: pgtype.Numeric{
+			Int:   big.NewInt(1000000),
+			Exp:   5,
+			Valid: true,
+		},
+	}
+
+	gameInput := types.GameInput{
+		NumRounds:       10,
+		DrawingDuration: 75 * time.Second,
+		StakePerGame:    "100000000000",
+	}
+
+	gameState := &types.GameStateView{
+		CurrentRound:  1,
+		CurrentArtist: uuid.New(),
+		CurrentWord: types.Word{
+			Text: "current word",
+		},
+		Players: map[uuid.UUID]bool{
+			uuid.New(): true,
+			uuid.New(): true,
+		},
+	}
+
+	testCases := []struct {
+		name       string
+		buildStubs func(gameServer *GameServer, config *MockConfig)
+		shouldErr  bool
+	}{
+		{
+			name: "success",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(gameID, nil)
+
+				config.GfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
+					Times(1).
+					Return(nil)
+
+				config.GfClient.EXPECT().
+					GetGameState(gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(gameState, nil)
+
+				config.Bus.EXPECT().
+					Session(gomock.Eq(eventbus.GameIdentifier{
+						GameID:       gameID,
+						GameServerID: gameServer.serverID,
+					})).
+					Times(1).
+					Return(config.Session, nil)
+
+				config.Session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				config.Session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+			},
+			shouldErr: false,
+		},
+		{
+			name: "failed to get db server",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(db.Server{}, errors.New("failed to get db server"))
+			},
+			shouldErr: true,
+		},
+		{
+			name: "failed to parse stake per game",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				dbServer := db.Server{
+					StakePerGame: pgtype.Numeric{
+						Int:   big.NewInt(1000000),
+						Exp:   5,
+						Valid: false,
+					},
+				}
+
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+			},
+			shouldErr: true,
+		},
+		{
+			name: "could not get or create game",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(uuid.Nil, errors.New("could not get or create game"))
+			},
+			shouldErr: true,
+		},
+		{
+			name: "failed to register game server instance",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(gameID, nil)
+
+				config.GfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
+					Times(1).
+					Return(errors.New("failed to register game server instance"))
+			},
+			shouldErr: true,
+		},
+		{
+			name: "failed to get game state",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(gameID, nil)
+
+				config.GfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
+					Times(1).
+					Return(nil)
+
+				config.GfClient.EXPECT().
+					GetGameState(gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(nil, errors.New("failed to get game state"))
+			},
+			shouldErr: true,
+		},
+		{
+			name: "failed to get bus session",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(gameID, nil)
+
+				config.GfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
+					Times(1).
+					Return(nil)
+
+				config.GfClient.EXPECT().
+					GetGameState(gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(gameState, nil)
+
+				config.Bus.EXPECT().
+					Session(gomock.Eq(eventbus.GameIdentifier{
+						GameID:       gameID,
+						GameServerID: gameServer.serverID,
+					})).
+					Times(1).
+					Return(nil, errors.New("failed to get bus session"))
+			},
+			shouldErr: true,
+		},
+		{
+			name: "failed to subscribe to game events stream",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(gameID, nil)
+
+				config.GfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
+					Times(1).
+					Return(nil)
+
+				config.GfClient.EXPECT().
+					GetGameState(gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(gameState, nil)
+
+				config.Bus.EXPECT().
+					Session(gomock.Eq(eventbus.GameIdentifier{
+						GameID:       gameID,
+						GameServerID: gameServer.serverID,
+					})).
+					Times(1).
+					Return(config.Session, nil)
+
+				config.Session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(errors.New("failed to subscribe to game events stream"))
+			},
+			shouldErr: true,
+		},
+		{
+			name: "failed to subscribe to drawing updates stream",
+			buildStubs: func(gameServer *GameServer, config *MockConfig) {
+				config.Store.EXPECT().
+					GetServerById(gomock.Any(), gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(dbServer, nil)
+
+				config.GfClient.EXPECT().
+					Game(gomock.Eq(gameServer.serverID), EqGameInput(gameInput)).
+					Times(1).
+					Return(gameID, nil)
+
+				config.GfClient.EXPECT().
+					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
+					Times(1).
+					Return(nil)
+
+				config.GfClient.EXPECT().
+					GetGameState(gomock.Eq(gameServer.serverID)).
+					Times(1).
+					Return(gameState, nil)
+
+				config.Bus.EXPECT().
+					Session(gomock.Eq(eventbus.GameIdentifier{
+						GameID:       gameID,
+						GameServerID: gameServer.serverID,
+					})).
+					Times(1).
+					Return(config.Session, nil)
+
+				config.Session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(nil)
+
+				config.Session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(errors.New("failed to subscribe to drawing updates stream"))
+			},
+			shouldErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockConfig, gameServer := createTestGameServer(t)
+			require.NotNil(t, gameServer)
+
+			tc.buildStubs(gameServer, mockConfig)
+
+			err := gameServer.initializeGame()
+			if tc.shouldErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotEmpty(t, gameServer.gameID)
+			require.NotEmpty(t, gameServer.currentRound)
+			require.NotEmpty(t, gameServer.currentArtist)
+			require.NotEmpty(t, gameServer.currentWord)
+			require.NotEmpty(t, gameServer.activePlayers)
+			require.Empty(t, gameServer.correctGuessers)
+			require.NotEmpty(t, gameServer.busSession)
+			require.True(t, gameServer.isGameActive.Load())
+		})
+	}
+}
+
+func TestInitializeGame_GameIsActive(t *testing.T) {
+	_, gameServer := createInitializedTestGameServer(t)
+	err := gameServer.initializeGame()
+	require.NoError(t, err)
+}
+
 func TestAddClient(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	require.Len(t, gameServer.clients, 0)
-	require.Len(t, gameServer.clients[client.userId], 0)
+	require.Len(t, gameServer.clients[client.userID], 0)
+	require.Equal(t, gameServer.clientCount.Load(), int32(0))
+	require.Equal(t, gameServer.connCount.Load(), int32(0))
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
+
+	gameServer.addClient(client)
+
+	require.Len(t, gameServer.clients, 1)
+	require.Len(t, gameServer.clients[client.userID], 1)
+	require.Equal(t, gameServer.clientCount.Load(), int32(1))
+	require.Equal(t, gameServer.connCount.Load(), int32(1))
+
+	connectionInfoMsg := <-client.send
+	require.Equal(t, gameevents.TypeConnectionInfo, connectionInfoMsg.Type)
+	require.NotEmpty(t, connectionInfoMsg.Payload)
+	require.False(t, connectionInfoMsg.RequiresWorkflowAck)
+	require.Empty(t, connectionInfoMsg.CorrelationID)
+}
+
+func TestAddClient_IsSpectating(t *testing.T) {
+	_, gameServer := createInitializedTestGameServer(t)
+
+	client := &Client{
+		userID:       uuid.New(),
+		connID:       uuid.New(),
+		isSpectating: true,
+		gameServer:   gameServer,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	require.Len(t, gameServer.clients, 0)
+	require.Len(t, gameServer.clients[client.userID], 0)
 	require.Equal(t, gameServer.clientCount.Load(), int32(0))
 	require.Equal(t, gameServer.connCount.Load(), int32(0))
 
 	gameServer.addClient(client)
 
 	require.Len(t, gameServer.clients, 1)
-	require.Len(t, gameServer.clients[client.userId], 1)
+	require.Len(t, gameServer.clients[client.userID], 1)
 	require.Equal(t, gameServer.clientCount.Load(), int32(1))
 	require.Equal(t, gameServer.connCount.Load(), int32(1))
 }
 
-func TestGetClientConnections(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
-
-	userId := uuid.New()
-
-	clientConns := gameServer.GetClientConnections(userId)
-	require.Empty(t, clientConns)
-	require.Len(t, clientConns, 0)
-
-	client1 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
-	}
-	gameServer.addClient(client1)
-
-	clientConns = gameServer.GetClientConnections(userId)
-	require.NotEmpty(t, clientConns)
-	require.Len(t, clientConns, 1)
-
-	client2 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
-	}
-	gameServer.addClient(client2)
-
-	clientConns = gameServer.GetClientConnections(userId)
-	require.NotEmpty(t, clientConns)
-	require.Len(t, clientConns, 2)
-}
-
 func TestRemoveClient(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
+
+	gameServer.addClient(client)
+
+	require.Len(t, gameServer.clients, 1)
+	require.Len(t, gameServer.clients[client.userID], 1)
+	require.Equal(t, gameServer.clientCount.Load(), int32(1))
+	require.Equal(t, gameServer.connCount.Load(), int32(1))
+
+	mockConfig.GfClient.EXPECT().
+		RemovePlayers(gomock.Eq(gameServer.serverID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
+
+	gameServer.removeClient(client)
+
+	require.Len(t, gameServer.clients, 0)
+	require.Len(t, gameServer.clients[client.userID], 0)
+	require.Equal(t, gameServer.clientCount.Load(), int32(0))
+	require.Equal(t, gameServer.connCount.Load(), int32(0))
+}
+
+func TestRemoveClient_IsArtist(t *testing.T) {
+	mockConfig, gameServer := createInitializedTestGameServer(t)
+
+	client := &Client{
+		userID:     uuid.New(),
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
+
+	gameServer.currentArtist = client.userID
+	gameServer.addClient(client)
+
+	require.Len(t, gameServer.clients, 1)
+	require.Len(t, gameServer.clients[client.userID], 1)
+	require.Equal(t, gameServer.clientCount.Load(), int32(1))
+	require.Equal(t, gameServer.connCount.Load(), int32(1))
+
+	mockConfig.GfClient.EXPECT().
+		ArtistDisconnected(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq(uint8(1)), gomock.Eq(client.userID)).
+		Times(1).
+		Return(nil)
+
+	gameServer.removeClient(client)
+
+	require.Len(t, gameServer.clients, 0)
+	require.Len(t, gameServer.clients[client.userID], 0)
+	require.Equal(t, gameServer.clientCount.Load(), int32(0))
+	require.Equal(t, gameServer.connCount.Load(), int32(0))
+}
+
+func TestRemoveClient_IsSpectating(t *testing.T) {
+	_, gameServer := createInitializedTestGameServer(t)
+
+	client := &Client{
+		userID:       uuid.New(),
+		connID:       uuid.New(),
+		isSpectating: true,
+		gameServer:   gameServer,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	gameServer.addClient(client)
 
 	require.Len(t, gameServer.clients, 1)
-	require.Len(t, gameServer.clients[client.userId], 1)
+	require.Len(t, gameServer.clients[client.userID], 1)
 	require.Equal(t, gameServer.clientCount.Load(), int32(1))
 	require.Equal(t, gameServer.connCount.Load(), int32(1))
 
 	gameServer.removeClient(client)
 
 	require.Len(t, gameServer.clients, 0)
-	require.Len(t, gameServer.clients[client.userId], 0)
+	require.Len(t, gameServer.clients[client.userID], 0)
 	require.Equal(t, gameServer.clientCount.Load(), int32(0))
 	require.Equal(t, gameServer.connCount.Load(), int32(0))
 }
 
 func TestRemoveClient_UserIdNotRegistered(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client)
 
-	originalClientUserId := client.userId
-	client.userId = uuid.New()
+	originalClientUserID := client.userID
+	client.userID = uuid.New()
 	gameServer.removeClient(client)
 
 	require.Len(t, gameServer.clients, 1)
-	require.Len(t, gameServer.clients[originalClientUserId], 1)
+	require.Len(t, gameServer.clients[originalClientUserID], 1)
 	require.Equal(t, gameServer.clientCount.Load(), int32(1))
 	require.Equal(t, gameServer.connCount.Load(), int32(1))
 }
 
 func TestRemoveClient_UserConnNotRegistered(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client)
 
-	client.connId = uuid.New()
+	client.connID = uuid.New()
 	gameServer.removeClient(client)
 
 	require.Len(t, gameServer.clients, 1)
-	require.Len(t, gameServer.clients[client.userId], 1)
+	require.Len(t, gameServer.clients[client.userID], 1)
 	require.Equal(t, gameServer.clientCount.Load(), int32(1))
 	require.Equal(t, gameServer.connCount.Load(), int32(1))
 }
 
 func TestRemoveAllClients(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client1 := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client2 := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		userID:       uuid.New(),
+		connID:       uuid.New(),
+		isSpectating: true,
+		gameServer:   gameServer,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client1.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client1)
 	gameServer.addClient(client2)
 
 	require.Len(t, gameServer.clients, 2)
-	require.Len(t, gameServer.clients[client1.userId], 1)
-	require.Len(t, gameServer.clients[client2.userId], 1)
+	require.Len(t, gameServer.clients[client1.userID], 1)
+	require.Len(t, gameServer.clients[client2.userID], 1)
 	require.Equal(t, gameServer.clientCount.Load(), int32(2))
 	require.Equal(t, gameServer.connCount.Load(), int32(2))
+
+	mockConfig.GfClient.EXPECT().
+		RemovePlayers(gomock.Eq(gameServer.serverID), gomock.Eq([]uuid.UUID{client1.userID})).
+		Times(1).
+		Return()
 
 	gameServer.removeAllClients()
 
 	require.Len(t, gameServer.clients, 0)
-	require.Len(t, gameServer.clients[client1.userId], 0)
-	require.Len(t, gameServer.clients[client2.userId], 0)
+	require.Len(t, gameServer.clients[client1.userID], 0)
+	require.Len(t, gameServer.clients[client2.userID], 0)
 	require.Equal(t, gameServer.clientCount.Load(), int32(0))
 	require.Equal(t, gameServer.connCount.Load(), int32(0))
 }
 
 func TestDispatchMsg(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client)
 
+	msgType := "msg-type"
 	msg := []byte("test msg")
-	gameServer.dispatchMsg(msg)
 
+	gameServer.dispatchMsg(&OutgoingMessage{
+		WsMessage: WsMessage{
+			Type:    msgType,
+			Payload: msg,
+		},
+	})
+
+	<-client.send // Discarding connection_info msg
 	retrievedMsg := <-client.send
-	require.Equal(t, msg, retrievedMsg.Data)
-	require.False(t, retrievedMsg.RequiresAck)
+
+	require.Equal(t, msgType, retrievedMsg.Type)
+	require.Equal(t, msg, []byte(retrievedMsg.Payload))
+	require.False(t, retrievedMsg.RequiresWorkflowAck)
 	require.Empty(t, retrievedMsg.CorrelationID)
 }
 
 func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client)
 
@@ -237,30 +723,36 @@ func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
 	payload := &DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{
 			{
-				UserId:  uuid.New(),
-				ConnIds: []uuid.UUID{client.connId},
+				UserID:  uuid.New(),
+				ConnIDs: []uuid.UUID{client.connID},
 			},
 		},
-		Msg: OutgoingMessage{
-			Data: testMsg,
+		Msg: &OutgoingMessage{
+			WsMessage: WsMessage{
+				Payload: testMsg,
+			},
 		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
 
-	require.Len(t, client.send, 0)
+	require.Len(t, client.send, 1) // send channel only has connection_info msg
 }
 
 func TestDispatchDirectMsg_RecipientConnIdNotFound(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client)
 
@@ -268,89 +760,113 @@ func TestDispatchDirectMsg_RecipientConnIdNotFound(t *testing.T) {
 	payload := &DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{
 			{
-				UserId:  client.userId,
-				ConnIds: []uuid.UUID{uuid.New()},
+				UserID:  client.userID,
+				ConnIDs: []uuid.UUID{uuid.New()},
 			},
 		},
-		Msg: OutgoingMessage{
-			Data: testMsg,
+		Msg: &OutgoingMessage{
+			WsMessage: WsMessage{
+				Payload: testMsg,
+			},
 		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
 
-	require.Len(t, client.send, 0)
+	require.Len(t, client.send, 1) // send channel only has connection_info msg
 }
 
 func TestDispatchDirectMsg_AllUserConnections(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	userId := uuid.New()
 
 	client1 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		userID:       userId,
+		connID:       uuid.New(),
+		gameServer:   gameServer,
+		isSpectating: true,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client2 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		userID:       userId,
+		connID:       uuid.New(),
+		gameServer:   gameServer,
+		isSpectating: false,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client1.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client1)
 	gameServer.addClient(client2)
 
+	msgType := "some-msg-type"
 	testMsg := []byte("test msg")
+
 	payload := &DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{
 			{
-				UserId: userId,
+				UserID: userId,
 			},
 		},
-		Msg: OutgoingMessage{
-			Data: testMsg,
+		Msg: &OutgoingMessage{
+			WsMessage: WsMessage{
+				Type:    msgType,
+				Payload: testMsg,
+			},
 		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
 
+	<-client1.send // Discarding connection_info msg
 	retrievedMsgClient1 := <-client1.send
+	<-client2.send // Discarding connection_info msg
 	retrievedMsgClient2 := <-client2.send
-	require.Equal(t, testMsg, retrievedMsgClient1.Data)
-	require.Equal(t, testMsg, retrievedMsgClient2.Data)
+
+	require.Equal(t, msgType, retrievedMsgClient1.Type)
+	require.Equal(t, testMsg, []byte(retrievedMsgClient1.Payload))
+
+	require.Equal(t, msgType, retrievedMsgClient2.Type)
+	require.Equal(t, testMsg, []byte(retrievedMsgClient2.Payload))
 }
 
 func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	userId := uuid.New()
 
 	client1 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
+		userID:     userId,
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client2 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		userID:       userId,
+		connID:       uuid.New(),
+		gameServer:   gameServer,
+		isSpectating: true,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	client3 := &Client{
-		userId:     userId,
-		connId:     uuid.New(),
+		userID:     userId,
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.AnyOf([]uuid.UUID{client1.userID}, []uuid.UUID{client3.userID})).
+		Times(2).
+		Return()
 
 	gameServer.addClient(client1)
 	gameServer.addClient(client2)
@@ -360,27 +876,156 @@ func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
 	payload := &DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{
 			{
-				UserId:  userId,
-				ConnIds: []uuid.UUID{client2.connId, client3.connId},
+				UserID:  userId,
+				ConnIDs: []uuid.UUID{client2.connID, client3.connID},
 			},
 		},
-		Msg: OutgoingMessage{
-			Data: testMsg,
+		Msg: &OutgoingMessage{
+			WsMessage: WsMessage{
+				Payload: testMsg,
+			},
 		},
 	}
 
 	gameServer.dispatchDirectMsg(payload)
 
+	<-client2.send // Discarding connection_info msg
 	retrievedMsgClient2 := <-client2.send
+	<-client3.send // Discarding connection_info msg
 	retrievedMsgClient3 := <-client3.send
-	require.Len(t, client1.send, 0)
-	require.Equal(t, testMsg, retrievedMsgClient2.Data)
-	require.Equal(t, testMsg, retrievedMsgClient3.Data)
+
+	require.Len(t, client1.send, 1) // send channel only has connection_info msg
+	require.Equal(t, testMsg, []byte(retrievedMsgClient2.Payload))
+	require.Equal(t, testMsg, []byte(retrievedMsgClient3.Payload))
+}
+
+func TestDispatchDirectMsg_SpecificUserConnections_ExcludeSpectators(t *testing.T) {
+	mockConfig, gameServer := createInitializedTestGameServer(t)
+
+	userId := uuid.New()
+
+	client1 := &Client{
+		userID:     userId,
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	client2 := &Client{
+		userID:       userId,
+		connID:       uuid.New(),
+		gameServer:   gameServer,
+		isSpectating: true,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	client3 := &Client{
+		userID:     userId,
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.AnyOf([]uuid.UUID{client1.userID}, []uuid.UUID{client3.userID})).
+		Times(2).
+		Return()
+
+	gameServer.addClient(client1)
+	gameServer.addClient(client2)
+	gameServer.addClient(client3)
+
+	testMsg := []byte("test msg")
+	payload := &DirectMsgPayload{
+		Recipients: []DirectMsgRecipient{
+			{
+				UserID:            userId,
+				ConnIDs:           []uuid.UUID{client2.connID, client3.connID},
+				ExcludeSpectators: true,
+			},
+		},
+		Msg: &OutgoingMessage{
+			WsMessage: WsMessage{
+				Payload: testMsg,
+			},
+		},
+	}
+
+	gameServer.dispatchDirectMsg(payload)
+
+	<-client3.send // Discarding connection_info msg
+	retrievedMsgClient3 := <-client3.send
+
+	require.Len(t, client1.send, 1) // send channel only has connection_info msg
+	require.Len(t, client2.send, 1) // send channel only has connection_info msg
+	require.Equal(t, testMsg, []byte(retrievedMsgClient3.Payload))
+}
+
+func TestDispatchDirectMsg_ExcludeSpectators(t *testing.T) {
+	mockConfig, gameServer := createInitializedTestGameServer(t)
+
+	userId := uuid.New()
+
+	client1 := &Client{
+		userID:     userId,
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	client2 := &Client{
+		userID:       userId,
+		connID:       uuid.New(),
+		gameServer:   gameServer,
+		isSpectating: true,
+		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	client3 := &Client{
+		userID:     userId,
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
+	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.AnyOf([]uuid.UUID{client1.userID}, []uuid.UUID{client3.userID})).
+		Times(2).
+		Return()
+
+	gameServer.addClient(client1)
+	gameServer.addClient(client2)
+	gameServer.addClient(client3)
+
+	testMsg := []byte("test msg")
+	payload := &DirectMsgPayload{
+		Recipients: []DirectMsgRecipient{
+			{
+				UserID:            userId,
+				ExcludeSpectators: true,
+			},
+		},
+		Msg: &OutgoingMessage{
+			WsMessage: WsMessage{
+				Payload: testMsg,
+			},
+		},
+	}
+
+	gameServer.dispatchDirectMsg(payload)
+
+	<-client1.send // Discarding connection_info msg
+	retrievedMsgClient1 := <-client1.send
+	<-client3.send // Discarding connection_info msg
+	retrievedMsgClient3 := <-client3.send
+
+	require.Len(t, client2.send, 1) // send channel only has connection_info msg
+	require.Equal(t, testMsg, []byte(retrievedMsgClient1.Payload))
+	require.Equal(t, testMsg, []byte(retrievedMsgClient3.Payload))
 }
 
 func TestScheduleShutdown(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	_, gameServer := createInitializedTestGameServer(t)
 
 	require.Nil(t, gameServer.shutdownTimer)
 
@@ -390,20 +1035,44 @@ func TestScheduleShutdown(t *testing.T) {
 }
 
 func TestShutdown(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+
+	mockConfig.GfClient.EXPECT().
+		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
 
 	gameServer.addClient(client)
 
 	require.False(t, gameServer.IsClosed())
 	require.Len(t, gameServer.clients, 1)
+
+	mockConfig.GfClient.EXPECT().
+		RemovePlayers(gomock.Eq(gameServer.serverID), gomock.Eq([]uuid.UUID{client.userID})).
+		Times(1).
+		Return()
+
+	mockConfig.GfClient.EXPECT().
+		UnregisterGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.instanceID)).
+		Times(1).
+		Return(nil)
+
+	mockConfig.GfClient.EXPECT().
+		ShutdownGameServer(gomock.Eq(gameServer.serverID)).
+		Times(1).
+		Return()
+
+	mockConfig.Session.EXPECT().
+		Close().
+		Times(1).
+		Return()
 
 	gameServer.shutdown()
 
@@ -414,8 +1083,7 @@ func TestShutdown(t *testing.T) {
 }
 
 func TestCancelScheduledShutdown(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	_, gameServer := createInitializedTestGameServer(t)
 
 	gameServer.scheduleShutdown()
 	require.NotNil(t, gameServer.shutdownTimer)
@@ -426,11 +1094,25 @@ func TestCancelScheduledShutdown(t *testing.T) {
 }
 
 func TestCancelScheduledShutdown_TimerAlreadyTriggered(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
 	gameServer.scheduleShutdown()
 	require.NotNil(t, gameServer.shutdownTimer)
+
+	mockConfig.Session.EXPECT().
+		Close().
+		Times(1).
+		Return()
+
+	mockConfig.GfClient.EXPECT().
+		UnregisterGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.instanceID)).
+		Times(1).
+		Return(nil)
+
+	mockConfig.GfClient.EXPECT().
+		ShutdownGameServer(gomock.Eq(gameServer.serverID)).
+		Times(1).
+		Return()
 
 	// Trigger timer
 	gameServer.shutdownTimer.Reset(0)
@@ -440,20 +1122,32 @@ func TestCancelScheduledShutdown_TimerAlreadyTriggered(t *testing.T) {
 	require.False(t, isCancelled)
 }
 
-func TestGetServerId(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+func TestAckGameEvent(t *testing.T) {
+	mockConfig, gameServer := createInitializedTestGameServer(t)
 
-	retrievedServerId := gameServer.GetServerId()
+	correlationID := uuid.New()
+	status := gameevents.AckStatusDelivered
+	reason := "success"
 
-	require.Equal(t, gameServer.serverId, retrievedServerId)
+	eventAckPayload := gameevents.EventAckPayload{
+		CorrelationID: correlationID,
+		InstanceID:    gameServer.instanceID,
+		Status:        status,
+		Reason:        reason,
+	}
+
+	mockConfig.GfClient.EXPECT().
+		AcknowledgeGameEvent(gomock.Eq(gameServer.serverID), gomock.Eq(eventAckPayload)).
+		Times(1).
+		Return(nil)
+
+	gameServer.ackGameEvent(correlationID, status, reason)
 }
 
 func TestBroadcast(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	_, gameServer := createInitializedTestGameServer(t)
 
-	received := make(chan []byte)
+	received := make(chan *OutgoingMessage)
 
 	go func() {
 		select {
@@ -464,21 +1158,26 @@ func TestBroadcast(t *testing.T) {
 		}
 	}()
 
+	msgType := "random-msg-type"
 	testMsg := []byte("test msg")
-	err := gameServer.Broadcast(testMsg)
+
+	err := gameServer.Broadcast(&WsMessage{
+		Type:    msgType,
+		Payload: testMsg,
+	})
 	require.NoError(t, err)
 
 	select {
 	case retrievedMsg := <-received:
-		require.Equal(t, testMsg, retrievedMsg)
+		require.Equal(t, msgType, retrievedMsg.Type)
+		require.Equal(t, testMsg, []byte(retrievedMsg.Payload))
 	case <-time.After(2 * time.Second):
 		require.Fail(t, "timed out waiting for broadcast")
 	}
 }
 
 func TestSendDirectMsg(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	_, gameServer := createInitializedTestGameServer(t)
 
 	received := make(chan *DirectMsgPayload)
 
@@ -494,8 +1193,8 @@ func TestSendDirectMsg(t *testing.T) {
 	payload := &DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{
 			{
-				UserId: uuid.New(),
-				ConnIds: []uuid.UUID{
+				UserID: uuid.New(),
+				ConnIDs: []uuid.UUID{
 					uuid.New(),
 				},
 			},
@@ -513,8 +1212,7 @@ func TestSendDirectMsg(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	_, gameServer := createInitializedTestGameServer(t)
 
 	received := make(chan *Client)
 
@@ -528,10 +1226,10 @@ func TestRegister(t *testing.T) {
 	}()
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	err := gameServer.Register(client)
@@ -546,8 +1244,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestUnregister(t *testing.T) {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+	_, gameServer := createInitializedTestGameServer(t)
 
 	received := make(chan *Client)
 
@@ -561,10 +1258,10 @@ func TestUnregister(t *testing.T) {
 	}()
 
 	client := &Client{
-		userId:     uuid.New(),
-		connId:     uuid.New(),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
 		gameServer: gameServer,
-		send:       make(chan OutgoingMessage, ClientSendChanBufSize),
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
 
 	err := gameServer.Unregister(client)

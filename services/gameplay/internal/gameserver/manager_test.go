@@ -1,23 +1,16 @@
 package gameserver
 
 import (
-	"context"
 	"testing"
 
-	mockworkflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow/mock"
+	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func createTestGameServerManager(t *testing.T) *Manager {
-	crtl := gomock.NewController(t)
-	defer crtl.Finish()
-
-	wfClient := mockworkflowclient.NewMockClient(crtl)
-
-	gameServerManager := NewManager(wfClient)
+	gameServerManager := NewManager()
 	require.NotEmpty(t, gameServerManager)
 	require.Empty(t, gameServerManager.gameServers)
 
@@ -30,32 +23,64 @@ func TestCreateGameServerManager(t *testing.T) {
 }
 
 func TestGetOrCreateGameServer(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
-	serverId := uuid.New()
+	serverID := uuid.New()
+	config := &Config{}
 
-	gsCall1 := sm.GetOrCreateGameServer(context.Background(), serverId)
+	gsCall1, err := sm.GetOrCreateGameServer(serverID, config)
+	require.NoError(t, err)
 	require.NotEmpty(t, gsCall1)
 
-	gsCall2 := sm.GetOrCreateGameServer(context.Background(), serverId)
+	gsCall2, err := sm.GetOrCreateGameServer(serverID, config)
+	require.NoError(t, err)
 	require.NotEmpty(t, gsCall2)
 
 	require.Equal(t, gsCall1, gsCall2)
 }
 
 func TestRemoveGameServerIfClosed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	sm := createTestGameServerManager(t)
 	require.NotEmpty(t, sm)
 
-	serverId := uuid.New()
+	serverID := uuid.New()
+	config := &Config{}
 
-	gs := sm.GetOrCreateGameServer(context.Background(), serverId)
+	gs, err := sm.GetOrCreateGameServer(serverID, config)
+	require.NoError(t, err)
 	gs.shutdown()
 
-	require.NotEmpty(t, sm.gameServers[serverId])
+	require.NotEmpty(t, sm.gameServers[serverID])
 
-	sm.RemoveGameServerIfClosed(serverId)
+	sm.RemoveGameServerIfClosed(serverID)
 
-	require.Nil(t, sm.gameServers[serverId])
+	require.Nil(t, sm.gameServers[serverID])
+}
+
+func TestManagerShutdown(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sm := createTestGameServerManager(t)
+	require.NotEmpty(t, sm)
+
+	serverID := uuid.New()
+	config := &Config{}
+
+	gs, err := sm.GetOrCreateGameServer(serverID, config)
+	require.NoError(t, err)
+	gs.shutdown()
+
+	require.NotEmpty(t, sm.gameServers[serverID])
+
+	sm.Shutdown()
+
+	require.Nil(t, sm.gameServers[serverID])
 }

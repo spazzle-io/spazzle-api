@@ -3,12 +3,21 @@ package gameserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow"
+	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
+
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -25,95 +34,251 @@ const (
 
 var ErrClosedGameServer = errors.New("game server is closed")
 
-// DirectMsgRecipient defines the recipient of a direct ws message.
-// To send a message to a specific connection of a given user, add its connection ID to ConnIds.
-// If ConnIds is empty, the message is sent to all user ws connections.
-type DirectMsgRecipient struct {
-	UserId  uuid.UUID
-	ConnIds []uuid.UUID
-}
-
-type DirectMsgPayload struct {
-	Recipients []DirectMsgRecipient
-	Msg        OutgoingMessage
+type Config struct {
+	Env       util.Config
+	Store     db.Store
+	Cache     commonCache.Cache
+	Bus       eventbus.EventBus
+	GfClient  gameflow.Client
+	WordStore wordstore.Store
 }
 
 type GameServer struct {
-	serverId      uuid.UUID
-	instanceId    uuid.UUID
-	wfClient      workflow.Client
-	register      chan *Client
-	unregister    chan *Client
-	broadcast     chan []byte
-	directMsg     chan *DirectMsgPayload
-	clientsMu     sync.RWMutex
-	clients       map[uuid.UUID]map[uuid.UUID]*Client
-	clientCount   atomic.Int32
-	connCount     atomic.Int32
-	isClosed      atomic.Bool
+	Config
+
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+	mu     sync.RWMutex
+
+	serverID   uuid.UUID
+	instanceID uuid.UUID
+	gameID     uuid.UUID
+
+	busSession eventbus.Session
+
+	register   chan *Client
+	unregister chan *Client
+	broadcast  chan *OutgoingMessage
+	directMsg  chan *DirectMsgPayload
+
+	clients     map[uuid.UUID]map[uuid.UUID]*Client
+	clientCount atomic.Int32
+	connCount   atomic.Int32
+
+	isClosed     atomic.Bool
+	isGameActive atomic.Bool
+
 	shutdownMu    sync.Mutex
 	shutdownTimer *time.Timer
-	ctx           context.Context
-	cancel        context.CancelFunc
-	wg            sync.WaitGroup
+
+	baseLogger zerolog.Logger
+	gameLogger zerolog.Logger
+
+	currentRound    uint8
+	currentArtist   uuid.UUID
+	currentWord     string
+	activePlayers   map[uuid.UUID]bool
+	correctGuessers map[uuid.UUID]bool
 }
 
-// NewGameServerOptions defines optional behaviors for the GameServer constructor.
-type NewGameServerOptions struct {
-	// When true (default), the GameServer's main loop is started automatically.
-	// This configuration is primarily intended for unit testing.
-	StartServer bool
+type gameServerOptions struct {
+	disableBackgroundWorkers bool
+}
+
+type Option func(options *gameServerOptions)
+
+func WithoutBackgroundWorkers() Option {
+	return func(o *gameServerOptions) {
+		o.disableBackgroundWorkers = true
+	}
 }
 
 func NewGameServer(
-	ctx context.Context,
-	serverId uuid.UUID,
-	wfClient workflow.Client,
-	opts *NewGameServerOptions,
-) *GameServer {
-	ctx, cancel := context.WithCancel(ctx)
-
-	if opts == nil {
-		opts = &NewGameServerOptions{
-			StartServer: true,
-		}
+	serverID uuid.UUID,
+	cfg *Config,
+	opts ...Option,
+) (*GameServer, error) {
+	options := &gameServerOptions{}
+	for _, opt := range opts {
+		opt(options)
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
 
 	gameServer := &GameServer{
-		serverId:   serverId,
-		instanceId: uuid.New(),
-		wfClient:   wfClient,
+		Config: *cfg,
+
+		ctx:    ctx,
+		cancel: cancel,
+
+		serverID:   serverID,
+		instanceID: uuid.New(),
+
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan *OutgoingMessage),
 		directMsg:  make(chan *DirectMsgPayload),
-		clients:    make(map[uuid.UUID]map[uuid.UUID]*Client),
-		ctx:        ctx,
-		cancel:     cancel,
+
+		clients: make(map[uuid.UUID]map[uuid.UUID]*Client),
+
+		activePlayers:   make(map[uuid.UUID]bool),
+		correctGuessers: make(map[uuid.UUID]bool),
 	}
 
-	if opts.StartServer {
-		gameServer.wg.Add(1)
+	gameServer.baseLogger = log.With().
+		Str("server_id", gameServer.serverID.String()).
+		Str("instance_id", gameServer.instanceID.String()).
+		Logger()
+	gameServer.gameLogger = gameServer.baseLogger
+
+	if !options.disableBackgroundWorkers {
+		gameServer.wg.Add(2)
 		go gameServer.run()
-		// TODO: Add a goroutine that sends heartbeats to the GameServer workflow via redis as a persistence store.
+		go gameServer.heartbeat()
 	}
 
-	gameServer.getLogger(nil).Info().Msg("created ws game server")
+	logger := gameServer.logger()
+	logger.Info().Msg("created ws game server")
 
-	return gameServer
+	return gameServer, nil
 }
 
-func (gs *GameServer) getLogger(client *Client) *zerolog.Logger {
-	logger := log.With().Str("server_id", gs.serverId.String()).Logger()
+func (gs *GameServer) logger() zerolog.Logger {
+	return gs.gameLogger
+}
 
-	if client != nil {
-		logger = logger.With().
-			Str("user_id", client.userId.String()).
-			Str("conn_id", client.connId.String()).
-			Logger()
+func (gs *GameServer) loggerWithClient(client *Client) zerolog.Logger {
+	if client == nil {
+		return gs.gameLogger
 	}
 
-	return &logger
+	return gs.gameLogger.With().
+		Str("user_id", client.userID.String()).
+		Str("conn_id", client.connID.String()).
+		Logger()
+}
+
+func (gs *GameServer) getGameID() uuid.UUID {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	return gs.gameID
+}
+
+func (gs *GameServer) getBusSession() eventbus.Session {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	return gs.busSession
+}
+
+func (gs *GameServer) getCurrentRound() uint8 {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	return gs.currentRound
+}
+
+func (gs *GameServer) getCurrentArtist() uuid.UUID {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	return gs.currentArtist
+}
+
+func (gs *GameServer) getCurrentWord() string {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	return gs.currentWord
+}
+
+func (gs *GameServer) isActivePlayer(playerID uuid.UUID) bool {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	_, ok := gs.activePlayers[playerID]
+	return ok
+}
+
+func (gs *GameServer) initializeGame() error {
+	if gs.isGameActive.Load() {
+		return nil
+	}
+
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+
+	server, err := gs.Store.GetServerById(gs.ctx, gs.serverID)
+	if err != nil {
+		return fmt.Errorf("failed to get server by id: %w", err)
+	}
+
+	stakePerGame, err := db.ParseDBNumericWeiToStr(server.StakePerGame)
+	if err != nil {
+		return fmt.Errorf("failed to parse stake per game: %w", err)
+	}
+
+	gameID, err := gs.GfClient.Game(gs.serverID, types.GameInput{
+		GameID:          uuid.New(),
+		NumRounds:       server.NumRoundsPerGame,
+		DrawingDuration: time.Duration(server.RoundDurationSecs) * time.Second,
+		StakePerGame:    stakePerGame,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get or create game: %w", err)
+	}
+
+	gs.gameID = gameID
+	gs.gameLogger = gs.baseLogger.With().Str("game_id", gameID.String()).Logger()
+
+	err = gs.GfClient.HeartbeatGameServerInstance(gs.serverID, gameID, gs.instanceID)
+	if err != nil {
+		return fmt.Errorf("failed to register game server instance: %w", err)
+	}
+
+	gameState, err := gs.GfClient.GetGameState(gs.serverID)
+	if err != nil {
+		return fmt.Errorf("failed to get game state: %w", err)
+	}
+
+	gs.currentRound = gameState.CurrentRound
+	gs.currentArtist = gameState.CurrentArtist
+	gs.currentWord = gameState.CurrentWord.Text
+	gs.activePlayers = gameState.Players
+	gs.correctGuessers = make(map[uuid.UUID]bool)
+
+	busSession, err := gs.Bus.Session(eventbus.GameIdentifier{
+		GameID:       gameID,
+		GameServerID: gs.serverID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create event bus session: %w", err)
+	}
+
+	err = busSession.Subscribe(gs.ctx, eventbus.GameEventsStreamType, eventbus.StartFromNow(), gs.handleEventBusMessage)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to game events stream: %w", err)
+	}
+
+	err = busSession.Subscribe(gs.ctx, eventbus.DrawingUpdatesStreamType, eventbus.StartFromNow(), gs.handleEventBusMessage)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to drawing updates stream: %w", err)
+	}
+
+	if gs.busSession != nil {
+		gs.busSession.Close()
+		gs.busSession = nil
+	}
+	gs.busSession = busSession
+
+	gs.isGameActive.Store(true)
+
+	logger := gs.logger()
+	logger.Info().Msg("game initialized successfully")
+
+	return nil
 }
 
 func (gs *GameServer) run() {
@@ -127,8 +292,8 @@ func (gs *GameServer) run() {
 			gs.removeClient(c)
 		case msg := <-gs.broadcast:
 			gs.dispatchMsg(msg)
-		case directMsgPayload := <-gs.directMsg:
-			gs.dispatchDirectMsg(directMsgPayload)
+		case msgPayload := <-gs.directMsg:
+			gs.dispatchDirectMsg(msgPayload)
 		case <-gs.ctx.Done():
 			gs.shutdown()
 			return
@@ -136,92 +301,177 @@ func (gs *GameServer) run() {
 	}
 }
 
-func (gs *GameServer) addClient(c *Client) bool {
-	gs.clientsMu.Lock()
-	defer gs.clientsMu.Unlock()
+func (gs *GameServer) heartbeat() {
+	defer gs.wg.Done()
 
-	if _, ok := gs.clients[c.userId]; !ok {
-		gs.clients[c.userId] = make(map[uuid.UUID]*Client)
+	logger := gs.logger()
+
+	ticker := time.NewTicker(types.GameServerHeartbeatInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if !gs.isGameActive.Load() {
+				continue
+			}
+
+			err := gs.GfClient.HeartbeatGameServerInstance(gs.serverID, gs.getGameID(), gs.instanceID)
+			if err != nil {
+				logger.Warn().Err(err).Msg("failed to send game server instance heartbeat")
+				gs.scheduleShutdown()
+			}
+
+		case <-gs.ctx.Done():
+			return
+		}
+	}
+}
+
+func (gs *GameServer) addClient(c *Client) bool {
+	err := gs.initializeGame()
+	if err != nil {
+		logger := gs.loggerWithClient(c)
+		logger.Warn().Err(err).Msg("failed to initialize game")
+
+		reason := JoinErrorReasonUnknown
+		if errors.Is(err, gameflow.ErrGameEnding) {
+			reason = JoinErrorReasonGameEnding
+		}
+
+		gs.sendError(c, ErrCodeJoinError, string(reason))
+		return false
+	}
+
+	logger := gs.loggerWithClient(c)
+
+	gs.mu.Lock()
+
+	if _, exists := gs.clients[c.userID]; !exists {
+		gs.clients[c.userID] = make(map[uuid.UUID]*Client)
 		gs.clientCount.Add(1)
 	}
 
-	gs.clients[c.userId][c.connId] = c
-	gs.connCount.Add(1)
+	if _, exists := gs.clients[c.userID][c.connID]; !exists {
+		gs.clients[c.userID][c.connID] = c
+		gs.connCount.Add(1)
+	}
+
+	gs.mu.Unlock()
+
+	if !c.isSpectating {
+		gs.GfClient.AddPlayers(gs.serverID, gs.gameID, []uuid.UUID{c.userID})
+	}
 
 	if !gs.cancelScheduledShutdown() {
 		return false
 	}
 
-	gs.getLogger(c).Info().Msg("added client to ws game server")
+	gs.sendConnectionInfoMsg(c)
 
+	logger.Info().Msg("added client to ws game server")
 	return true
 }
 
 func (gs *GameServer) removeClient(c *Client) {
-	gs.clientsMu.Lock()
-	defer gs.clientsMu.Unlock()
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
 
-	if _, ok := gs.clients[c.userId]; !ok {
-		gs.getLogger(c).Warn().Msg("user is not registered to ws game server")
+	logger := gs.loggerWithClient(c)
+
+	if _, ok := gs.clients[c.userID]; !ok {
+		logger.Warn().Msg("user is not registered to ws game server")
 		return
 	}
 
-	if _, ok := gs.clients[c.userId][c.connId]; !ok {
-		gs.getLogger(c).Warn().Msg("connection ID is not registered to ws game server client")
+	if _, ok := gs.clients[c.userID][c.connID]; !ok {
+		logger.Warn().Msg("connection ID is not registered to ws game server client")
 		return
 	}
 
-	delete(gs.clients[c.userId], c.connId)
+	delete(gs.clients[c.userID], c.connID)
 	close(c.send)
 	gs.connCount.Add(-1)
 
-	if len(gs.clients[c.userId]) == 0 {
-		delete(gs.clients, c.userId)
+	if len(gs.clients[c.userID]) == 0 {
+		delete(gs.clients, c.userID)
 		gs.clientCount.Add(-1)
 	}
 
-	gs.getLogger(c).Info().Msg("removed client from ws game server")
+	logger.Info().Msg("removed client from ws game server")
 
 	// If there are no clients in the game server, schedule server shutdown
 	if gs.clientCount.Load() == 0 {
 		gs.scheduleShutdown()
 	}
+
+	if c.isSpectating || !gs.isGameActive.Load() {
+		return
+	}
+
+	if c.userID == gs.currentArtist {
+		err := gs.GfClient.ArtistDisconnected(gs.serverID, gs.gameID, gs.currentRound, gs.currentArtist)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to notify workflow that artist is disconnected")
+		}
+	} else {
+		gs.GfClient.RemovePlayers(gs.serverID, []uuid.UUID{c.userID})
+	}
 }
 
 func (gs *GameServer) removeAllClients() {
-	gs.clientsMu.Lock()
-	defer gs.clientsMu.Unlock()
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
 
-	for userId, conns := range gs.clients {
-		for connId, client := range conns {
-			delete(conns, connId)
+	logger := gs.logger()
+
+	if gs.clientCount.Load() == 0 {
+		logger.Debug().Msg("no clients to remove from ws game server")
+		return
+	}
+
+	if gs.isGameActive.Load() {
+		var nonSpectatingClients []uuid.UUID
+		for userID, conns := range gs.clients {
+			for _, client := range conns {
+				if !client.isSpectating {
+					nonSpectatingClients = append(nonSpectatingClients, userID)
+					break
+				}
+			}
+		}
+		gs.GfClient.RemovePlayers(gs.serverID, nonSpectatingClients)
+	}
+
+	for userID, conns := range gs.clients {
+		for connID, client := range conns {
+			delete(conns, connID)
 			close(client.send)
 		}
-		delete(gs.clients, userId)
+		delete(gs.clients, userID)
 	}
 
 	gs.connCount.Store(0)
 	gs.clientCount.Store(0)
 	gs.scheduleShutdown()
 
-	gs.getLogger(nil).Info().Msg("removed all clients from ws game server")
+	logger.Info().Msg("removed all clients from ws game server")
 }
 
-func (gs *GameServer) dispatchMsg(msg []byte) {
-	gs.clientsMu.RLock()
-	defer gs.clientsMu.RUnlock()
-
-	outgoingMsg := OutgoingMessage{
-		Data: msg,
-	}
+func (gs *GameServer) dispatchMsg(msg *OutgoingMessage) {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
 
 	for _, conns := range gs.clients {
 		for _, client := range conns {
+			logger := gs.loggerWithClient(client)
+
 			select {
-			case client.send <- outgoingMsg:
+			case client.send <- msg:
 			default:
+				logger.Warn().Msg("could not send message to client ws send channel")
+
 				// If client send buffer is full, drop the client connection
-				gs.getLogger(client).Warn().Msg("could not send message to client ws send channel")
 				if !gs.IsClosed() {
 					go func(c *Client) { gs.unregister <- c }(client)
 				}
@@ -231,27 +481,35 @@ func (gs *GameServer) dispatchMsg(msg []byte) {
 }
 
 func (gs *GameServer) dispatchDirectMsg(directMsgPayload *DirectMsgPayload) {
-	gs.clientsMu.RLock()
-	defer gs.clientsMu.RUnlock()
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
 
 	for _, recipient := range directMsgPayload.Recipients {
-		if clients, ok := gs.clients[recipient.UserId]; ok {
-			for connId, client := range clients {
-				if len(recipient.ConnIds) > 0 && !slices.Contains(recipient.ConnIds, connId) {
+		if clients, ok := gs.clients[recipient.UserID]; ok {
+			for connID, client := range clients {
+				logger := gs.loggerWithClient(client)
+
+				if len(recipient.ConnIDs) > 0 && !slices.Contains(recipient.ConnIDs, connID) {
+					continue
+				}
+
+				if recipient.ExcludeSpectators && client.isSpectating {
 					continue
 				}
 
 				select {
 				case client.send <- directMsgPayload.Msg:
 				default:
+					logger.Warn().Msg("could not send message to client ws send channel")
+
 					// If client send buffer is full, drop the client connection
-					gs.getLogger(client).Warn().Msg("could not send message to client ws send channel")
-					if directMsgPayload.Msg.RequiresAck {
-						// TODO: Notify workflow that message send has failed
-						_ = struct{}{}
-					}
 					if !gs.IsClosed() {
 						go func(c *Client) { gs.unregister <- c }(client)
+					}
+
+					if directMsgPayload.Msg.RequiresWorkflowAck {
+						ackReason := "failed to write to client ws. send channel is full"
+						gs.ackGameEvent(directMsgPayload.Msg.CorrelationID, gameevents.AckStatusFailed, ackReason)
 					}
 				}
 			}
@@ -276,20 +534,43 @@ func (gs *GameServer) scheduleShutdown() {
 		gs.wg.Wait()
 	})
 
-	gs.getLogger(nil).Info().Msg("scheduled ws game server shutdown")
+	logger := gs.logger()
+	logger.Info().Msg("scheduled ws game server shutdown")
 }
 
 func (gs *GameServer) shutdown() {
-	if gs.isClosed.CompareAndSwap(false, true) {
-		gs.removeAllClients()
-		gs.cancel()
-		gs.getLogger(nil).Info().Msg("ws game server shut down")
+	logger := gs.logger()
+
+	isInitialServerShutdown := gs.isClosed.CompareAndSwap(false, true)
+	if !isInitialServerShutdown {
+		return
 	}
+
+	gs.removeAllClients()
+
+	if gs.isGameActive.Load() {
+		err := gs.GfClient.UnregisterGameServerInstance(gs.serverID, gs.instanceID)
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to unregister game server instance from workflow")
+		}
+
+		gs.GfClient.ShutdownGameServer(gs.serverID)
+	}
+
+	if gs.getBusSession() != nil {
+		gs.getBusSession().Close()
+	}
+
+	gs.cancel()
+
+	logger.Info().Msg("ws game server shut down")
 }
 
 func (gs *GameServer) cancelScheduledShutdown() bool {
 	gs.shutdownMu.Lock()
 	defer gs.shutdownMu.Unlock()
+
+	logger := gs.logger()
 
 	if gs.shutdownTimer == nil {
 		return true
@@ -297,16 +578,31 @@ func (gs *GameServer) cancelScheduledShutdown() bool {
 
 	if gs.shutdownTimer.Stop() {
 		gs.shutdownTimer = nil
-		gs.isClosed.CompareAndSwap(true, false)
+		gs.isClosed.Store(false)
 
-		gs.getLogger(nil).Info().Msg("cancelled ws game server shutdown")
-
+		logger.Info().Msg("cancelled ws game server shutdown")
 		return true
 	}
 
-	gs.getLogger(nil).Warn().Msg("could not cancel ws game server shutdown")
-
+	logger.Warn().Msg("could not cancel ws game server shutdown")
 	return false
+}
+
+func (gs *GameServer) ackGameEvent(correlationID uuid.UUID, status gameevents.AckStatus, reason string) {
+	logger := gs.logger()
+
+	err := gs.GfClient.AcknowledgeGameEvent(gs.serverID, gameevents.EventAckPayload{
+		CorrelationID: correlationID,
+		InstanceID:    gs.instanceID,
+		Status:        status,
+		Reason:        reason,
+	})
+	if err != nil {
+		logger.Warn().Err(err).
+			Str("status", string(status)).
+			Str("reason", reason).
+			Msg("failed to acknowledge game event")
+	}
 }
 
 func (gs *GameServer) IsClosed() bool {
@@ -314,17 +610,10 @@ func (gs *GameServer) IsClosed() bool {
 }
 
 func (gs *GameServer) GetServerId() uuid.UUID {
-	return gs.serverId
+	return gs.serverID
 }
 
-func (gs *GameServer) GetClientConnections(userId uuid.UUID) map[uuid.UUID]*Client {
-	gs.clientsMu.RLock()
-	defer gs.clientsMu.RUnlock()
-
-	return gs.clients[userId]
-}
-
-func (gs *GameServer) Broadcast(msg []byte) error {
+func (gs *GameServer) Broadcast(msg *WsMessage) error {
 	if gs.IsClosed() {
 		return ErrClosedGameServer
 	}
@@ -332,8 +621,12 @@ func (gs *GameServer) Broadcast(msg []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), BroadcastTimeout)
 	defer cancel()
 
+	outgoingMsg := &OutgoingMessage{
+		WsMessage: *msg,
+	}
+
 	select {
-	case gs.broadcast <- msg:
+	case gs.broadcast <- outgoingMsg:
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()

@@ -7,7 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/workflow"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/services"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
+
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
@@ -62,44 +66,70 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
 
+	bus, err := eventbus.New(ctx, config)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create event bus")
+	}
+
+	wordStore, err := wordstore.NewDefaultStore()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not initialize word store")
+	}
+
+	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create auth service client")
+	}
+
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
-	runGRPCServer(ctx, waitGroup, config, store, redisCache)
-	runGatewayServer(ctx, waitGroup, config, store, redisCache)
+	serverCfg := &server.APIServerConfig{
+		Config:      config,
+		Store:       store,
+		Cache:       redisCache,
+		Bus:         bus,
+		WordStore:   wordStore,
+		AuthService: authService,
+	}
 
-	err = waitGroup.Wait()
-	if err != nil {
+	serverCfg.GfClient, serverCfg.GsManager = startGameServices(ctx, waitGroup, serverCfg)
+
+	runGRPCServer(ctx, waitGroup, serverCfg)
+	runGatewayServer(ctx, waitGroup, serverCfg)
+
+	if err = waitGroup.Wait(); err != nil {
 		log.Fatal().Err(err).Msg("could not wait for server shutdown")
 	}
 
 	stopInterruptCtx()
 
-	err = redisCache.Close()
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not close redis cache")
+	if err = redisCache.Close(); err != nil {
+		log.Error().Err(err).Msg("could not close redis cache")
+	}
+
+	if err = bus.Close(); err != nil {
+		log.Error().Err(err).Msg("could not close event bus")
+	}
+
+	if err = authService.Close(); err != nil {
+		log.Error().Err(err).Msg("could not close auth service")
 	}
 }
 
-func runGRPCServer(
-	ctx context.Context,
-	waitGroup *errgroup.Group,
-	config util.Config,
-	store db.Store,
-	cache commonCache.Cache,
-) {
-	s, err := server.NewAPIServer(config, store, cache)
+func runGRPCServer(ctx context.Context, wg *errgroup.Group, serverCfg *server.APIServerConfig) {
+	s, err := server.NewAPIServer(serverCfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
 	commonServer.RunGRPCServer(
 		ctx,
-		waitGroup,
-		config.GRPCServerAddress,
+		wg,
+		serverCfg.Config.GRPCServerAddress,
 		[]commonServer.GrpcMiddlewareProvider{
 			func() grpc.UnaryServerInterceptor {
 				config := &commonMiddleware.AuthenticateServiceConfig{
-					Cache: cache,
+					Cache: serverCfg.Cache,
 				}
 				return config.AuthenticateServiceGrpc
 			},
@@ -118,43 +148,28 @@ func runGRPCServer(
 	)
 }
 
-func startTemporalWorkflow(ctx context.Context) workflow.Client {
-	go func() {
-		err := workflow.StartTemporalWorker(ctx)
-		if err != nil {
-			log.Fatal().Err(err).Msg("could not start temporal worker")
-		}
-	}()
-
-	wfClient, err := workflow.NewTemporalClient()
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not create temporal client")
-	}
-
-	return wfClient
-}
-
-func runGatewayServer(
-	ctx context.Context,
-	waitGroup *errgroup.Group,
-	config util.Config,
-	store db.Store,
-	cache commonCache.Cache,
-) {
-	s, err := server.NewAPIServer(config, store, cache)
+func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server.APIServerConfig) {
+	s, err := server.NewAPIServer(serverCfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create server")
 	}
 
-	wfClient := startTemporalWorkflow(ctx)
-	gameServerManager := gameserver.NewManager(wfClient)
+	wsHandler := websocketserver.WsHandler{
+		Config:    serverCfg.Config,
+		Store:     serverCfg.Store,
+		Cache:     serverCfg.Cache,
+		GfClient:  serverCfg.GfClient,
+		Bus:       serverCfg.Bus,
+		GsManager: serverCfg.GsManager,
+		WordStore: serverCfg.WordStore,
+	}
 
 	commonServer.RunGatewayServer(
 		ctx,
-		waitGroup,
-		config.HTTPServerAddress,
-		config.IsDevelopmentEnvironment(),
-		config.AllowedOrigins,
+		wg,
+		serverCfg.Config.HTTPServerAddress,
+		serverCfg.Config.IsDevelopmentEnvironment(),
+		serverCfg.Config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
 				return pb.RegisterServerServiceHandlerServer(ctx, mux, &s.ServerHandler)
@@ -169,7 +184,7 @@ func runGatewayServer(
 		[]commonServer.HttpRouteRegistrar{
 			func(mux *http.ServeMux) {
 				mux.HandleFunc(websocketserver.WsServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
-					_, err = websocketserver.ServeWs(ctx, gameServerManager, config, cache, w, r, nil)
+					_, err = wsHandler.ServeWs(ctx, w, r)
 					if err != nil {
 						log.Error().Err(err).Msg("could not serve server join ws")
 					}
@@ -178,9 +193,48 @@ func runGatewayServer(
 		},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{
-				Cache: cache,
+				Cache: serverCfg.Cache,
 			}
 			return commonMiddleware.AuthenticateServiceHTTP(handler, config)
 		},
 	)
+}
+
+func startGameServices(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	cfg *server.APIServerConfig,
+) (gameflow.Client, *gameserver.Manager) {
+	gfClient, err := gameflow.NewClient(cfg.Config)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create gameFlow client")
+		return nil, nil
+	}
+
+	worker := gameflow.Worker{
+		Config:    cfg.Config,
+		Store:     cfg.Store,
+		Bus:       cfg.Bus,
+		WordStore: cfg.WordStore,
+	}
+	worker.Start()
+
+	gsManager := gameserver.NewManager()
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+
+		gsManager.Shutdown()
+		log.Info().Msg("game server manager stopped")
+
+		gfClient.Close()
+		log.Info().Msg("gameFlow client closed")
+
+		worker.Stop()
+		log.Info().Msg("gameFlow worker stopped")
+
+		return nil
+	})
+
+	return gfClient, gsManager
 }

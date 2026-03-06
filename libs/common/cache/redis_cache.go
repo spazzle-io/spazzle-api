@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -24,6 +26,8 @@ func NewRedisCache(connURL string) (Cache, error) {
 		client: redis.NewClient(opts),
 	}
 
+	log.Info().Msg("created redis cache")
+
 	return rc, nil
 }
 
@@ -35,21 +39,15 @@ func (rc *RedisCache) Set(ctx context.Context, key string, value interface{}, ex
 	return rc.client.Set(ctx, key, serializedValue, expiration).Err()
 }
 
-func (rc *RedisCache) Get(ctx context.Context, key string) (interface{}, error) {
+func (rc *RedisCache) Get(ctx context.Context, key string, dest interface{}) error {
 	res, err := rc.client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return nil, nil
+		return ErrKeyNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("could not get value: %w", err)
+		return fmt.Errorf("could not get value: %w", err)
 	}
 
-	var deserializedValue interface{}
-	err = json.Unmarshal([]byte(res), &deserializedValue)
-	if err != nil {
-		return nil, fmt.Errorf("could not deserialize value: %w", err)
-	}
-
-	return deserializedValue, nil
+	return json.Unmarshal([]byte(res), dest)
 }
 
 func (rc *RedisCache) Del(ctx context.Context, key string) error {
@@ -62,5 +60,12 @@ func (rc *RedisCache) Del(ctx context.Context, key string) error {
 }
 
 func (rc *RedisCache) Close() error {
-	return rc.client.Close()
+	err := rc.client.Close()
+	if err != nil {
+		return fmt.Errorf("could not close redis cache: %w", err)
+	}
+
+	log.Info().Msg("closed redis cache")
+
+	return nil
 }

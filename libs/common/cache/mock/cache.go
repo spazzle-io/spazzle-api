@@ -70,18 +70,17 @@ func (mr *MockCacheMockRecorder) Del(ctx, key any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockCache) Get(ctx context.Context, key string) (any, error) {
+func (m *MockCache) Get(ctx context.Context, key string, dest any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, key)
-	ret0, _ := ret[0].(any)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Get", ctx, key, dest)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockCacheMockRecorder) Get(ctx, key any) *gomock.Call {
+func (mr *MockCacheMockRecorder) Get(ctx, key, dest any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCache)(nil).Get), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCache)(nil).Get), ctx, key, dest)
 }
 
 // Set mocks base method.

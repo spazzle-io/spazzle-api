@@ -24,7 +24,7 @@ type DefaultWords struct {
 }
 
 type DefaultStore struct {
-	words *[]Word
+	words []Word
 }
 
 func NewDefaultStore() (Store, error) {
@@ -34,7 +34,7 @@ func NewDefaultStore() (Store, error) {
 	}
 
 	return &DefaultStore{
-		words: &defaultWords.Words,
+		words: defaultWords.Words,
 	}, nil
 }
 
@@ -75,5 +75,5 @@ func (ws *DefaultStore) GetRandomWords(
 		return mapFromDBWords(randomWords), nil
 	}
 
-	return getRandomWords(*ws.words, numWords)
+	return getRandomWords(ws.words, numWords)
 }

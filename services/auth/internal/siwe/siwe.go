@@ -146,22 +146,16 @@ func FetchSIWEMessage(
 
 	cacheKey := fmt.Sprintf("%s-%s:%s", config.ServiceName, prefix, walletAddress)
 
-	res, err := cache.Get(ctx, cacheKey)
-	if err != nil {
+	var message string
+	if err := cache.Get(ctx, cacheKey, &message); err != nil {
+		if errors.Is(err, commonCache.ErrKeyNotFound) {
+			return "", errors.New("SIWE message not found in cache")
+		}
+
 		return "", fmt.Errorf("could not fetch SIWE message from cache: %w", err)
 	}
 
-	if res == nil {
-		return "", fmt.Errorf("SIWE message not found in cache")
-	}
-
-	message, ok := res.(string)
-	if !ok {
-		return "", errors.New("could not cast SIWE message to string")
-	}
-
-	err = cache.Del(ctx, cacheKey)
-	if err != nil {
+	if err := cache.Del(ctx, cacheKey); err != nil {
 		return "", fmt.Errorf("could not delete SIWE message from cache: %w", err)
 	}
 

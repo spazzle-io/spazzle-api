@@ -7,12 +7,12 @@ Project gameplay_service {
 
 Table servers {
   id UUID [pk, default: `gen_random_uuid()`]
-  name varchar [not null, note: 'a partial unique index on name and is_archived is added in a subsequent db migration']
+  name text [not null, note: 'a partial unique index on name and is_archived is added in a subsequent db migration']
   owner_id UUID [not null]
   num_admins int [not null, default: 0]
   num_custom_words int [not null, default: 0]
   is_publicly_visible boolean [not null, default: true]
-  server_address varchar [not null]
+  server_address text [not null]
   stake_per_game numeric [not null]
   num_rounds_per_game int [not null]
   round_duration_secs int [not null]
@@ -44,7 +44,7 @@ Table words {
   id UUID [pk, default: `gen_random_uuid()`]
   word_idx int [not null]
   server_id UUID [not null]
-  word varchar [not null]
+  word text [not null]
   added_at timestamptz [not null, default: `now()`]
 
   Ref: words.server_id > servers.id [delete: cascade, update: no action]

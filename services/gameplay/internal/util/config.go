@@ -11,6 +11,8 @@ type Config struct {
 	DBSource                  string      `mapstructure:"DB_SOURCE"`
 	AllowedOrigins            []string    `mapstructure:"ALLOWED_ORIGINS"`
 	RedisConnURL              string      `mapstructure:"REDIS_CONN_URL"`
+	TemporalAPIKey            string      `mapstructure:"TEMPORAL_API_KEY"`
+	TemporalHostPort          string      `mapstructure:"TEMPORAL_HOST_PORT"`
 	DBMigrationURL            string      `mapstructure:"DB_MIGRATION_URL"`
 	HTTPServerAddress         string      `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GRPCServerAddress         string      `mapstructure:"GRPC_SERVER_ADDRESS"`

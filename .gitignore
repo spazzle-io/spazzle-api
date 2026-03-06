@@ -2,6 +2,7 @@
 
 *.out
 *.log
+*.DS_Store
 
 *.env
 !*.development.env

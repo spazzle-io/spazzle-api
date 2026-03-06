@@ -1,6 +1,6 @@
 -- SQL dump generated using DBML (dbml-lang.org)
 -- Database: PostgreSQL
--- Generated at: 2025-06-28T21:46:35.041Z
+-- Generated at: 2026-01-05T06:16:51.523Z
 
 CREATE TYPE "role" AS ENUM (
   'admin',
@@ -10,7 +10,7 @@ CREATE TYPE "role" AS ENUM (
 CREATE TABLE "credentials" (
   "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
   "user_id" UUID UNIQUE NOT NULL,
-  "wallet_address" varchar UNIQUE NOT NULL,
+  "wallet_address" text UNIQUE NOT NULL,
   "role" role NOT NULL DEFAULT 'user',
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
@@ -18,10 +18,10 @@ CREATE TABLE "credentials" (
 CREATE TABLE "sessions" (
   "id" UUID PRIMARY KEY,
   "user_id" UUID NOT NULL,
-  "wallet_address" varchar NOT NULL,
-  "refresh_token" varchar UNIQUE NOT NULL,
-  "user_agent" varchar NOT NULL,
-  "client_ip" varchar NOT NULL,
+  "wallet_address" text NOT NULL,
+  "refresh_token" text UNIQUE NOT NULL,
+  "user_agent" text NOT NULL,
+  "client_ip" text NOT NULL,
   "is_revoked" boolean NOT NULL DEFAULT false,
   "expires_at" timestamptz NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())

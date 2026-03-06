@@ -9,3 +9,8 @@ linters:
     - gocritic
     - gosec
     - misspell
+  exclusions:
+    rules:
+      - linters:
+          - goconst
+        path: _test\.go

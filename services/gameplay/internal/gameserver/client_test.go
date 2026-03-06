@@ -8,15 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTestClient(t *testing.T, isSpectating bool, startPumps bool) *Client {
-	gameServer := createTestGameServer(t)
-	require.NotEmpty(t, gameServer)
+func createTestClient(t *testing.T, isSpectating bool) *Client {
+	t.Helper()
 
-	client, err := NewClient(context.Background(), gameServer, nil, uuid.New(), isSpectating, startPumps)
+	_, gameServer := createInitializedTestGameServer(t)
+
+	client, err := NewClient(context.Background(), gameServer, nil, uuid.New(), isSpectating, WithoutPumps())
 	require.NoError(t, err)
 	require.NotEmpty(t, client)
-	require.NotEmpty(t, client.userId)
-	require.NotEmpty(t, client.connId)
+	require.NotEmpty(t, client.userID)
+	require.NotEmpty(t, client.connID)
 	require.NotEmpty(t, client.gameServer)
 	require.Equal(t, isSpectating, client.isSpectating)
 
@@ -24,7 +25,7 @@ func createTestClient(t *testing.T, isSpectating bool, startPumps bool) *Client 
 }
 
 func TestCreateClient(t *testing.T) {
-	client := createTestClient(t, false, true)
+	client := createTestClient(t, false)
 
 	require.NotEmpty(t, client)
 }

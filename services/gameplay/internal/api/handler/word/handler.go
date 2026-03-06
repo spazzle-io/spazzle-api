@@ -3,7 +3,6 @@ package word
 import (
 	"time"
 
-	"github.com/rs/zerolog/log"
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
@@ -12,6 +11,14 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 )
+
+type HandlerConfig struct {
+	Config      util.Config
+	Store       db.Store
+	Cache       commonCache.Cache
+	WordStore   wordstore.Store
+	AuthService services.AuthGrpcService
+}
 
 type Handler struct {
 	pb.UnimplementedWordServiceServer
@@ -23,18 +30,13 @@ type Handler struct {
 	wordStore   wordstore.Store
 }
 
-func New(config util.Config, store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
-	wordStore, err := wordstore.NewDefaultStore()
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not initialize word store")
-	}
-
+func New(cfg *HandlerConfig) *Handler {
 	return &Handler{
-		config:      config,
-		store:       store,
-		cache:       cache,
-		authService: authService,
-		wordStore:   wordStore,
+		config:      cfg.Config,
+		store:       cfg.Store,
+		cache:       cfg.Cache,
+		wordStore:   cfg.WordStore,
+		authService: cfg.AuthService,
 	}
 }
 

@@ -83,9 +83,12 @@ func TestAuthenticateService(t *testing.T) {
 			expectedResultContext: context.WithValue(context.WithValue(context.Background(), ServiceAuthentication, validPayload), AuthenticatedService, "users"),
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(nil, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = ""
+						return nil
+					})
 
 				cache.EXPECT().
 					Set(gomock.Any(), gomock.Any(), gomock.Any(), serviceAuthenticationPayloadDuration).
@@ -148,9 +151,12 @@ func TestAuthenticateService(t *testing.T) {
 			expectedResultContext: context.WithValue(context.Background(), ServiceAuthentication, validPayload),
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return("some-value", nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = "some-value"
+						return nil
+					})
 			},
 		},
 		{
@@ -159,9 +165,12 @@ func TestAuthenticateService(t *testing.T) {
 			expectedResultContext: context.WithValue(context.Background(), ServiceAuthentication, validPayload),
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(nil, errors.New("some cache error"))
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = ""
+						return errors.New("some cache error")
+					})
 			},
 		},
 		{
@@ -170,9 +179,12 @@ func TestAuthenticateService(t *testing.T) {
 			expectedResultContext: context.WithValue(context.Background(), ServiceAuthentication, validPayload),
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
-					Get(gomock.Any(), gomock.Any()).
+					Get(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(nil, nil)
+					DoAndReturn(func(ctx context.Context, key string, dest *string) error {
+						*dest = ""
+						return nil
+					})
 
 				cache.EXPECT().
 					Set(gomock.Any(), gomock.Any(), gomock.Any(), serviceAuthenticationPayloadDuration).
@@ -184,10 +196,10 @@ func TestAuthenticateService(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			crtl := gomock.NewController(t)
-			defer crtl.Finish()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-			cache := mockcache.NewMockCache(crtl)
+			cache := mockcache.NewMockCache(ctrl)
 			tc.buildStubs(cache)
 
 			config := &AuthenticateServiceConfig{

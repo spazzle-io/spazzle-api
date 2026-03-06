@@ -113,14 +113,17 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	}
 
 	cacheKey := fmt.Sprintf("%s-%s:%s", serviceName, serviceAuthenticationCacheKeyPrefix, signature)
-	cachedSignature, err := c.Cache.Get(ctx, cacheKey)
-	if err != nil {
+
+	var cachedSignature string
+	err = c.Cache.Get(ctx, cacheKey, &cachedSignature)
+	if err != nil && !errors.Is(err, cache.ErrKeyNotFound) {
 		logger.Error().Err(err).Msg("could not fetch service authentication cache")
 		return ctx
 	}
-	if cachedSignature != nil {
+
+	if cachedSignature != "" {
 		logger.Error().
-			Interface("cached_signature", cachedSignature).
+			Str("cached_signature", cachedSignature).
 			Msg("service authentication signature already present in cache")
 		return ctx
 	}
