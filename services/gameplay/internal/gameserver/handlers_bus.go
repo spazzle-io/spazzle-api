@@ -232,6 +232,20 @@ func (gs *GameServer) sendBusMsgToTargetClient(msg eventbus.Message) {
 	}
 }
 
+func (gs *GameServer) getUserClients(userID uuid.UUID, includeSpectators bool) []*Client {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	clients := make([]*Client, 0)
+	for _, client := range gs.clients[userID] {
+		if !client.isSpectating || includeSpectators {
+			clients = append(clients, client)
+		}
+	}
+
+	return clients
+}
+
 func (gs *GameServer) userHasNonSpectatingClients(userID uuid.UUID) bool {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
@@ -247,9 +261,21 @@ func (gs *GameServer) userHasNonSpectatingClients(userID uuid.UUID) bool {
 
 func (gs *GameServer) setCurrentArtist(currentArtist uuid.UUID) {
 	gs.mu.Lock()
-	defer gs.mu.Unlock()
-
+	previousArtist := gs.currentArtist
 	gs.currentArtist = currentArtist
+	gs.mu.Unlock()
+
+	if previousArtist != uuid.Nil {
+		for _, client := range gs.getUserClients(previousArtist, false) {
+			client.UpdateTiming(DefaultTiming)
+		}
+	}
+
+	if currentArtist != uuid.Nil {
+		for _, client := range gs.getUserClients(currentArtist, false) {
+			client.UpdateTiming(AggressiveTiming)
+		}
+	}
 }
 
 func (gs *GameServer) setCurrentRound(currentRound uint8) {
