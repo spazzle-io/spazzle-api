@@ -52,6 +52,7 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 
 		case types.PhaseEndRound:
 			handlePhaseEndRound(ctx, state, notifyCh, logger)
+			logger = log.With(logger, "Round", state.CurrentRound)
 
 		case types.PhaseEndGame:
 			handlePhaseEndGame(ctx, state, notifyCh, logger)
