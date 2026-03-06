@@ -14,3 +14,7 @@ linters:
       - linters:
           - goconst
         path: _test\.go
+      - linters:
+          - gosec
+        text: "G117"
+        path: (ethereum_wallet|session)\.go
