@@ -100,6 +100,20 @@ func (mr *MockTemporalMockRecorder) CompleteActivity(ctx, taskToken, result, err
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteActivity", reflect.TypeOf((*MockTemporal)(nil).CompleteActivity), ctx, taskToken, result, err)
 }
 
+// CompleteActivityByActivityID mocks base method.
+func (m *MockTemporal) CompleteActivityByActivityID(ctx context.Context, namespace, activityID, activityRunID string, result any, err error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CompleteActivityByActivityID", ctx, namespace, activityID, activityRunID, result, err)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CompleteActivityByActivityID indicates an expected call of CompleteActivityByActivityID.
+func (mr *MockTemporalMockRecorder) CompleteActivityByActivityID(ctx, namespace, activityID, activityRunID, result, err any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteActivityByActivityID", reflect.TypeOf((*MockTemporal)(nil).CompleteActivityByActivityID), ctx, namespace, activityID, activityRunID, result, err)
+}
+
 // CompleteActivityByID mocks base method.
 func (m *MockTemporal) CompleteActivityByID(ctx context.Context, namespace, workflowID, runID, activityID string, result any, err error) error {
 	m.ctrl.T.Helper()
@@ -112,6 +126,21 @@ func (m *MockTemporal) CompleteActivityByID(ctx context.Context, namespace, work
 func (mr *MockTemporalMockRecorder) CompleteActivityByID(ctx, namespace, workflowID, runID, activityID, result, err any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteActivityByID", reflect.TypeOf((*MockTemporal)(nil).CompleteActivityByID), ctx, namespace, workflowID, runID, activityID, result, err)
+}
+
+// CountActivities mocks base method.
+func (m *MockTemporal) CountActivities(ctx context.Context, options client.CountActivitiesOptions) (*client.CountActivitiesResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountActivities", ctx, options)
+	ret0, _ := ret[0].(*client.CountActivitiesResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountActivities indicates an expected call of CountActivities.
+func (mr *MockTemporalMockRecorder) CountActivities(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountActivities", reflect.TypeOf((*MockTemporal)(nil).CountActivities), ctx, options)
 }
 
 // CountWorkflow mocks base method.
@@ -203,6 +232,26 @@ func (mr *MockTemporalMockRecorder) DescribeWorkflowExecution(ctx, workflowID, r
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeWorkflowExecution", reflect.TypeOf((*MockTemporal)(nil).DescribeWorkflowExecution), ctx, workflowID, runID)
 }
 
+// ExecuteActivity mocks base method.
+func (m *MockTemporal) ExecuteActivity(ctx context.Context, options client.StartActivityOptions, activity any, args ...any) (client.ActivityHandle, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, options, activity}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExecuteActivity", varargs...)
+	ret0, _ := ret[0].(client.ActivityHandle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecuteActivity indicates an expected call of ExecuteActivity.
+func (mr *MockTemporalMockRecorder) ExecuteActivity(ctx, options, activity any, args ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, options, activity}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteActivity", reflect.TypeOf((*MockTemporal)(nil).ExecuteActivity), varargs...)
+}
+
 // ExecuteWorkflow mocks base method.
 func (m *MockTemporal) ExecuteWorkflow(ctx context.Context, options client.StartWorkflowOptions, workflow any, args ...any) (client.WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -221,6 +270,20 @@ func (mr *MockTemporalMockRecorder) ExecuteWorkflow(ctx, options, workflow any, 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, options, workflow}, args...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteWorkflow", reflect.TypeOf((*MockTemporal)(nil).ExecuteWorkflow), varargs...)
+}
+
+// GetActivityHandle mocks base method.
+func (m *MockTemporal) GetActivityHandle(options client.GetActivityHandleOptions) client.ActivityHandle {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActivityHandle", options)
+	ret0, _ := ret[0].(client.ActivityHandle)
+	return ret0
+}
+
+// GetActivityHandle indicates an expected call of GetActivityHandle.
+func (mr *MockTemporalMockRecorder) GetActivityHandle(options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActivityHandle", reflect.TypeOf((*MockTemporal)(nil).GetActivityHandle), options)
 }
 
 // GetSearchAttributes mocks base method.
@@ -323,6 +386,21 @@ func (m *MockTemporal) GetWorkflowUpdateHandle(ref client.GetWorkflowUpdateHandl
 func (mr *MockTemporalMockRecorder) GetWorkflowUpdateHandle(ref any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowUpdateHandle", reflect.TypeOf((*MockTemporal)(nil).GetWorkflowUpdateHandle), ref)
+}
+
+// ListActivities mocks base method.
+func (m *MockTemporal) ListActivities(ctx context.Context, options client.ListActivitiesOptions) (client.ListActivitiesResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListActivities", ctx, options)
+	ret0, _ := ret[0].(client.ListActivitiesResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListActivities indicates an expected call of ListActivities.
+func (mr *MockTemporalMockRecorder) ListActivities(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActivities", reflect.TypeOf((*MockTemporal)(nil).ListActivities), ctx, options)
 }
 
 // ListArchivedWorkflow mocks base method.
