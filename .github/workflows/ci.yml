@@ -47,6 +47,9 @@ jobs:
           sudo apt-get install -y postgresql-client
           ./scripts/init-db-ci.sh
 
+      - name: start-minio
+        run: ./scripts/init-minio-ci.sh
+
       - name: install-golang-migrate
         run: |
           curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
