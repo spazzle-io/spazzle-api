@@ -164,4 +164,13 @@ temporal-down:
 temporal-logs:
 	docker compose -f docker/temporal/docker-compose.temporal.yml logs -f
 
-.PHONY: run-module-target test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs
+minio-up:
+	docker compose -f docker/minio/docker-compose.minio.yml up -d
+
+minio-down:
+	docker compose -f docker/minio/docker-compose.minio.yml down --volumes
+
+minio-logs:
+	docker compose -f docker/minio/docker-compose.minio.yml logs -f
+
+.PHONY: run-module-target test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs
