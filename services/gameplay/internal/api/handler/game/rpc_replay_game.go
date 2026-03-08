@@ -53,6 +53,9 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidGameIdError)
 	}
 
+	// TODO: Gate replay on the payments service.
+	// Only users with active commitments on the game and those with elevated permissions should be able to replay
+
 	streamType, err := mapStreamTypeFromPb(req.GetStreamType())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidStreamTypeError)
