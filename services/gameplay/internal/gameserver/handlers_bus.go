@@ -164,6 +164,10 @@ func (gs *GameServer) handleWordSelected(msg eventbus.Message) {
 }
 
 func (gs *GameServer) handleRoundEnded(msg eventbus.Message) {
+	if msg.StreamType != eventbus.GameEventsStreamType {
+		return
+	}
+
 	gs.setCurrentArtist(uuid.Nil)
 	gs.setCurrentWord("")
 	gs.clearCorrectGuessers()

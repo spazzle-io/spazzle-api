@@ -27,6 +27,7 @@ func TestPublishGameEvent(t *testing.T) {
 			CurrentRound: uint8(1),
 			EndsAt:       time.Now().UTC(),
 		},
+		Marker: eventbus.MarkerRoundEnded,
 	}
 
 	marshaledPayload, err := json.Marshal(params.EventPayload)
@@ -38,6 +39,7 @@ func TestPublishGameEvent(t *testing.T) {
 		Payload:        marshaledPayload,
 		TargetClientID: params.TargetClientID,
 		CorrelationID:  params.CorrelationID,
+		Marker:         params.Marker,
 	}
 
 	game := eventbus.GameIdentifier{

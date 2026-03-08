@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package gameplay.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
+
+message ReplayGameRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  string game_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  StreamType stream_type = 3 [(buf.validate.field).required = true];
+  string after = 4;
+  int32 limit = 5 [(buf.validate.field).int32 = {gte: 0, lte: 1000}];
+}
+
+message ReplayGameResponse {
+  repeated ReplayMessage messages = 1;
+  bool has_more = 2;
+  string last_id = 3;
+}
+
+enum StreamType {
+  STREAM_TYPE_UNSPECIFIED = 0;
+  STREAM_TYPE_GAME_EVENTS = 1;
+  STREAM_TYPE_DRAWING_UPDATES = 2;
+}
+
+message ReplayMessage {
+  string id = 1;
+  string type = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  StreamType stream_type = 4;
+  google.protobuf.Struct payload = 5;
+  string correlation_id = 6;
+}

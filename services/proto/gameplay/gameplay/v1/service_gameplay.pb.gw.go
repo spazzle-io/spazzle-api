@@ -806,6 +806,75 @@ func local_request_WordService_RemoveAllWords_0(ctx context.Context, marshaler r
 	return msg, metadata, err
 }
 
+var filter_GameService_ReplayGame_0 = &utilities.DoubleArray{Encoding: map[string]int{"server_id": 0, "game_id": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+
+func request_GameService_ReplayGame_0(ctx context.Context, marshaler runtime.Marshaler, client GameServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ReplayGameRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	val, ok := pathParams["server_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "server_id")
+	}
+	protoReq.ServerId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "server_id", err)
+	}
+	val, ok = pathParams["game_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "game_id")
+	}
+	protoReq.GameId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "game_id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GameService_ReplayGame_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.ReplayGame(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_GameService_ReplayGame_0(ctx context.Context, marshaler runtime.Marshaler, server GameServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ReplayGameRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	val, ok := pathParams["server_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "server_id")
+	}
+	protoReq.ServerId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "server_id", err)
+	}
+	val, ok = pathParams["game_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "game_id")
+	}
+	protoReq.GameId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "game_id", err)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GameService_ReplayGame_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.ReplayGame(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterServerServiceHandlerServer registers the http handlers for service ServerService to "mux".
 // UnaryRPC     :call ServerServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -1171,6 +1240,36 @@ func RegisterWordServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 		forward_WordService_RemoveAllWords_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+
+	return nil
+}
+
+// RegisterGameServiceHandlerServer registers the http handlers for service GameService to "mux".
+// UnaryRPC     :call GameServiceServer directly.
+// StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterGameServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
+func RegisterGameServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server GameServiceServer) error {
+	mux.Handle(http.MethodGet, pattern_GameService_ReplayGame_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/gameplay.v1.GameService/ReplayGame", runtime.WithHTTPPathPattern("/servers/{server_id}/games/{game_id}/replay"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GameService_ReplayGame_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_GameService_ReplayGame_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -1632,4 +1731,68 @@ var (
 	forward_WordService_ListWords_0      = runtime.ForwardResponseMessage
 	forward_WordService_RemoveWords_0    = runtime.ForwardResponseMessage
 	forward_WordService_RemoveAllWords_0 = runtime.ForwardResponseMessage
+)
+
+// RegisterGameServiceHandlerFromEndpoint is same as RegisterGameServiceHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterGameServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.NewClient(endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+	return RegisterGameServiceHandler(ctx, mux, conn)
+}
+
+// RegisterGameServiceHandler registers the http handlers for service GameService to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterGameServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterGameServiceHandlerClient(ctx, mux, NewGameServiceClient(conn))
+}
+
+// RegisterGameServiceHandlerClient registers the http handlers for service GameService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "GameServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "GameServiceClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "GameServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
+func RegisterGameServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client GameServiceClient) error {
+	mux.Handle(http.MethodGet, pattern_GameService_ReplayGame_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/gameplay.v1.GameService/ReplayGame", runtime.WithHTTPPathPattern("/servers/{server_id}/games/{game_id}/replay"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GameService_ReplayGame_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_GameService_ReplayGame_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	return nil
+}
+
+var (
+	pattern_GameService_ReplayGame_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"servers", "server_id", "games", "game_id", "replay"}, ""))
+)
+
+var (
+	forward_GameService_ReplayGame_0 = runtime.ForwardResponseMessage
 )

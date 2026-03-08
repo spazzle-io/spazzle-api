@@ -14,3 +14,13 @@ func streamKey(config util.Config, streamType StreamType, game GameIdentifier) s
 		game.GameID.String(),
 	)
 }
+
+func markerKey(config util.Config, streamType StreamType, game GameIdentifier, marker Marker) string {
+	return fmt.Sprintf("%s-%s:%s:%s:%s",
+		config.ServiceName,
+		streamType,
+		game.GameServerID.String(),
+		game.GameID.String(),
+		string(marker),
+	)
+}

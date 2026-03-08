@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/game"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
@@ -38,6 +40,7 @@ type APIServer struct {
 	ServerHandler      server.Handler
 	ServerAdminHandler serveradmin.Handler
 	WordHandler        word.Handler
+	GameHandler        game.Handler
 }
 
 var once sync.Once
@@ -62,10 +65,15 @@ func NewAPIServer(cfg *APIServerConfig) (*APIServer, error) {
 		WordStore:   cfg.WordStore,
 		AuthService: cfg.AuthService,
 	})
+	gameHandler := game.New(&game.HandlerConfig{
+		Config:      cfg.Config,
+		Bus:         cfg.Bus,
+		AuthService: cfg.AuthService,
+	})
 
 	err := setupRateLimiter(
 		cfg.Config.ServiceName, cfg.Config.RedisConnURL,
-		serverHandler.RateLimits(), serverAdminHandler.RateLimits(), wordHandler.RateLimits(),
+		serverHandler.RateLimits(), serverAdminHandler.RateLimits(), wordHandler.RateLimits(), gameHandler.RateLimits(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot setup rate limiter: %w", err)
@@ -75,6 +83,7 @@ func NewAPIServer(cfg *APIServerConfig) (*APIServer, error) {
 		ServerHandler:      *serverHandler,
 		ServerAdminHandler: *serverAdminHandler,
 		WordHandler:        *wordHandler,
+		GameHandler:        *gameHandler,
 	}
 
 	return s, nil

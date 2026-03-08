@@ -17,6 +17,9 @@
     },
     {
       "name": "WordService"
+    },
+    {
+      "name": "GameService"
     }
   ],
   "consumes": [
@@ -458,6 +461,74 @@
         ]
       }
     },
+    "/servers/{serverId}/games/{gameId}/replay": {
+      "get": {
+        "summary": "Replay game",
+        "description": "Replay game events from a specific point in a game's event stream",
+        "operationId": "GameService_ReplayGame",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ReplayGameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "streamType",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "STREAM_TYPE_UNSPECIFIED",
+              "STREAM_TYPE_GAME_EVENTS",
+              "STREAM_TYPE_DRAWING_UPDATES"
+            ],
+            "default": "STREAM_TYPE_UNSPECIFIED"
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/servers/{serverId}/join": {
       "post": {
         "summary": "Join server",
@@ -839,6 +910,14 @@
       },
       "additionalProperties": {}
     },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
     "rpcStatus": {
       "type": "object",
       "properties": {
@@ -1130,6 +1209,48 @@
         }
       }
     },
+    "v1ReplayGameResponse": {
+      "type": "object",
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ReplayMessage"
+          }
+        },
+        "hasMore": {
+          "type": "boolean"
+        },
+        "lastId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ReplayMessage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "streamType": {
+          "$ref": "#/definitions/v1StreamType"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "correlationId": {
+          "type": "string"
+        }
+      }
+    },
     "v1Server": {
       "type": "object",
       "properties": {
@@ -1198,6 +1319,15 @@
           "format": "date-time"
         }
       }
+    },
+    "v1StreamType": {
+      "type": "string",
+      "enum": [
+        "STREAM_TYPE_UNSPECIFIED",
+        "STREAM_TYPE_GAME_EVENTS",
+        "STREAM_TYPE_DRAWING_UPDATES"
+      ],
+      "default": "STREAM_TYPE_UNSPECIFIED"
     },
     "v1UpdateServerResponse": {
       "type": "object",

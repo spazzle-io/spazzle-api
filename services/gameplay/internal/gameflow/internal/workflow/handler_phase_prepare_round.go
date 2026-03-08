@@ -84,7 +84,10 @@ func selectAndNotifyArtist(
 			CurrentRound: state.CurrentRound,
 		}
 		delivered, err := sendGameEvent(
-			ctx, state, notifyCh, gameevents.TypeArtistSelected, payload, artistID, true,
+			ctx, state, notifyCh, gameevents.TypeArtistSelected, payload, &sendGameEventOpts{
+				TargetClientID: artistID,
+				WaitForAck:     true,
+			},
 		)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("failed to send artist selected event: %w", err)

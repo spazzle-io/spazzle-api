@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/uuid"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
@@ -90,7 +92,14 @@ func (b *redisEventBus) multiplexerFor(streamType StreamType) *multiplexer {
 	}
 }
 
-func (b *redisEventBus) Replay(ctx context.Context, game GameIdentifier, streamType StreamType, after string, limit int) (ReplayResult, error) {
+func (b *redisEventBus) Replay(
+	ctx context.Context,
+	clientID uuid.UUID,
+	game GameIdentifier,
+	streamType StreamType,
+	after string,
+	limit int,
+) (ReplayResult, error) {
 	b.mu.RLock()
 	if b.closed {
 		b.mu.RUnlock()
@@ -100,47 +109,136 @@ func (b *redisEventBus) Replay(ctx context.Context, game GameIdentifier, streamT
 
 	sk := streamKey(b.serviceConfig, streamType, game)
 
-	start := after
-	if start == "" || start == "0" {
-		start = "-" // minimum ID
+	cursor := after
+	if cursor == "" || cursor == "0" {
+		cursor = "-" // minimum ID
 	} else {
-		start = "(" + start // exclusive start
+		cursor = "(" + cursor // exclusive start
 	}
 
-	count := int64(limit + 1)
-	msgs, err := b.client.XRangeN(ctx, sk, start, "+", count).Result()
-	if err != nil {
-		return ReplayResult{}, fmt.Errorf("event bus failed to replay messages: %w", err)
-	}
-
-	hasMore := len(msgs) > limit
-	if hasMore {
-		msgs = msgs[:limit]
-	}
-
-	messages := make([]Message, 0, len(msgs))
+	batchSize := int64(limit)
+	messages := make([]Message, 0, limit)
 	var lastID string
-	for _, redisMsg := range msgs {
-		msg, err := decodeMessage(redisMsg.ID, redisMsg.Values)
+
+	for {
+		msgs, err := b.client.XRangeN(ctx, sk, cursor, "+", batchSize).Result()
 		if err != nil {
-			log.Error().
-				Err(err).
-				Str("id", redisMsg.ID).
-				Str("stream_key", sk).
-				Any("msg", redisMsg.Values).
-				Msg("failed to decode redis event message")
-			continue
+			return ReplayResult{}, fmt.Errorf("event bus failed to replay messages: %w", err)
 		}
 
-		messages = append(messages, msg)
-		lastID = redisMsg.ID
+		if len(msgs) == 0 {
+			break
+		}
+
+		for _, redisMsg := range msgs {
+			msg, err := decodeMessage(redisMsg.ID, redisMsg.Values)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Str("id", redisMsg.ID).
+					Str("stream_key", sk).
+					Any("msg", redisMsg.Values).
+					Msg("failed to decode redis event message")
+				continue
+			}
+
+			lastID = redisMsg.ID
+
+			if clientID != uuid.Nil && msg.TargetClientID != uuid.Nil && msg.TargetClientID != clientID {
+				continue
+			}
+
+			messages = append(messages, msg)
+
+			if len(messages) >= limit {
+				return ReplayResult{
+					Messages: messages,
+					HasMore:  true,
+					LastID:   lastID,
+				}, nil
+			}
+		}
+
+		cursor = "(" + msgs[len(msgs)-1].ID
+
+		if int64(len(msgs)) < batchSize {
+			break
+		}
 	}
 
 	return ReplayResult{
 		Messages: messages,
-		HasMore:  hasMore,
+		HasMore:  false,
 		LastID:   lastID,
 	}, nil
+}
+
+func (b *redisEventBus) MarkerID(
+	ctx context.Context,
+	game GameIdentifier,
+	streamType StreamType,
+	marker Marker,
+) (string, error) {
+	b.mu.RLock()
+	if b.closed {
+		b.mu.RUnlock()
+		return "", ErrClosedEventBus
+	}
+	b.mu.RUnlock()
+
+	key := markerKey(b.serviceConfig, streamType, game, marker)
+	id, err := b.client.Get(ctx, key).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to get marker: %w", err)
+	}
+
+	return id, nil
+}
+
+func (b *redisEventBus) deleteStreams(ctx context.Context, game GameIdentifier) error {
+	keys := make([]string, 0, len(AllStreamTypes))
+	for _, st := range AllStreamTypes {
+		keys = append(keys, streamKey(b.serviceConfig, st, game))
+	}
+
+	if err := b.client.Del(ctx, keys...).Err(); err != nil {
+		return fmt.Errorf("failed to delete streams: %w", err)
+	}
+
+	return nil
+}
+
+func (b *redisEventBus) deleteMarkers(ctx context.Context, game GameIdentifier) error {
+	keys := make([]string, 0, len(AllStreamTypes)*len(AllMarkers))
+	for _, st := range AllStreamTypes {
+		for _, m := range AllMarkers {
+			keys = append(keys, markerKey(b.serviceConfig, st, game, m))
+		}
+	}
+
+	if err := b.client.Del(ctx, keys...).Err(); err != nil {
+		return fmt.Errorf("failed to delete markers: %w", err)
+	}
+
+	return nil
+}
+
+func (b *redisEventBus) Cleanup(ctx context.Context, game GameIdentifier) error {
+	b.mu.RLock()
+	if b.closed {
+		b.mu.RUnlock()
+		return ErrClosedEventBus
+	}
+	b.mu.RUnlock()
+
+	if err := b.deleteStreams(ctx, game); err != nil {
+		return err
+	}
+
+	return b.deleteMarkers(ctx, game)
 }
 
 func (b *redisEventBus) Close() error {

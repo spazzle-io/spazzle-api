@@ -39,6 +39,35 @@ func TestPublish(t *testing.T) {
 	require.NotEmpty(t, messageID)
 }
 
+func TestPublish_WithMarker(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping event bus test in short mode")
+	}
+
+	bus := newEventBus(t)
+	game := newGameIdentifier()
+
+	session, err := bus.Session(game)
+	require.NoError(t, err)
+
+	msg := PublishMessage{
+		Type:    "test_event",
+		Payload: json.RawMessage(`{"key":"value"}`),
+		Marker:  MarkerRoundEnded,
+	}
+
+	messageID, err := session.Publish(context.Background(), GameEventsStreamType, msg)
+	require.NoError(t, err)
+	require.NotEmpty(t, messageID)
+
+	markerID, err := bus.MarkerID(context.Background(), game, GameEventsStreamType, MarkerRoundEnded)
+	require.NoError(t, err)
+	require.Equal(t, messageID, markerID)
+
+	err = bus.Cleanup(context.Background(), game)
+	require.NoError(t, err)
+}
+
 func TestPublish_AfterClose(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping event bus test in short mode")

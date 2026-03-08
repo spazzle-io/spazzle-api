@@ -17,6 +17,7 @@ type PublishGameEventParams struct {
 	CorrelationID  uuid.UUID
 	EventType      string
 	EventPayload   any
+	Marker         eventbus.Marker
 }
 
 type PublishGameEventResult struct {
@@ -37,6 +38,7 @@ func (a *Activities) PublishGameEvent(
 		Payload:        payload,
 		TargetClientID: params.TargetClientID,
 		CorrelationID:  params.CorrelationID,
+		Marker:         params.Marker,
 	}
 
 	game := eventbus.GameIdentifier{

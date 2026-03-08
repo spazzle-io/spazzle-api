@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
@@ -35,7 +34,7 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, 
 		TotalPot:    state.GamePot,
 		Results:     results,
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult, uuid.Nil, false)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult, nil)
 	if err != nil {
 		return fmt.Errorf("failed to send game ended event: %w", err)
 	}

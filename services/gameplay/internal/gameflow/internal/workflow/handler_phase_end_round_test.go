@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
@@ -61,13 +63,15 @@ func (s *EndRoundTestSuite) TestEndRound() {
 		})
 	}, 200*time.Millisecond)
 
-	sentRoundEndedEvent := false
+	sentEventOnGameEventsStream := false
+	sentEventOnDrawingUpdatesStream := false
+
 	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			params := args.Get(1).(activities.PublishGameEventParams)
 
-			if params.EventType == gameevents.TypeRoundEnded {
-				sentRoundEndedEvent = true
+			if params.EventType == gameevents.TypeRoundEnded && params.StreamType == eventbus.GameEventsStreamType {
+				sentEventOnGameEventsStream = true
 
 				var payload gameevents.RoundEndedPayload
 				raw := params.EventPayload.(map[string]interface{})
@@ -82,6 +86,10 @@ func (s *EndRoundTestSuite) TestEndRound() {
 				s.NotEmpty(payload.Results)
 				s.NotEmpty(payload.TotalPot)
 				s.False(payload.IsFinalRound)
+			}
+
+			if params.EventType == gameevents.TypeRoundEnded && params.StreamType == eventbus.DrawingUpdatesStreamType {
+				sentEventOnDrawingUpdatesStream = true
 			}
 
 			if params.TargetClientID == uuid.Nil {
@@ -119,7 +127,8 @@ func (s *EndRoundTestSuite) TestEndRound() {
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
-	s.True(sentRoundEndedEvent)
+	s.True(sentEventOnGameEventsStream)
+	s.True(sentEventOnDrawingUpdatesStream)
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhaseEndRound, capturedState.Phase)
 	s.Equal(types.SubPhaseNone, capturedState.SubPhase)

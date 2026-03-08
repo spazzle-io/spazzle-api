@@ -26,3 +26,21 @@ func TestStreamKey(t *testing.T) {
 
 	require.Equal(t, expectedStreamKey, gotStreamKey)
 }
+
+func TestMarkerKey(t *testing.T) {
+	config := util.Config{
+		ServiceName: "gameplay",
+	}
+
+	gameServerId := uuid.New()
+	gameId := uuid.New()
+	game := GameIdentifier{
+		GameServerID: gameServerId,
+		GameID:       gameId,
+	}
+
+	gotMarkerKey := markerKey(config, GameEventsStreamType, game, MarkerRoundEnded)
+	expectedMarkerKey := fmt.Sprintf("gameplay-game-events:%s:%s:round-ended", gameServerId, gameId)
+
+	require.Equal(t, expectedMarkerKey, gotMarkerKey)
+}
