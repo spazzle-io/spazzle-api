@@ -144,6 +144,9 @@ func runGRPCServer(ctx context.Context, wg *errgroup.Group, serverCfg *server.AP
 			func(grpcServer *grpc.Server) {
 				pb.RegisterWordServiceServer(grpcServer, &s.WordHandler)
 			},
+			func(grpcServer *grpc.Server) {
+				pb.RegisterGameServiceServer(grpcServer, &s.GameHandler)
+			},
 		},
 	)
 }
@@ -179,6 +182,9 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server
 			},
 			func(ctx context.Context, mux *runtime.ServeMux) error {
 				return pb.RegisterWordServiceHandlerServer(ctx, mux, &s.WordHandler)
+			},
+			func(ctx context.Context, mux *runtime.ServeMux) error {
+				return pb.RegisterGameServiceHandlerServer(ctx, mux, &s.GameHandler)
 			},
 		},
 		[]commonServer.HttpRouteRegistrar{

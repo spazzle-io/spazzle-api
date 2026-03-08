@@ -6,6 +6,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestAllStreamTypes(t *testing.T) {
+	if len(AllStreamTypes) != 2 {
+		t.Fatalf("Did you add a new StreamType without updating AllStreamTypes?")
+	}
+}
+
+func TestAllMarkers(t *testing.T) {
+	if len(AllMarkers) != 1 {
+		t.Fatalf("Did you add a new Marker without updating AllMarkers?")
+	}
+}
+
 func TestStartFromBeginning(t *testing.T) {
 	pos := StartFromBeginning()
 	require.Equal(t, "0", pos.String())

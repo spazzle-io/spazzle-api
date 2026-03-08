@@ -18,10 +18,12 @@ const (
 	UnauthorizedAccessError  string = "Authorization failed. Please verify your credentials and try again"
 	InvalidUserIdError       string = "Invalid user id"
 	InvalidServerIdError     string = "Invalid server id"
+	InvalidGameIdError       string = "Invalid game id"
 	ServerNotFoundError      string = "Server not found"
 	InvalidAfterIdError      string = "Invalid after id"
 	ServerNameInUseError     string = "Server name already in use"
 	InvalidStakePerGameError string = "Invalid stake per game"
+	InvalidStreamTypeError   string = "Invalid stream type"
 )
 
 func ProtovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {

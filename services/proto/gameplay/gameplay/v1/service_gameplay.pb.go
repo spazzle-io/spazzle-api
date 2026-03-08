@@ -26,7 +26,7 @@ var File_gameplay_v1_service_gameplay_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\n" +
-	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto\x1a*gameplay/v1/rpc_server_admin_service.proto\x1a\"gameplay/v1/rpc_word_service.proto2\xc5\f\n" +
+	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto\x1a*gameplay/v1/rpc_server_admin_service.proto\x1a\"gameplay/v1/rpc_word_service.proto\x1a\"gameplay/v1/rpc_game_service.proto2\xc5\f\n" +
 	"\rServerService\x12\x9d\x01\n" +
 	"\fCreateServer\x12 .gameplay.v1.CreateServerRequest\x1a!.gameplay.v1.CreateServerResponse\"H\x92A2\x12\rCreate server\x1a\x13Create a new serverb\f\n" +
 	"\n" +
@@ -82,7 +82,13 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\x0eRemoveAllWords\x12\".gameplay.v1.RemoveAllWordsRequest\x1a#.gameplay.v1.RemoveAllWordsResponse\"s\x92AN\x12\x1eRemove all words from a server\x1a\x1eRemove all words from a serverb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c*\x1a/servers/{server_id}/wordsB\xcf\x02\x92A\x9f\x01\x124\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c*\x1a/servers/{server_id}/words2\xf4\x01\n" +
+	"\vGameService\x12\xe4\x01\n" +
+	"\n" +
+	"ReplayGame\x12\x1e.gameplay.v1.ReplayGameRequest\x1a\x1f.gameplay.v1.ReplayGameResponse\"\x94\x01\x92A^\x12\vReplay game\x1aAReplay game events from a specific point in a game's event streamb\f\n" +
+	"\n" +
+	"\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02-\x12+/servers/{server_id}/games/{game_id}/replayB\xcf\x02\x92A\x9f\x01\x124\n" +
 	"\x10Gameplay Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -110,23 +116,25 @@ var file_gameplay_v1_service_gameplay_proto_goTypes = []any{
 	(*ListWordsRequest)(nil),                 // 14: gameplay.v1.ListWordsRequest
 	(*RemoveWordsRequest)(nil),               // 15: gameplay.v1.RemoveWordsRequest
 	(*RemoveAllWordsRequest)(nil),            // 16: gameplay.v1.RemoveAllWordsRequest
-	(*CreateServerResponse)(nil),             // 17: gameplay.v1.CreateServerResponse
-	(*GetServerResponse)(nil),                // 18: gameplay.v1.GetServerResponse
-	(*GetServerByNameResponse)(nil),          // 19: gameplay.v1.GetServerByNameResponse
-	(*ListServersResponse)(nil),              // 20: gameplay.v1.ListServersResponse
-	(*ListUserServersResponse)(nil),          // 21: gameplay.v1.ListUserServersResponse
-	(*GetUserServerPermissionsResponse)(nil), // 22: gameplay.v1.GetUserServerPermissionsResponse
-	(*UpdateServerResponse)(nil),             // 23: gameplay.v1.UpdateServerResponse
-	(*JoinServerResponse)(nil),               // 24: gameplay.v1.JoinServerResponse
-	(*ArchiveServerResponse)(nil),            // 25: gameplay.v1.ArchiveServerResponse
-	(*AddServerAdminResponse)(nil),           // 26: gameplay.v1.AddServerAdminResponse
-	(*ListServerAdminsResponse)(nil),         // 27: gameplay.v1.ListServerAdminsResponse
-	(*RemoveServerAdminResponse)(nil),        // 28: gameplay.v1.RemoveServerAdminResponse
-	(*AddWordsResponse)(nil),                 // 29: gameplay.v1.AddWordsResponse
-	(*GetRandomWordsResponse)(nil),           // 30: gameplay.v1.GetRandomWordsResponse
-	(*ListWordsResponse)(nil),                // 31: gameplay.v1.ListWordsResponse
-	(*RemoveWordsResponse)(nil),              // 32: gameplay.v1.RemoveWordsResponse
-	(*RemoveAllWordsResponse)(nil),           // 33: gameplay.v1.RemoveAllWordsResponse
+	(*ReplayGameRequest)(nil),                // 17: gameplay.v1.ReplayGameRequest
+	(*CreateServerResponse)(nil),             // 18: gameplay.v1.CreateServerResponse
+	(*GetServerResponse)(nil),                // 19: gameplay.v1.GetServerResponse
+	(*GetServerByNameResponse)(nil),          // 20: gameplay.v1.GetServerByNameResponse
+	(*ListServersResponse)(nil),              // 21: gameplay.v1.ListServersResponse
+	(*ListUserServersResponse)(nil),          // 22: gameplay.v1.ListUserServersResponse
+	(*GetUserServerPermissionsResponse)(nil), // 23: gameplay.v1.GetUserServerPermissionsResponse
+	(*UpdateServerResponse)(nil),             // 24: gameplay.v1.UpdateServerResponse
+	(*JoinServerResponse)(nil),               // 25: gameplay.v1.JoinServerResponse
+	(*ArchiveServerResponse)(nil),            // 26: gameplay.v1.ArchiveServerResponse
+	(*AddServerAdminResponse)(nil),           // 27: gameplay.v1.AddServerAdminResponse
+	(*ListServerAdminsResponse)(nil),         // 28: gameplay.v1.ListServerAdminsResponse
+	(*RemoveServerAdminResponse)(nil),        // 29: gameplay.v1.RemoveServerAdminResponse
+	(*AddWordsResponse)(nil),                 // 30: gameplay.v1.AddWordsResponse
+	(*GetRandomWordsResponse)(nil),           // 31: gameplay.v1.GetRandomWordsResponse
+	(*ListWordsResponse)(nil),                // 32: gameplay.v1.ListWordsResponse
+	(*RemoveWordsResponse)(nil),              // 33: gameplay.v1.RemoveWordsResponse
+	(*RemoveAllWordsResponse)(nil),           // 34: gameplay.v1.RemoveAllWordsResponse
+	(*ReplayGameResponse)(nil),               // 35: gameplay.v1.ReplayGameResponse
 }
 var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	0,  // 0: gameplay.v1.ServerService.CreateServer:input_type -> gameplay.v1.CreateServerRequest
@@ -146,25 +154,27 @@ var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	14, // 14: gameplay.v1.WordService.ListWords:input_type -> gameplay.v1.ListWordsRequest
 	15, // 15: gameplay.v1.WordService.RemoveWords:input_type -> gameplay.v1.RemoveWordsRequest
 	16, // 16: gameplay.v1.WordService.RemoveAllWords:input_type -> gameplay.v1.RemoveAllWordsRequest
-	17, // 17: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
-	18, // 18: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
-	19, // 19: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
-	20, // 20: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
-	21, // 21: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
-	22, // 22: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
-	23, // 23: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
-	24, // 24: gameplay.v1.ServerService.JoinServer:output_type -> gameplay.v1.JoinServerResponse
-	25, // 25: gameplay.v1.ServerService.ArchiveServer:output_type -> gameplay.v1.ArchiveServerResponse
-	26, // 26: gameplay.v1.ServerAdminService.AddServerAdmin:output_type -> gameplay.v1.AddServerAdminResponse
-	27, // 27: gameplay.v1.ServerAdminService.ListServerAdmins:output_type -> gameplay.v1.ListServerAdminsResponse
-	28, // 28: gameplay.v1.ServerAdminService.RemoveServerAdmin:output_type -> gameplay.v1.RemoveServerAdminResponse
-	29, // 29: gameplay.v1.WordService.AddWords:output_type -> gameplay.v1.AddWordsResponse
-	30, // 30: gameplay.v1.WordService.GetRandomWords:output_type -> gameplay.v1.GetRandomWordsResponse
-	31, // 31: gameplay.v1.WordService.ListWords:output_type -> gameplay.v1.ListWordsResponse
-	32, // 32: gameplay.v1.WordService.RemoveWords:output_type -> gameplay.v1.RemoveWordsResponse
-	33, // 33: gameplay.v1.WordService.RemoveAllWords:output_type -> gameplay.v1.RemoveAllWordsResponse
-	17, // [17:34] is the sub-list for method output_type
-	0,  // [0:17] is the sub-list for method input_type
+	17, // 17: gameplay.v1.GameService.ReplayGame:input_type -> gameplay.v1.ReplayGameRequest
+	18, // 18: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
+	19, // 19: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
+	20, // 20: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
+	21, // 21: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
+	22, // 22: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
+	23, // 23: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
+	24, // 24: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
+	25, // 25: gameplay.v1.ServerService.JoinServer:output_type -> gameplay.v1.JoinServerResponse
+	26, // 26: gameplay.v1.ServerService.ArchiveServer:output_type -> gameplay.v1.ArchiveServerResponse
+	27, // 27: gameplay.v1.ServerAdminService.AddServerAdmin:output_type -> gameplay.v1.AddServerAdminResponse
+	28, // 28: gameplay.v1.ServerAdminService.ListServerAdmins:output_type -> gameplay.v1.ListServerAdminsResponse
+	29, // 29: gameplay.v1.ServerAdminService.RemoveServerAdmin:output_type -> gameplay.v1.RemoveServerAdminResponse
+	30, // 30: gameplay.v1.WordService.AddWords:output_type -> gameplay.v1.AddWordsResponse
+	31, // 31: gameplay.v1.WordService.GetRandomWords:output_type -> gameplay.v1.GetRandomWordsResponse
+	32, // 32: gameplay.v1.WordService.ListWords:output_type -> gameplay.v1.ListWordsResponse
+	33, // 33: gameplay.v1.WordService.RemoveWords:output_type -> gameplay.v1.RemoveWordsResponse
+	34, // 34: gameplay.v1.WordService.RemoveAllWords:output_type -> gameplay.v1.RemoveAllWordsResponse
+	35, // 35: gameplay.v1.GameService.ReplayGame:output_type -> gameplay.v1.ReplayGameResponse
+	18, // [18:36] is the sub-list for method output_type
+	0,  // [0:18] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name
@@ -178,6 +188,7 @@ func file_gameplay_v1_service_gameplay_proto_init() {
 	file_gameplay_v1_rpc_server_service_proto_init()
 	file_gameplay_v1_rpc_server_admin_service_proto_init()
 	file_gameplay_v1_rpc_word_service_proto_init()
+	file_gameplay_v1_rpc_game_service_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
@@ -186,7 +197,7 @@ func file_gameplay_v1_service_gameplay_proto_init() {
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   4,
 		},
 		GoTypes:           file_gameplay_v1_service_gameplay_proto_goTypes,
 		DependencyIndexes: file_gameplay_v1_service_gameplay_proto_depIdxs,

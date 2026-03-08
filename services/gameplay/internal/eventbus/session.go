@@ -118,6 +118,17 @@ func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg P
 		return "", fmt.Errorf("%w: %v", ErrPublishFailed, err)
 	}
 
+	if msg.Marker != "" {
+		mk := markerKey(s.bus.serviceConfig, streamType, s.game, msg.Marker)
+		if err := s.bus.client.Set(ctx, mk, id, 0).Err(); err != nil {
+			s.getLogger().Error().
+				Err(err).
+				Str("marker", string(msg.Marker)).
+				Str("message_id", id).
+				Msg("failed to set stream marker")
+		}
+	}
+
 	return id, nil
 }
 

@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	eventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -41,6 +42,20 @@ func (m *MockEventBus) EXPECT() *MockEventBusMockRecorder {
 	return m.recorder
 }
 
+// Cleanup mocks base method.
+func (m *MockEventBus) Cleanup(ctx context.Context, game eventbus.GameIdentifier) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Cleanup", ctx, game)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Cleanup indicates an expected call of Cleanup.
+func (mr *MockEventBusMockRecorder) Cleanup(ctx, game any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cleanup", reflect.TypeOf((*MockEventBus)(nil).Cleanup), ctx, game)
+}
+
 // Close mocks base method.
 func (m *MockEventBus) Close() error {
 	m.ctrl.T.Helper()
@@ -55,19 +70,34 @@ func (mr *MockEventBusMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockEventBus)(nil).Close))
 }
 
-// Replay mocks base method.
-func (m *MockEventBus) Replay(ctx context.Context, game eventbus.GameIdentifier, streamType eventbus.StreamType, after string, limit int) (eventbus.ReplayResult, error) {
+// MarkerID mocks base method.
+func (m *MockEventBus) MarkerID(ctx context.Context, game eventbus.GameIdentifier, streamType eventbus.StreamType, marker eventbus.Marker) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Replay", ctx, game, streamType, after, limit)
+	ret := m.ctrl.Call(m, "MarkerID", ctx, game, streamType, marker)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkerID indicates an expected call of MarkerID.
+func (mr *MockEventBusMockRecorder) MarkerID(ctx, game, streamType, marker any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkerID", reflect.TypeOf((*MockEventBus)(nil).MarkerID), ctx, game, streamType, marker)
+}
+
+// Replay mocks base method.
+func (m *MockEventBus) Replay(ctx context.Context, clientID uuid.UUID, game eventbus.GameIdentifier, streamType eventbus.StreamType, after string, limit int) (eventbus.ReplayResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Replay", ctx, clientID, game, streamType, after, limit)
 	ret0, _ := ret[0].(eventbus.ReplayResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Replay indicates an expected call of Replay.
-func (mr *MockEventBusMockRecorder) Replay(ctx, game, streamType, after, limit any) *gomock.Call {
+func (mr *MockEventBusMockRecorder) Replay(ctx, clientID, game, streamType, after, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Replay", reflect.TypeOf((*MockEventBus)(nil).Replay), ctx, game, streamType, after, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Replay", reflect.TypeOf((*MockEventBus)(nil).Replay), ctx, clientID, game, streamType, after, limit)
 }
 
 // Session mocks base method.

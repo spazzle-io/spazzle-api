@@ -15,6 +15,21 @@ const (
 	DrawingUpdatesStreamType StreamType = "drawing-updates"
 )
 
+var AllStreamTypes = []StreamType{
+	GameEventsStreamType,
+	DrawingUpdatesStreamType,
+}
+
+type Marker string
+
+const (
+	MarkerRoundEnded Marker = "round-ended"
+)
+
+var AllMarkers = []Marker{
+	MarkerRoundEnded,
+}
+
 type GameIdentifier struct {
 	GameServerID uuid.UUID
 	GameID       uuid.UUID
@@ -46,6 +61,7 @@ type PublishMessage struct {
 	Payload        json.RawMessage
 	TargetClientID uuid.UUID
 	CorrelationID  uuid.UUID
+	Marker         Marker
 }
 
 type Message struct {
@@ -68,7 +84,9 @@ type ReplayResult struct {
 
 type EventBus interface {
 	Session(game GameIdentifier) (Session, error)
-	Replay(ctx context.Context, game GameIdentifier, streamType StreamType, after string, limit int) (ReplayResult, error)
+	Replay(ctx context.Context, clientID uuid.UUID, game GameIdentifier, streamType StreamType, after string, limit int) (ReplayResult, error)
+	MarkerID(ctx context.Context, game GameIdentifier, streamType StreamType, marker Marker) (string, error)
+	Cleanup(ctx context.Context, game GameIdentifier) error
 	Close() error
 }
 

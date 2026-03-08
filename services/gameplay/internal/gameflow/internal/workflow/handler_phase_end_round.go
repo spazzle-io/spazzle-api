@@ -5,6 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+
 	"github.com/google/uuid"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
@@ -69,9 +71,18 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel,
 		TotalPot:        state.GamePot,
 		IsFinalRound:    isFinalRound,
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResult, uuid.Nil, false)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResult, &sendGameEventOpts{
+		Marker: eventbus.MarkerRoundEnded,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to send round ended event: %w", err)
+		return fmt.Errorf("failed to send round ended event to game events stream: %w", err)
+	}
+	_, err = sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundEnded, nil, &sendGameEventOpts{
+		StreamType: eventbus.DrawingUpdatesStreamType,
+		Marker:     eventbus.MarkerRoundEnded,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send round ended event to drawing updates stream: %w", err)
 	}
 
 	state.CurrentWord = types.Word{}

@@ -102,9 +102,7 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 
 			notifyCh.Send(ctx, struct{}{})
 
-			_, err := sendGameEvent(
-				ctx, state, notifyCh, gameevents.TypePlayersJoined, payload, uuid.Nil, false,
-			)
+			_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersJoined, payload, nil)
 			if err != nil {
 				logger.Error("failed to send players joined event", "error", err)
 			}
@@ -146,9 +144,7 @@ func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh wo
 
 			notifyCh.Send(ctx, struct{}{})
 
-			_, err := sendGameEvent(
-				ctx, state, notifyCh, gameevents.TypePlayersLeft, payload, uuid.Nil, false,
-			)
+			_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersLeft, payload, nil)
 			if err != nil {
 				logger.Error("failed to send players left event", "error", err)
 			}
@@ -194,9 +190,7 @@ func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh w
 		payload := gameevents.PlayerReportsClearedPayload{
 			PlayerIDs: sig.PlayerIDs,
 		}
-		_, err := sendGameEvent(
-			ctx, state, notifyCh, gameevents.TypePlayerReportsCleared, payload, uuid.Nil, false,
-		)
+		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayerReportsCleared, payload, nil)
 		if err != nil {
 			logger.Error("failed to send player reports cleared event", "error", err)
 			return
@@ -251,7 +245,7 @@ func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh work
 			CurrentRound: state.CurrentRound,
 			Ejections:    ejections,
 		}
-		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersEjected, payload, uuid.Nil, false)
+		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersEjected, payload, nil)
 		if err != nil {
 			logger.Error("failed to send players ejected event", "error", err)
 			return
@@ -463,7 +457,7 @@ func processPlayerReports(
 		CurrentRound: state.CurrentRound,
 		Reports:      reports,
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersReported, payload, uuid.Nil, false)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersReported, payload, nil)
 	if err != nil {
 		logger.Error("failed to send players reported event", "error", err)
 	}
