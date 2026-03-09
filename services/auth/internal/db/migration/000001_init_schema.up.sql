@@ -1,7 +1,3 @@
--- SQL dump generated using DBML (dbml-lang.org)
--- Database: PostgreSQL
--- Generated at: 2026-01-05T06:16:51.523Z
-
 CREATE TYPE "role" AS ENUM (
   'admin',
   'user'

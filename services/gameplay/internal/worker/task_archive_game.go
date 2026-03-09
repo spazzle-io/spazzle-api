@@ -35,7 +35,8 @@ func (distributor *RedisTaskDistributor) DistributeTaskArchiveGame(
 
 	task := asynq.NewTask(TaskArchiveGame, jsonPayload, opts...)
 
-	info, err := distributor.client.EnqueueContext(ctx, task)
+	taskID := fmt.Sprintf("%s:%s", payload.GameServerID.String(), payload.GameID.String())
+	info, err := distributor.client.EnqueueContext(ctx, task, asynq.TaskID(taskID))
 	if err != nil {
 		return fmt.Errorf("failed to enqueue task: %w", err)
 	}
