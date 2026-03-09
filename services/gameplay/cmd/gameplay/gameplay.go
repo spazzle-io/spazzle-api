@@ -7,6 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hibiken/asynq"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/services"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 
@@ -28,6 +31,7 @@ import (
 	_ "github.com/spazzle-io/spazzle-api/libs/common/docs/statik"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	commonServer "github.com/spazzle-io/spazzle-api/libs/common/server"
+	commonStorage "github.com/spazzle-io/spazzle-api/libs/common/storage"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/server"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
@@ -61,10 +65,23 @@ func main() {
 
 	store := db.NewStore(connPool)
 
+	objectStore, err := commonStorage.NewS3Store(
+		config.ObjectStoreEndpoint, config.ObjectStoreRegion, config.ObjectStoreAccessKey, config.ObjectStoreSecretKey,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create object store")
+	}
+
 	redisCache, err := commonCache.NewRedisCache(config.RedisConnURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
+
+	redisOpt, err := asynq.ParseRedisURI(config.RedisConnURL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to parse redis URI for asynq")
+	}
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	bus, err := eventbus.New(ctx, config)
 	if err != nil {
@@ -84,15 +101,19 @@ func main() {
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
 	serverCfg := &server.APIServerConfig{
-		Config:      config,
-		Store:       store,
-		Cache:       redisCache,
-		Bus:         bus,
-		WordStore:   wordStore,
-		AuthService: authService,
+		Config:          config,
+		Store:           store,
+		Cache:           redisCache,
+		Bus:             bus,
+		WordStore:       wordStore,
+		ObjectStore:     objectStore,
+		TaskDistributor: taskDistributor,
+		AuthService:     authService,
 	}
 
 	serverCfg.GfClient, serverCfg.GsManager = startGameServices(ctx, waitGroup, serverCfg)
+
+	go runTaskProcessor(redisOpt, serverCfg)
 
 	runGRPCServer(ctx, waitGroup, serverCfg)
 	runGatewayServer(ctx, waitGroup, serverCfg)
@@ -217,13 +238,14 @@ func startGameServices(
 		return nil, nil
 	}
 
-	worker := gameflow.Worker{
-		Config:    cfg.Config,
-		Store:     cfg.Store,
-		Bus:       cfg.Bus,
-		WordStore: cfg.WordStore,
+	wk := gameflow.Worker{
+		Config:          cfg.Config,
+		Store:           cfg.Store,
+		Bus:             cfg.Bus,
+		WordStore:       cfg.WordStore,
+		TaskDistributor: cfg.TaskDistributor,
 	}
-	worker.Start()
+	wk.Start()
 
 	gsManager := gameserver.NewManager()
 
@@ -236,11 +258,22 @@ func startGameServices(
 		gfClient.Close()
 		log.Info().Msg("gameFlow client closed")
 
-		worker.Stop()
+		wk.Stop()
 		log.Info().Msg("gameFlow worker stopped")
 
 		return nil
 	})
 
 	return gfClient, gsManager
+}
+
+func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.ObjectStore)
+
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start task processor")
+	}
+
+	log.Info().Msg("task processor started")
 }

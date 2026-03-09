@@ -9,17 +9,19 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
 	temporalclient "go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/worker"
+	temporalworker "go.temporal.io/sdk/worker"
 )
 
 type Worker struct {
-	worker worker.Worker
+	worker temporalworker.Worker
 
-	Config    util.Config
-	Store     db.Store
-	Bus       eventbus.EventBus
-	WordStore wordstore.Store
+	Config          util.Config
+	Store           db.Store
+	Bus             eventbus.EventBus
+	WordStore       wordstore.Store
+	TaskDistributor worker.TaskDistributor
 }
 
 func (w *Worker) Start() {
@@ -32,13 +34,14 @@ func (w *Worker) Start() {
 		return
 	}
 
-	wk := worker.New(c, types.GameWorkflowTaskQueue, worker.Options{})
+	wk := temporalworker.New(c, types.GameWorkflowTaskQueue, temporalworker.Options{})
 
 	wk.RegisterWorkflow(workflow.GameWorkflow)
 	wk.RegisterActivity(&activities.Activities{
-		Store:     w.Store,
-		Bus:       w.Bus,
-		WordStore: w.WordStore,
+		Store:           w.Store,
+		Bus:             w.Bus,
+		WordStore:       w.WordStore,
+		TaskDistributor: w.TaskDistributor,
 	})
 
 	go func() {
