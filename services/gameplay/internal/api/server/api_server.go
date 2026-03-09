@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"sync"
 
+	commonStorage "github.com/spazzle-io/spazzle-api/libs/common/storage"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/game"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
@@ -26,14 +29,16 @@ import (
 )
 
 type APIServerConfig struct {
-	Config      util.Config
-	Store       db.Store
-	Cache       commonCache.Cache
-	Bus         eventbus.EventBus
-	GfClient    gameflow.Client
-	GsManager   *gameserver.Manager
-	WordStore   wordstore.Store
-	AuthService services.AuthGrpcService
+	Config          util.Config
+	Store           db.Store
+	Cache           commonCache.Cache
+	Bus             eventbus.EventBus
+	GfClient        gameflow.Client
+	GsManager       *gameserver.Manager
+	WordStore       wordstore.Store
+	ObjectStore     commonStorage.ObjectStore
+	TaskDistributor worker.TaskDistributor
+	AuthService     services.AuthGrpcService
 }
 
 type APIServer struct {

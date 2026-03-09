@@ -106,12 +106,22 @@ func (s *EndGameTestSuite) TestEndGame() {
 			}, nil
 		})
 
+	executedArchiveGameActivity := false
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			executedArchiveGameActivity = true
+		}).
+		Return(func(ctx context.Context, params activities.ArchiveGameParams) (*activities.ArchiveGameResult, error) {
+			return &activities.ArchiveGameResult{}, nil
+		})
+
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
 		ID: serverID.String(),
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
 	s.True(sentGameEndedEvent)
+	s.True(executedArchiveGameActivity)
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhaseEndGame, capturedState.Phase)
 	s.Equal(types.SubPhaseNone, capturedState.SubPhase)

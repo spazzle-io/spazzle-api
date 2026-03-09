@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
@@ -37,6 +39,15 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, 
 	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult, nil)
 	if err != nil {
 		return fmt.Errorf("failed to send game ended event: %w", err)
+	}
+
+	var a *activities.Activities
+	err = workflow.ExecuteActivity(ctx, a.ArchiveGame, activities.ArchiveGameParams{
+		GameServerID: getGameServerID(ctx),
+		GameID:       state.GameID,
+	}).Get(ctx, nil)
+	if err != nil {
+		logger.Error("failed to execute archive game activity", "error", err)
 	}
 
 	logger.Info("game ended")
