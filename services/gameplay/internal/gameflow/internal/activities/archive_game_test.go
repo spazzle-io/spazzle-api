@@ -18,7 +18,7 @@ func TestArchiveGame(t *testing.T) {
 	}
 
 	deps.TaskDistributor.EXPECT().
-		DistributeTaskArchiveGame(gomock.Any(), gomock.Any()).
+		DistributeTaskArchiveGame(gomock.Any(), gomock.Any(), gomock.Any()).
 		Times(1).
 		Return(nil)
 
