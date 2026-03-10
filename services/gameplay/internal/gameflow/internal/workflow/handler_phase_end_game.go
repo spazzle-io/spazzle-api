@@ -31,6 +31,8 @@ func handlePhaseEndGame(ctx workflow.Context, state *GameState, notifyCh workflo
 func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) error {
 	results := getFinalPlayerResults(state)
 
+	state.EndedAt = workflow.Now(ctx).UTC()
+
 	gameResult := gameevents.GameEndedPayload{
 		TotalRounds: state.CurrentRound,
 		TotalPot:    state.GamePot,

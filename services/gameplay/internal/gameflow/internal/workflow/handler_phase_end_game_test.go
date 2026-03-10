@@ -125,6 +125,8 @@ func (s *EndGameTestSuite) TestEndGame() {
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhaseEndGame, capturedState.Phase)
 	s.Equal(types.SubPhaseNone, capturedState.SubPhase)
+	s.NotZero(capturedState.StartedAt)
+	s.NotZero(capturedState.EndedAt)
 	s.Empty(capturedState.CurrentArtist)
 	s.Empty(capturedState.CurrentWord)
 	s.Len(capturedState.Players, 2)

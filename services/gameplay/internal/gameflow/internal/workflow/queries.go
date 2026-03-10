@@ -36,6 +36,8 @@ func registerGetGameStateQuery(ctx workflow.Context, state *GameState) error {
 
 		return &types.GameStateView{
 			GameID:            state.GameID,
+			StartedAt:         state.StartedAt,
+			EndedAt:           state.EndedAt,
 			Phase:             state.Phase,
 			SubPhase:          state.SubPhase,
 			CurrentRound:      state.CurrentRound,

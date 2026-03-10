@@ -18,13 +18,14 @@ const (
 
 type GameState struct {
 	GameID       uuid.UUID
+	StartedAt    time.Time
+	EndedAt      time.Time
 	IsTerminated bool
 
 	Phase         types.Phase
 	SubPhase      types.SubPhase
 	NumRounds     int32
 	CurrentRound  uint8
-	StartedAt     time.Time
 	GamePot       string
 	StakePerGame  string
 	StakePerRound string

@@ -70,6 +70,8 @@ type PlayerEjection struct {
 
 type GameStateView struct {
 	GameID            uuid.UUID
+	StartedAt         time.Time
+	EndedAt           time.Time
 	Phase             Phase
 	SubPhase          SubPhase
 	CurrentRound      uint8
