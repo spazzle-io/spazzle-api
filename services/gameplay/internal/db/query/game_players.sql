@@ -54,7 +54,7 @@ SELECT
     g.num_rounds,
     g.num_players,
     g.total_pot,
-    g.stake_per_game,
+    g.game_stake,
     g.started_at,
     g.ended_at
 FROM game_players gp

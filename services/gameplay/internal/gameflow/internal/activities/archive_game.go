@@ -11,8 +11,11 @@ import (
 )
 
 type ArchiveGameParams struct {
-	GameServerID uuid.UUID
-	GameID       uuid.UUID
+	ServerID      uuid.UUID
+	GameID        uuid.UUID
+	GameStake     string
+	GameStartedAt time.Time
+	GameEndedAt   time.Time
 }
 
 type ArchiveGameResult struct{}
@@ -24,8 +27,11 @@ func (a *Activities) ArchiveGame(
 	err := a.TaskDistributor.DistributeTaskArchiveGame(
 		ctx,
 		&worker.PayloadArchiveGame{
-			GameServerID: params.GameServerID,
-			GameID:       params.GameID,
+			ServerID:      params.ServerID,
+			GameID:        params.GameID,
+			GameStake:     params.GameStake,
+			GameStartedAt: params.GameStartedAt,
+			GameEndedAt:   params.GameEndedAt,
 		},
 		asynq.MaxRetry(5),
 		asynq.Timeout(10*time.Minute),

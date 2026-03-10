@@ -29,7 +29,7 @@ type ArchiveGameTxParams struct {
 	ServerID      uuid.UUID
 	NumRounds     int32
 	TotalPot      *big.Int
-	StakePerGame  *big.Int
+	GameStake     *big.Int
 	PlayerResults []GamePlayerResult
 	StartedAt     time.Time
 	EndedAt       time.Time
@@ -57,8 +57,8 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 				Int:   params.TotalPot,
 				Valid: true,
 			},
-			StakePerGame: pgtype.Numeric{
-				Int:   params.StakePerGame,
+			GameStake: pgtype.Numeric{
+				Int:   params.GameStake,
 				Valid: true,
 			},
 			StartedAt: params.StartedAt,
@@ -116,7 +116,7 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 					Valid: true,
 				},
 				Volume: pgtype.Numeric{
-					Int:   params.StakePerGame,
+					Int:   params.GameStake,
 					Valid: true,
 				},
 			})
@@ -134,7 +134,7 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 					Valid: true,
 				},
 				Volume: pgtype.Numeric{
-					Int:   params.StakePerGame,
+					Int:   params.GameStake,
 					Valid: true,
 				},
 			})

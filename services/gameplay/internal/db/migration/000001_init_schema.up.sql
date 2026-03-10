@@ -25,7 +25,7 @@ CREATE TABLE "games" (
   "num_rounds" int NOT NULL DEFAULT 0,
   "num_players" int NOT NULL DEFAULT 0,
   "total_pot" numeric NOT NULL DEFAULT 0,
-  "stake_per_game" numeric NOT NULL DEFAULT 0,
+  "game_stake" numeric NOT NULL DEFAULT 0,
   "started_at" timestamptz NOT NULL,
   "ended_at" timestamptz NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())

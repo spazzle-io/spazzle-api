@@ -268,7 +268,7 @@ func startGameServices(
 }
 
 func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.ObjectStore)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.Store, serverCfg.ObjectStore)
 
 	err := taskProcessor.Start()
 	if err != nil {

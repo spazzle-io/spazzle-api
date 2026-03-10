@@ -18,8 +18,8 @@ func newTestPayload(t *testing.T) (*PayloadArchiveGame, *asynq.Task) {
 	t.Helper()
 
 	payload := &PayloadArchiveGame{
-		GameServerID: uuid.New(),
-		GameID:       uuid.New(),
+		ServerID: uuid.New(),
+		GameID:   uuid.New(),
 	}
 
 	data, err := json.Marshal(payload)
@@ -43,7 +43,7 @@ func TestProcessTaskArchiveGame_Success(t *testing.T) {
 
 	payload, task := newTestPayload(t)
 	game := eventbus.GameIdentifier{
-		GameServerID: payload.GameServerID,
+		GameServerID: payload.ServerID,
 		GameID:       payload.GameID,
 	}
 

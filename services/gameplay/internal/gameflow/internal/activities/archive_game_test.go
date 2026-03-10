@@ -3,6 +3,7 @@ package activities
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -13,8 +14,11 @@ func TestArchiveGame(t *testing.T) {
 	deps := setupActivities(t)
 
 	params := ArchiveGameParams{
-		GameServerID: uuid.New(),
-		GameID:       uuid.New(),
+		ServerID:      uuid.New(),
+		GameID:        uuid.New(),
+		GameStake:     "100",
+		GameStartedAt: time.Now().UTC(),
+		GameEndedAt:   time.Now().UTC(),
 	}
 
 	deps.TaskDistributor.EXPECT().

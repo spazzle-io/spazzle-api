@@ -5,7 +5,7 @@ INSERT INTO games (
     num_rounds,
     num_players,
     total_pot,
-    stake_per_game,
+    game_stake,
     started_at,
     ended_at
 ) VALUES (
@@ -19,7 +19,7 @@ SELECT
     num_rounds,
     num_players,
     total_pot,
-    stake_per_game,
+    game_stake,
     started_at,
     ended_at,
     created_at
@@ -34,7 +34,7 @@ SELECT
     num_rounds,
     num_players,
     total_pot,
-    stake_per_game,
+    game_stake,
     started_at,
     ended_at,
     created_at

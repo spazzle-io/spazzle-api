@@ -104,6 +104,21 @@ func (mr *MockStoreMockRecorder) AddWordsToServer(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWordsToServer", reflect.TypeOf((*MockStore)(nil).AddWordsToServer), ctx, arg)
 }
 
+// ArchiveGameTx mocks base method.
+func (m *MockStore) ArchiveGameTx(ctx context.Context, params db.ArchiveGameTxParams) (db.ArchiveGameTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveGameTx", ctx, params)
+	ret0, _ := ret[0].(db.ArchiveGameTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ArchiveGameTx indicates an expected call of ArchiveGameTx.
+func (mr *MockStoreMockRecorder) ArchiveGameTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveGameTx", reflect.TypeOf((*MockStore)(nil).ArchiveGameTx), ctx, params)
+}
+
 // CreateGame mocks base method.
 func (m *MockStore) CreateGame(ctx context.Context, arg db.CreateGameParams) (db.Game, error) {
 	m.ctrl.T.Helper()

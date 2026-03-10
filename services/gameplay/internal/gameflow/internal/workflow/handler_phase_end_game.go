@@ -45,8 +45,11 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, 
 
 	var a *activities.Activities
 	err = workflow.ExecuteActivity(ctx, a.ArchiveGame, activities.ArchiveGameParams{
-		GameServerID: getGameServerID(ctx),
-		GameID:       state.GameID,
+		ServerID:      getGameServerID(ctx),
+		GameID:        state.GameID,
+		GameStake:     state.StakePerGame,
+		GameStartedAt: state.StartedAt,
+		GameEndedAt:   state.EndedAt,
 	}).Get(ctx, nil)
 	if err != nil {
 		logger.Error("failed to execute archive game activity", "error", err)

@@ -12,15 +12,15 @@ import (
 )
 
 type Game struct {
-	ID           uuid.UUID      `json:"id"`
-	ServerID     uuid.UUID      `json:"server_id"`
-	NumRounds    int32          `json:"num_rounds"`
-	NumPlayers   int32          `json:"num_players"`
-	TotalPot     pgtype.Numeric `json:"total_pot"`
-	StakePerGame pgtype.Numeric `json:"stake_per_game"`
-	StartedAt    time.Time      `json:"started_at"`
-	EndedAt      time.Time      `json:"ended_at"`
-	CreatedAt    time.Time      `json:"created_at"`
+	ID         uuid.UUID      `json:"id"`
+	ServerID   uuid.UUID      `json:"server_id"`
+	NumRounds  int32          `json:"num_rounds"`
+	NumPlayers int32          `json:"num_players"`
+	TotalPot   pgtype.Numeric `json:"total_pot"`
+	GameStake  pgtype.Numeric `json:"game_stake"`
+	StartedAt  time.Time      `json:"started_at"`
+	EndedAt    time.Time      `json:"ended_at"`
+	CreatedAt  time.Time      `json:"created_at"`
 }
 
 type GamePlayer struct {

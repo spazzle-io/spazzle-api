@@ -3,6 +3,8 @@ package worker
 import (
 	"context"
 
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -18,12 +20,14 @@ type TaskProcessor interface {
 type RedisTaskProcessor struct {
 	server      *asynq.Server
 	bus         eventbus.EventBus
+	store       db.Store
 	objectStore commonStorage.ObjectStore
 }
 
 func NewRedisTaskProcessor(
 	redisOpt asynq.RedisConnOpt,
 	bus eventbus.EventBus,
+	store db.Store,
 	objectStore commonStorage.ObjectStore,
 ) TaskProcessor {
 	logger := NewLogger()
@@ -45,6 +49,7 @@ func NewRedisTaskProcessor(
 	return &RedisTaskProcessor{
 		server:      server,
 		bus:         bus,
+		store:       store,
 		objectStore: objectStore,
 	}
 }

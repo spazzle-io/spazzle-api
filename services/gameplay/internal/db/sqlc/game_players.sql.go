@@ -130,7 +130,7 @@ SELECT
     g.num_rounds,
     g.num_players,
     g.total_pot,
-    g.stake_per_game,
+    g.game_stake,
     g.started_at,
     g.ended_at
 FROM game_players gp
@@ -166,7 +166,7 @@ type ListUserGamesRow struct {
 	NumRounds         int32          `json:"num_rounds"`
 	NumPlayers        int32          `json:"num_players"`
 	TotalPot          pgtype.Numeric `json:"total_pot"`
-	StakePerGame      pgtype.Numeric `json:"stake_per_game"`
+	GameStake         pgtype.Numeric `json:"game_stake"`
 	StartedAt         time.Time      `json:"started_at"`
 	EndedAt           time.Time      `json:"ended_at"`
 }
@@ -199,7 +199,7 @@ func (q *Queries) ListUserGames(ctx context.Context, arg ListUserGamesParams) ([
 			&i.NumRounds,
 			&i.NumPlayers,
 			&i.TotalPot,
-			&i.StakePerGame,
+			&i.GameStake,
 			&i.StartedAt,
 			&i.EndedAt,
 		); err != nil {

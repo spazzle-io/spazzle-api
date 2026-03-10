@@ -20,23 +20,23 @@ INSERT INTO games (
     num_rounds,
     num_players,
     total_pot,
-    stake_per_game,
+    game_stake,
     started_at,
     ended_at
 ) VALUES (
    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, server_id, num_rounds, num_players, total_pot, stake_per_game, started_at, ended_at, created_at
+) RETURNING id, server_id, num_rounds, num_players, total_pot, game_stake, started_at, ended_at, created_at
 `
 
 type CreateGameParams struct {
-	ID           uuid.UUID      `json:"id"`
-	ServerID     uuid.UUID      `json:"server_id"`
-	NumRounds    int32          `json:"num_rounds"`
-	NumPlayers   int32          `json:"num_players"`
-	TotalPot     pgtype.Numeric `json:"total_pot"`
-	StakePerGame pgtype.Numeric `json:"stake_per_game"`
-	StartedAt    time.Time      `json:"started_at"`
-	EndedAt      time.Time      `json:"ended_at"`
+	ID         uuid.UUID      `json:"id"`
+	ServerID   uuid.UUID      `json:"server_id"`
+	NumRounds  int32          `json:"num_rounds"`
+	NumPlayers int32          `json:"num_players"`
+	TotalPot   pgtype.Numeric `json:"total_pot"`
+	GameStake  pgtype.Numeric `json:"game_stake"`
+	StartedAt  time.Time      `json:"started_at"`
+	EndedAt    time.Time      `json:"ended_at"`
 }
 
 func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, error) {
@@ -46,7 +46,7 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, e
 		arg.NumRounds,
 		arg.NumPlayers,
 		arg.TotalPot,
-		arg.StakePerGame,
+		arg.GameStake,
 		arg.StartedAt,
 		arg.EndedAt,
 	)
@@ -57,7 +57,7 @@ func (q *Queries) CreateGame(ctx context.Context, arg CreateGameParams) (Game, e
 		&i.NumRounds,
 		&i.NumPlayers,
 		&i.TotalPot,
-		&i.StakePerGame,
+		&i.GameStake,
 		&i.StartedAt,
 		&i.EndedAt,
 		&i.CreatedAt,
@@ -72,7 +72,7 @@ SELECT
     num_rounds,
     num_players,
     total_pot,
-    stake_per_game,
+    game_stake,
     started_at,
     ended_at,
     created_at
@@ -90,7 +90,7 @@ func (q *Queries) GetGameById(ctx context.Context, gameID uuid.UUID) (Game, erro
 		&i.NumRounds,
 		&i.NumPlayers,
 		&i.TotalPot,
-		&i.StakePerGame,
+		&i.GameStake,
 		&i.StartedAt,
 		&i.EndedAt,
 		&i.CreatedAt,
@@ -118,7 +118,7 @@ SELECT
     num_rounds,
     num_players,
     total_pot,
-    stake_per_game,
+    game_stake,
     started_at,
     ended_at,
     created_at
@@ -159,7 +159,7 @@ func (q *Queries) ListServerGames(ctx context.Context, arg ListServerGamesParams
 			&i.NumRounds,
 			&i.NumPlayers,
 			&i.TotalPot,
-			&i.StakePerGame,
+			&i.GameStake,
 			&i.StartedAt,
 			&i.EndedAt,
 			&i.CreatedAt,
