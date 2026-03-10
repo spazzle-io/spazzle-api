@@ -621,10 +621,11 @@ SET
     num_rounds_per_game = COALESCE($8, num_rounds_per_game),
     round_duration_secs = COALESCE($9, round_duration_secs),
     num_drawing_options = COALESCE($10, num_drawing_options),
-    is_archived = COALESCE($11, is_archived),
-    archived_at = COALESCE($12, archived_at)
+    trending_score = COALESCE($11, trending_score),
+    is_archived = COALESCE($12, is_archived),
+    archived_at = COALESCE($13, archived_at)
 WHERE
-    id = $13
+    id = $14
     RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
@@ -639,6 +640,7 @@ type UpdateServerParams struct {
 	NumRoundsPerGame  pgtype.Int4        `json:"num_rounds_per_game"`
 	RoundDurationSecs pgtype.Int4        `json:"round_duration_secs"`
 	NumDrawingOptions pgtype.Int4        `json:"num_drawing_options"`
+	TrendingScore     pgtype.Float8      `json:"trending_score"`
 	IsArchived        pgtype.Bool        `json:"is_archived"`
 	ArchivedAt        pgtype.Timestamptz `json:"archived_at"`
 	ServerID          uuid.UUID          `json:"server_id"`
@@ -656,6 +658,7 @@ func (q *Queries) UpdateServer(ctx context.Context, arg UpdateServerParams) (Ser
 		arg.NumRoundsPerGame,
 		arg.RoundDurationSecs,
 		arg.NumDrawingOptions,
+		arg.TrendingScore,
 		arg.IsArchived,
 		arg.ArchivedAt,
 		arg.ServerID,

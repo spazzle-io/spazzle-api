@@ -79,6 +79,11 @@ func createTestServer(t *testing.T, userId uuid.UUID) Server {
 
 	require.WithinDuration(t, time.Now().UTC(), server.CreatedAt, time.Second)
 
+	require.Zero(t, server.TotalGames)
+	require.Empty(t, server.TotalVolume.Int)
+	require.Zero(t, server.TotalPlayers)
+	require.Zero(t, server.TrendingScore)
+
 	return server
 }
 
@@ -553,4 +558,256 @@ func TestUpdateServer(t *testing.T) {
 	require.False(t, updatedServer.IsPubliclyVisible)
 	require.True(t, updatedServer.IsArchived)
 	require.WithinDuration(t, expectedUpdatedArchivedAt, updatedServer.ArchivedAt.Time, time.Second)
+}
+
+func TestUpdateServerGameStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server := createTestServer(t, uuid.New())
+
+	err := testStore.UpdateServerGameStats(context.Background(), UpdateServerGameStatsParams{
+		ServerID: server.ID,
+		Volume: pgtype.Numeric{
+			Int:   big.NewInt(4000000000000000),
+			Valid: true,
+		},
+		NumPlayers: 5,
+	})
+	require.NoError(t, err)
+
+	updated, err := testStore.GetServerById(context.Background(), server.ID)
+	require.NoError(t, err)
+	require.Equal(t, int32(1), updated.TotalGames)
+	require.Equal(t, int32(5), updated.TotalPlayers)
+
+	// Update again — should increment
+	err = testStore.UpdateServerGameStats(context.Background(), UpdateServerGameStatsParams{
+		ServerID: server.ID,
+		Volume: pgtype.Numeric{
+			Int:   big.NewInt(2000000000000000),
+			Valid: true,
+		},
+		NumPlayers: 3,
+	})
+	require.NoError(t, err)
+
+	updated, err = testStore.GetServerById(context.Background(), server.ID)
+	require.NoError(t, err)
+	require.Equal(t, int32(2), updated.TotalGames)
+	require.Equal(t, int32(8), updated.TotalPlayers)
+}
+
+func TestRecomputeTrendingScores(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server1 := createTestServer(t, uuid.New())
+	server2 := createTestServer(t, uuid.New())
+
+	// Server1: 3 games with 2 players each
+	for i := 0; i < 3; i++ {
+		game := createTestGame(t, server1.ID)
+		insertTestGamePlayers(t, game.ID, []uuid.UUID{uuid.New(), uuid.New()})
+	}
+
+	// Server2: 1 game with 1 player
+	game := createTestGame(t, server2.ID)
+	insertTestGamePlayers(t, game.ID, []uuid.UUID{uuid.New()})
+
+	err := testStore.RecomputeTrendingScores(context.Background(), pgtype.Interval{
+		Days:  1,
+		Valid: true,
+	})
+	require.NoError(t, err)
+
+	updated1, err := testStore.GetServerById(context.Background(), server1.ID)
+	require.NoError(t, err)
+	require.Greater(t, updated1.TrendingScore, float64(0))
+
+	updated2, err := testStore.GetServerById(context.Background(), server2.ID)
+	require.NoError(t, err)
+	require.Greater(t, updated2.TrendingScore, float64(0))
+
+	// Server1 should have higher trending score (more games, more players)
+	require.Greater(t, updated1.TrendingScore, updated2.TrendingScore)
+}
+
+func TestResetTrendingScores(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server1 := createTestServer(t, uuid.New())
+	server2 := createTestServer(t, uuid.New())
+
+	// Server1: has a recent game
+	game := createTestGame(t, server1.ID)
+	insertTestGamePlayers(t, game.ID, []uuid.UUID{uuid.New()})
+
+	err := testStore.RecomputeTrendingScores(context.Background(), pgtype.Interval{
+		Days:  1,
+		Valid: true,
+	})
+	require.NoError(t, err)
+
+	// Manually set server2 trending score to simulate it had activity before
+	_, err = testStore.UpdateServer(context.Background(), UpdateServerParams{
+		ServerID:      server2.ID,
+		TrendingScore: pgtype.Float8{Float64: 5.0, Valid: true},
+	})
+	require.NoError(t, err)
+
+	// Reset — server2 should go to 0 (no recent games), server1 should keep score
+	err = testStore.ResetTrendingScores(context.Background(), pgtype.Interval{
+		Days:  1,
+		Valid: true,
+	})
+	require.NoError(t, err)
+
+	updated1, err := testStore.GetServerById(context.Background(), server1.ID)
+	require.NoError(t, err)
+	require.Greater(t, updated1.TrendingScore, float64(0))
+
+	updated2, err := testStore.GetServerById(context.Background(), server2.ID)
+	require.NoError(t, err)
+	require.Equal(t, float64(0), updated2.TrendingScore)
+}
+
+func TestRecomputeAndResetTrendingScoresOutsideWindow(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server := createTestServer(t, uuid.New())
+
+	params := CreateGameParams{
+		ID:         uuid.New(),
+		ServerID:   server.ID,
+		NumRounds:  5,
+		NumPlayers: 2,
+		TotalPot: pgtype.Numeric{
+			Int:   big.NewInt(2000000000000000),
+			Valid: true,
+		},
+		GameStake: pgtype.Numeric{
+			Int:   big.NewInt(200000000000000),
+			Valid: true,
+		},
+		StartedAt: time.Now().UTC().Add(-48 * time.Hour),
+		EndedAt:   time.Now().UTC().Add(-25 * time.Hour), // older than 24h window
+	}
+	oldGame, err := testStore.CreateGame(context.Background(), params)
+	require.NoError(t, err)
+	insertTestGamePlayers(t, oldGame.ID, []uuid.UUID{uuid.New(), uuid.New()})
+
+	err = testStore.RecomputeTrendingScores(context.Background(), pgtype.Interval{
+		Days:  1,
+		Valid: true,
+	})
+	require.NoError(t, err)
+
+	updated, err := testStore.GetServerById(context.Background(), server.ID)
+	require.NoError(t, err)
+	require.Equal(t, float64(0), updated.TrendingScore)
+}
+
+func TestListServersByTrending(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	servers := make([]Server, 5)
+	for i := 0; i < 5; i++ {
+		servers[i] = createTestServer(t, uuid.New())
+
+		for j := 0; j <= i; j++ {
+			game := createTestGame(t, servers[i].ID)
+			insertTestGamePlayers(t, game.ID, []uuid.UUID{uuid.New()})
+		}
+	}
+
+	err := testStore.RecomputeTrendingScores(context.Background(), pgtype.Interval{
+		Days:  1,
+		Valid: true,
+	})
+	require.NoError(t, err)
+
+	firstPage, err := testStore.ListServersByTrending(context.Background(), ListServersByTrendingParams{
+		PageSize: 3,
+	})
+	require.NoError(t, err)
+	require.Len(t, firstPage, 3)
+
+	for i := 1; i < len(firstPage); i++ {
+		require.GreaterOrEqual(t, firstPage[i-1].TrendingScore, firstPage[i].TrendingScore)
+	}
+
+	last := firstPage[len(firstPage)-1]
+	secondPage, err := testStore.ListServersByTrending(context.Background(), ListServersByTrendingParams{
+		AfterTrendingScore: pgtype.Float8{Float64: last.TrendingScore, Valid: true},
+		AfterID:            pgtype.UUID{Bytes: last.ID, Valid: true},
+		PageSize:           3,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, secondPage)
+
+	for _, s := range secondPage {
+		for _, f := range firstPage {
+			require.NotEqual(t, f.ID, s.ID)
+		}
+	}
+}
+
+func TestListServersByPopular(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	servers := make([]Server, 5)
+	for i := 0; i < 5; i++ {
+		servers[i] = createTestServer(t, uuid.New())
+
+		for j := 0; j <= i; j++ {
+			game := createTestGame(t, servers[i].ID)
+			insertTestGamePlayers(t, game.ID, []uuid.UUID{uuid.New()})
+
+			err := testStore.UpdateServerGameStats(context.Background(), UpdateServerGameStatsParams{
+				ServerID: servers[i].ID,
+				Volume: pgtype.Numeric{
+					Int:   big.NewInt(2000000000000000),
+					Valid: true,
+				},
+				NumPlayers: 1,
+			})
+			require.NoError(t, err)
+		}
+	}
+
+	firstPage, err := testStore.ListServersByPopular(context.Background(), ListServersByPopularParams{
+		PageSize: 3,
+	})
+	require.NoError(t, err)
+	require.Len(t, firstPage, 3)
+
+	for i := 1; i < len(firstPage); i++ {
+		require.GreaterOrEqual(t, firstPage[i-1].TotalGames, firstPage[i].TotalGames)
+	}
+
+	last := firstPage[len(firstPage)-1]
+	secondPage, err := testStore.ListServersByPopular(context.Background(), ListServersByPopularParams{
+		AfterTotalGames: pgtype.Int4{Int32: last.TotalGames, Valid: true},
+		AfterID:         pgtype.UUID{Bytes: last.ID, Valid: true},
+		PageSize:        3,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, secondPage)
+
+	for _, s := range secondPage {
+		for _, f := range firstPage {
+			require.NotEqual(t, f.ID, s.ID)
+		}
+	}
 }

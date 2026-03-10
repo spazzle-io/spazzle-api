@@ -163,6 +163,7 @@ SET
     num_rounds_per_game = COALESCE(sqlc.narg(num_rounds_per_game), num_rounds_per_game),
     round_duration_secs = COALESCE(sqlc.narg(round_duration_secs), round_duration_secs),
     num_drawing_options = COALESCE(sqlc.narg(num_drawing_options), num_drawing_options),
+    trending_score = COALESCE(sqlc.narg(trending_score), trending_score),
     is_archived = COALESCE(sqlc.narg(is_archived), is_archived),
     archived_at = COALESCE(sqlc.narg(archived_at), archived_at)
 WHERE
