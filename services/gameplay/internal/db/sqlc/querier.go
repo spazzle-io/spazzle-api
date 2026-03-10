@@ -9,26 +9,48 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	AddServerAdmin(ctx context.Context, arg AddServerAdminParams) (ServerAdmin, error)
 	AddWordsToServer(ctx context.Context, arg AddWordsToServerParams) (pgconn.CommandTag, error)
+	CreateGame(ctx context.Context, arg CreateGameParams) (Game, error)
 	CreateServer(ctx context.Context, arg CreateServerParams) (Server, error)
+	GetGameById(ctx context.Context, gameID uuid.UUID) (Game, error)
+	GetGameLeaderboard(ctx context.Context, arg GetGameLeaderboardParams) ([]GamePlayer, error)
+	GetGlobalLeaderboard(ctx context.Context, arg GetGlobalLeaderboardParams) ([]UserStat, error)
 	GetRandomWordsForServer(ctx context.Context, arg GetRandomWordsForServerParams) ([]GetRandomWordsForServerRow, error)
 	GetServerById(ctx context.Context, serverID uuid.UUID) (Server, error)
 	GetServerByName(ctx context.Context, name string) (Server, error)
+	GetServerLeaderboard(ctx context.Context, arg GetServerLeaderboardParams) ([]ServerPlayerStat, error)
 	GetServerUserPermissions(ctx context.Context, arg GetServerUserPermissionsParams) (GetServerUserPermissionsRow, error)
+	GetTotalGamePlayersCount(ctx context.Context, gameID uuid.UUID) (int64, error)
 	GetTotalServerCount(ctx context.Context) (int64, error)
+	GetTotalServerGamesCount(ctx context.Context, serverID uuid.UUID) (int64, error)
+	GetTotalServerPlayerStatsCount(ctx context.Context, serverID uuid.UUID) (int64, error)
+	GetTotalUserGamesCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetTotalUserServersCount(ctx context.Context, userID uuid.UUID) (int64, error)
+	GetTotalUserStatsCount(ctx context.Context) (int64, error)
+	GetUserStats(ctx context.Context, userID uuid.UUID) (UserStat, error)
+	InsertGamePlayers(ctx context.Context, arg []InsertGamePlayersParams) (int64, error)
 	ListServerAdmins(ctx context.Context, arg ListServerAdminsParams) ([]ServerAdmin, error)
+	ListServerGames(ctx context.Context, arg ListServerGamesParams) ([]Game, error)
 	ListServers(ctx context.Context, arg ListServersParams) ([]Server, error)
+	ListServersByPopular(ctx context.Context, arg ListServersByPopularParams) ([]Server, error)
+	ListServersByTrending(ctx context.Context, arg ListServersByTrendingParams) ([]Server, error)
+	ListUserGames(ctx context.Context, arg ListUserGamesParams) ([]ListUserGamesRow, error)
 	ListUserServers(ctx context.Context, arg ListUserServersParams) ([]ListUserServersRow, error)
 	ListWords(ctx context.Context, arg ListWordsParams) ([]ListWordsRow, error)
+	RecomputeTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error
 	RemoveAllWordsFromServer(ctx context.Context, serverID uuid.UUID) (pgconn.CommandTag, error)
 	RemoveServerAdmin(ctx context.Context, arg RemoveServerAdminParams) (pgconn.CommandTag, error)
 	RemoveWordsFromServer(ctx context.Context, arg RemoveWordsFromServerParams) (pgconn.CommandTag, error)
+	ResetTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error
 	UpdateServer(ctx context.Context, arg UpdateServerParams) (Server, error)
+	UpdateServerGameStats(ctx context.Context, arg UpdateServerGameStatsParams) error
+	UpsertServerPlayerStats(ctx context.Context, arg UpsertServerPlayerStatsParams) error
+	UpsertUserStats(ctx context.Context, arg UpsertUserStatsParams) error
 }
 
 var _ Querier = (*Queries)(nil)

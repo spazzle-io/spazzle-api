@@ -25,7 +25,7 @@ INSERT INTO servers (
     num_drawing_options
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, is_archived, archived_at, created_at
+) RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
 type CreateServerParams struct {
@@ -63,6 +63,10 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 		&i.NumRoundsPerGame,
 		&i.RoundDurationSecs,
 		&i.NumDrawingOptions,
+		&i.TotalGames,
+		&i.TotalVolume,
+		&i.TotalPlayers,
+		&i.TrendingScore,
 		&i.IsArchived,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -83,6 +87,10 @@ SELECT
     num_rounds_per_game,
     round_duration_secs,
     num_drawing_options,
+    total_games,
+    total_volume,
+    total_players,
+    trending_score,
     is_archived,
     archived_at,
     created_at
@@ -106,6 +114,10 @@ func (q *Queries) GetServerById(ctx context.Context, serverID uuid.UUID) (Server
 		&i.NumRoundsPerGame,
 		&i.RoundDurationSecs,
 		&i.NumDrawingOptions,
+		&i.TotalGames,
+		&i.TotalVolume,
+		&i.TotalPlayers,
+		&i.TrendingScore,
 		&i.IsArchived,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -126,6 +138,10 @@ SELECT
     num_rounds_per_game,
     round_duration_secs,
     num_drawing_options,
+    total_games,
+    total_volume,
+    total_players,
+    trending_score,
     is_archived,
     archived_at,
     created_at
@@ -149,6 +165,10 @@ func (q *Queries) GetServerByName(ctx context.Context, name string) (Server, err
 		&i.NumRoundsPerGame,
 		&i.RoundDurationSecs,
 		&i.NumDrawingOptions,
+		&i.TotalGames,
+		&i.TotalVolume,
+		&i.TotalPlayers,
+		&i.TrendingScore,
 		&i.IsArchived,
 		&i.ArchivedAt,
 		&i.CreatedAt,
@@ -229,6 +249,10 @@ SELECT
     num_rounds_per_game,
     round_duration_secs,
     num_drawing_options,
+    total_games,
+    total_volume,
+    total_players,
+    trending_score,
     is_archived,
     archived_at,
     created_at
@@ -268,6 +292,158 @@ func (q *Queries) ListServers(ctx context.Context, arg ListServersParams) ([]Ser
 			&i.NumRoundsPerGame,
 			&i.RoundDurationSecs,
 			&i.NumDrawingOptions,
+			&i.TotalGames,
+			&i.TotalVolume,
+			&i.TotalPlayers,
+			&i.TrendingScore,
+			&i.IsArchived,
+			&i.ArchivedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listServersByPopular = `-- name: ListServersByPopular :many
+SELECT
+    id,
+    name,
+    owner_id,
+    num_admins,
+    num_custom_words,
+    is_publicly_visible,
+    server_address,
+    stake_per_game,
+    num_rounds_per_game,
+    round_duration_secs,
+    num_drawing_options,
+    total_games,
+    total_volume,
+    total_players,
+    trending_score,
+    is_archived,
+    archived_at,
+    created_at
+FROM servers
+WHERE (
+    $1::int IS NULL
+    OR total_games < $1
+    OR (total_games = $1 AND id < $2)
+) ORDER BY total_games DESC, id DESC
+LIMIT $3
+`
+
+type ListServersByPopularParams struct {
+	AfterTotalGames pgtype.Int4 `json:"after_total_games"`
+	AfterID         pgtype.UUID `json:"after_id"`
+	PageSize        int32       `json:"page_size"`
+}
+
+func (q *Queries) ListServersByPopular(ctx context.Context, arg ListServersByPopularParams) ([]Server, error) {
+	rows, err := q.db.Query(ctx, listServersByPopular, arg.AfterTotalGames, arg.AfterID, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Server{}
+	for rows.Next() {
+		var i Server
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.OwnerID,
+			&i.NumAdmins,
+			&i.NumCustomWords,
+			&i.IsPubliclyVisible,
+			&i.ServerAddress,
+			&i.StakePerGame,
+			&i.NumRoundsPerGame,
+			&i.RoundDurationSecs,
+			&i.NumDrawingOptions,
+			&i.TotalGames,
+			&i.TotalVolume,
+			&i.TotalPlayers,
+			&i.TrendingScore,
+			&i.IsArchived,
+			&i.ArchivedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listServersByTrending = `-- name: ListServersByTrending :many
+SELECT
+    id,
+    name,
+    owner_id,
+    num_admins,
+    num_custom_words,
+    is_publicly_visible,
+    server_address,
+    stake_per_game,
+    num_rounds_per_game,
+    round_duration_secs,
+    num_drawing_options,
+    total_games,
+    total_volume,
+    total_players,
+    trending_score,
+    is_archived,
+    archived_at,
+    created_at
+FROM servers
+WHERE (
+    $1::float8 IS NULL
+    OR trending_score < $1
+    OR (trending_score = $1 AND id < $2)
+) ORDER BY trending_score DESC, id DESC
+LIMIT $3
+`
+
+type ListServersByTrendingParams struct {
+	AfterTrendingScore pgtype.Float8 `json:"after_trending_score"`
+	AfterID            pgtype.UUID   `json:"after_id"`
+	PageSize           int32         `json:"page_size"`
+}
+
+func (q *Queries) ListServersByTrending(ctx context.Context, arg ListServersByTrendingParams) ([]Server, error) {
+	rows, err := q.db.Query(ctx, listServersByTrending, arg.AfterTrendingScore, arg.AfterID, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Server{}
+	for rows.Next() {
+		var i Server
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.OwnerID,
+			&i.NumAdmins,
+			&i.NumCustomWords,
+			&i.IsPubliclyVisible,
+			&i.ServerAddress,
+			&i.StakePerGame,
+			&i.NumRoundsPerGame,
+			&i.RoundDurationSecs,
+			&i.NumDrawingOptions,
+			&i.TotalGames,
+			&i.TotalVolume,
+			&i.TotalPlayers,
+			&i.TrendingScore,
 			&i.IsArchived,
 			&i.ArchivedAt,
 			&i.CreatedAt,
@@ -295,6 +471,10 @@ SELECT
     s.num_rounds_per_game,
     s.round_duration_secs,
     s.num_drawing_options,
+    s.total_games,
+    s.total_volume,
+    s.total_players,
+    s.trending_score,
     s.is_archived,
     s.archived_at,
     s.created_at,
@@ -335,6 +515,10 @@ type ListUserServersRow struct {
 	NumRoundsPerGame  int32              `json:"num_rounds_per_game"`
 	RoundDurationSecs int32              `json:"round_duration_secs"`
 	NumDrawingOptions int32              `json:"num_drawing_options"`
+	TotalGames        int32              `json:"total_games"`
+	TotalVolume       pgtype.Numeric     `json:"total_volume"`
+	TotalPlayers      int32              `json:"total_players"`
+	TrendingScore     float64            `json:"trending_score"`
 	IsArchived        bool               `json:"is_archived"`
 	ArchivedAt        pgtype.Timestamptz `json:"archived_at"`
 	CreatedAt         time.Time          `json:"created_at"`
@@ -368,6 +552,10 @@ func (q *Queries) ListUserServers(ctx context.Context, arg ListUserServersParams
 			&i.NumRoundsPerGame,
 			&i.RoundDurationSecs,
 			&i.NumDrawingOptions,
+			&i.TotalGames,
+			&i.TotalVolume,
+			&i.TotalPlayers,
+			&i.TrendingScore,
 			&i.IsArchived,
 			&i.ArchivedAt,
 			&i.CreatedAt,
@@ -382,6 +570,42 @@ func (q *Queries) ListUserServers(ctx context.Context, arg ListUserServersParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const recomputeTrendingScores = `-- name: RecomputeTrendingScores :exec
+UPDATE servers s
+SET trending_score = COALESCE(sub.score, 0)
+FROM (
+    SELECT
+        g.server_id,
+        COUNT(*)::float8 * 0.7 + COUNT(DISTINCT gp.user_id)::float8 * 0.3 AS score
+    FROM games g
+        JOIN game_players gp ON g.id = gp.game_id
+    WHERE g.ended_at > now() - $1::interval
+    GROUP BY g.server_id
+) sub
+WHERE s.id = sub.server_id
+`
+
+func (q *Queries) RecomputeTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error {
+	_, err := q.db.Exec(ctx, recomputeTrendingScores, trendingWindow)
+	return err
+}
+
+const resetTrendingScores = `-- name: ResetTrendingScores :exec
+UPDATE servers
+SET trending_score = 0
+WHERE trending_score > 0
+AND id NOT IN (
+    SELECT DISTINCT server_id
+    FROM games
+    WHERE ended_at > now() - $1::interval
+)
+`
+
+func (q *Queries) ResetTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error {
+	_, err := q.db.Exec(ctx, resetTrendingScores, trendingWindow)
+	return err
 }
 
 const updateServer = `-- name: UpdateServer :one
@@ -401,7 +625,7 @@ SET
     archived_at = COALESCE($12, archived_at)
 WHERE
     id = $13
-    RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, is_archived, archived_at, created_at
+    RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
 type UpdateServerParams struct {
@@ -449,9 +673,33 @@ func (q *Queries) UpdateServer(ctx context.Context, arg UpdateServerParams) (Ser
 		&i.NumRoundsPerGame,
 		&i.RoundDurationSecs,
 		&i.NumDrawingOptions,
+		&i.TotalGames,
+		&i.TotalVolume,
+		&i.TotalPlayers,
+		&i.TrendingScore,
 		&i.IsArchived,
 		&i.ArchivedAt,
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const updateServerGameStats = `-- name: UpdateServerGameStats :exec
+UPDATE servers
+SET
+    total_games = total_games + 1,
+    total_volume = total_volume + $1,
+    total_players = total_players + $2
+WHERE id = $3
+`
+
+type UpdateServerGameStatsParams struct {
+	Volume     pgtype.Numeric `json:"volume"`
+	NumPlayers int32          `json:"num_players"`
+	ServerID   uuid.UUID      `json:"server_id"`
+}
+
+func (q *Queries) UpdateServerGameStats(ctx context.Context, arg UpdateServerGameStatsParams) error {
+	_, err := q.db.Exec(ctx, updateServerGameStats, arg.Volume, arg.NumPlayers, arg.ServerID)
+	return err
 }

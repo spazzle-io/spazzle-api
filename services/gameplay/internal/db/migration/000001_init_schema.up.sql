@@ -20,7 +20,7 @@ CREATE TABLE "servers" (
 );
 
 CREATE TABLE "games" (
-  "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
+  "id" UUID PRIMARY KEY,
   "server_id" UUID NOT NULL,
   "num_rounds" int NOT NULL DEFAULT 0,
   "num_players" int NOT NULL DEFAULT 0,
@@ -84,6 +84,8 @@ CREATE INDEX ON "servers" ("name");
 CREATE INDEX ON "servers" ("owner_id");
 
 CREATE INDEX ON "servers" ("trending_score" DESC);
+
+CREATE INDEX ON "servers" ("total_games" DESC);
 
 CREATE UNIQUE INDEX servers_name_unique_unarchived_idx ON servers (name) WHERE is_archived = false;
 
