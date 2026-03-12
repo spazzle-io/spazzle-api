@@ -94,6 +94,7 @@ func (processor *RedisTaskProcessor) ProcessTaskArchiveGame(ctx context.Context,
 
 	if err := processor.bus.Cleanup(ctx, game); err != nil {
 		logger.Error().Err(err).Msg("failed to clean up game streams")
+		return fmt.Errorf("failed to clean up game streams: %w", err)
 	}
 
 	log.Info().

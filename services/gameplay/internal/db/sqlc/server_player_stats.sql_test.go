@@ -83,6 +83,10 @@ func TestGetServerLeaderboard(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+	count, err := testStore.GetTotalServerPlayerStatsCount(context.Background(), server.ID)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, count, int64(5))
+
 	leaderboard, err := testStore.GetServerLeaderboard(context.Background(), GetServerLeaderboardParams{
 		ServerID: server.ID,
 		PageSize: 3,
@@ -91,6 +95,55 @@ func TestGetServerLeaderboard(t *testing.T) {
 	require.Len(t, leaderboard, 3)
 
 	for i := 1; i < len(leaderboard); i++ {
-		require.True(t, leaderboard[i-1].TotalPnl.Int.Cmp(leaderboard[i].TotalPnl.Int) >= 0)
+		prev, err := leaderboard[i-1].TotalPnl.Float64Value()
+		require.NoError(t, err)
+		curr, err := leaderboard[i].TotalPnl.Float64Value()
+		require.NoError(t, err)
+
+		require.GreaterOrEqual(t, prev.Float64, curr.Float64)
+	}
+}
+
+func TestGetServerLeaderboardByWindow(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	server := createTestServer(t, uuid.New())
+
+	for i := 0; i <= 2; i++ {
+		game := createTestGame(t, server.ID)
+		insertTestGamePlayers(t, game.ID, []uuid.UUID{uuid.New(), uuid.New()})
+	}
+
+	count, err := testStore.GetServerLeaderboardByWindowCount(context.Background(), GetServerLeaderboardByWindowCountParams{
+		ServerID: server.ID,
+		TimeWindow: pgtype.Interval{
+			Microseconds: 1_000_000, // 1s,
+			Valid:        true,
+		},
+	})
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, count, int64(6))
+
+	leaderboard, err := testStore.GetServerLeaderboardByWindow(context.Background(), GetServerLeaderboardByWindowParams{
+		ServerID: server.ID,
+		TimeWindow: pgtype.Interval{
+			Microseconds: 1_000_000, // 1s,
+			Valid:        true,
+		},
+		PageSize:   4,
+		PageOffset: 0,
+	})
+	require.NoError(t, err)
+	require.Len(t, leaderboard, 4)
+
+	for i := 1; i < len(leaderboard); i++ {
+		prev, err := leaderboard[i-1].TotalPnl.Float64Value()
+		require.NoError(t, err)
+		curr, err := leaderboard[i].TotalPnl.Float64Value()
+		require.NoError(t, err)
+
+		require.GreaterOrEqual(t, prev.Float64, curr.Float64)
 	}
 }

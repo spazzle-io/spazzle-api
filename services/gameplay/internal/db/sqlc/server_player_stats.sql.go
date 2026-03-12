@@ -23,29 +23,19 @@ SELECT
     updated_at
 FROM server_player_stats
 WHERE server_id = $1
-AND (
-    $2::numeric IS NULL
-    OR total_pnl < $2
-    OR (total_pnl = $2 AND user_id < $3)
-)
-ORDER BY total_pnl DESC, user_id DESC
-LIMIT $4
+ORDER BY total_pnl DESC, user_id
+LIMIT $3
+OFFSET $2
 `
 
 type GetServerLeaderboardParams struct {
-	ServerID      uuid.UUID      `json:"server_id"`
-	AfterTotalPnl pgtype.Numeric `json:"after_total_pnl"`
-	AfterID       pgtype.UUID    `json:"after_id"`
-	PageSize      int32          `json:"page_size"`
+	ServerID   uuid.UUID `json:"server_id"`
+	PageOffset int32     `json:"page_offset"`
+	PageSize   int32     `json:"page_size"`
 }
 
 func (q *Queries) GetServerLeaderboard(ctx context.Context, arg GetServerLeaderboardParams) ([]ServerPlayerStat, error) {
-	rows, err := q.db.Query(ctx, getServerLeaderboard,
-		arg.ServerID,
-		arg.AfterTotalPnl,
-		arg.AfterID,
-		arg.PageSize,
-	)
+	rows, err := q.db.Query(ctx, getServerLeaderboard, arg.ServerID, arg.PageOffset, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +60,89 @@ func (q *Queries) GetServerLeaderboard(ctx context.Context, arg GetServerLeaderb
 		return nil, err
 	}
 	return items, nil
+}
+
+const getServerLeaderboardByWindow = `-- name: GetServerLeaderboardByWindow :many
+SELECT
+    gp.user_id,
+    COUNT(*)::int AS total_games,
+    SUM(gp.score)::int AS total_score,
+    SUM(gp.pnl)::numeric AS total_pnl,
+    SUM(g.game_stake)::numeric AS total_volume
+FROM game_players gp
+    JOIN games g ON g.id = gp.game_id
+WHERE g.server_id = $1
+AND g.ended_at > now() - $2::interval
+GROUP BY gp.user_id
+ORDER BY total_pnl DESC, gp.user_id
+LIMIT $4
+OFFSET $3
+`
+
+type GetServerLeaderboardByWindowParams struct {
+	ServerID   uuid.UUID       `json:"server_id"`
+	TimeWindow pgtype.Interval `json:"time_window"`
+	PageOffset int32           `json:"page_offset"`
+	PageSize   int32           `json:"page_size"`
+}
+
+type GetServerLeaderboardByWindowRow struct {
+	UserID      uuid.UUID      `json:"user_id"`
+	TotalGames  int32          `json:"total_games"`
+	TotalScore  int32          `json:"total_score"`
+	TotalPnl    pgtype.Numeric `json:"total_pnl"`
+	TotalVolume pgtype.Numeric `json:"total_volume"`
+}
+
+func (q *Queries) GetServerLeaderboardByWindow(ctx context.Context, arg GetServerLeaderboardByWindowParams) ([]GetServerLeaderboardByWindowRow, error) {
+	rows, err := q.db.Query(ctx, getServerLeaderboardByWindow,
+		arg.ServerID,
+		arg.TimeWindow,
+		arg.PageOffset,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetServerLeaderboardByWindowRow{}
+	for rows.Next() {
+		var i GetServerLeaderboardByWindowRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.TotalGames,
+			&i.TotalScore,
+			&i.TotalPnl,
+			&i.TotalVolume,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getServerLeaderboardByWindowCount = `-- name: GetServerLeaderboardByWindowCount :one
+SELECT COUNT(DISTINCT gp.user_id)
+FROM game_players gp
+    JOIN games g ON g.id = gp.game_id
+WHERE g.server_id = $1
+AND g.ended_at > now() - $2::interval
+`
+
+type GetServerLeaderboardByWindowCountParams struct {
+	ServerID   uuid.UUID       `json:"server_id"`
+	TimeWindow pgtype.Interval `json:"time_window"`
+}
+
+func (q *Queries) GetServerLeaderboardByWindowCount(ctx context.Context, arg GetServerLeaderboardByWindowCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, getServerLeaderboardByWindowCount, arg.ServerID, arg.TimeWindow)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getTotalServerPlayerStatsCount = `-- name: GetTotalServerPlayerStatsCount :one

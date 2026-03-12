@@ -261,7 +261,8 @@ WHERE (
     $1::timestamptz IS NULL
     OR created_at < $1
     OR (created_at = $1 AND id < $2)
-) ORDER BY created_at DESC, id DESC
+)
+ORDER BY created_at DESC, id DESC
 LIMIT $3
 `
 
@@ -492,7 +493,8 @@ AND (
     $2::timestamptz IS NULL
     OR s.created_at < $2
     OR (s.created_at = $2 AND s.id < $3)
-) ORDER BY s.created_at DESC, s.id DESC
+)
+ORDER BY s.created_at DESC, s.id DESC
 LIMIT $4
 `
 

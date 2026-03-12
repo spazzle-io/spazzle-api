@@ -116,7 +116,8 @@ AND (
     sqlc.narg(after_created_at)::timestamptz IS NULL
     OR s.created_at < sqlc.narg(after_created_at)
     OR (s.created_at = sqlc.narg(after_created_at) AND s.id < sqlc.narg(after_id))
-) ORDER BY s.created_at DESC, s.id DESC
+)
+ORDER BY s.created_at DESC, s.id DESC
 LIMIT sqlc.arg(page_size);
 
 -- name: GetTotalServerCount :one
@@ -147,7 +148,8 @@ WHERE (
     sqlc.narg(after_created_at)::timestamptz IS NULL
     OR created_at < sqlc.narg(after_created_at)
     OR (created_at = sqlc.narg(after_created_at) AND id < sqlc.narg(after_id))
-) ORDER BY created_at DESC, id DESC
+)
+ORDER BY created_at DESC, id DESC
 LIMIT sqlc.arg(page_size);
 
 -- name: UpdateServer :one

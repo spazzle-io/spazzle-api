@@ -194,6 +194,36 @@ func (mr *MockStoreMockRecorder) GetGlobalLeaderboard(ctx, arg any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalLeaderboard", reflect.TypeOf((*MockStore)(nil).GetGlobalLeaderboard), ctx, arg)
 }
 
+// GetGlobalLeaderboardByWindow mocks base method.
+func (m *MockStore) GetGlobalLeaderboardByWindow(ctx context.Context, arg db.GetGlobalLeaderboardByWindowParams) ([]db.GetGlobalLeaderboardByWindowRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGlobalLeaderboardByWindow", ctx, arg)
+	ret0, _ := ret[0].([]db.GetGlobalLeaderboardByWindowRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGlobalLeaderboardByWindow indicates an expected call of GetGlobalLeaderboardByWindow.
+func (mr *MockStoreMockRecorder) GetGlobalLeaderboardByWindow(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalLeaderboardByWindow", reflect.TypeOf((*MockStore)(nil).GetGlobalLeaderboardByWindow), ctx, arg)
+}
+
+// GetGlobalLeaderboardByWindowCount mocks base method.
+func (m *MockStore) GetGlobalLeaderboardByWindowCount(ctx context.Context, timeWindow pgtype.Interval) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGlobalLeaderboardByWindowCount", ctx, timeWindow)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGlobalLeaderboardByWindowCount indicates an expected call of GetGlobalLeaderboardByWindowCount.
+func (mr *MockStoreMockRecorder) GetGlobalLeaderboardByWindowCount(ctx, timeWindow any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalLeaderboardByWindowCount", reflect.TypeOf((*MockStore)(nil).GetGlobalLeaderboardByWindowCount), ctx, timeWindow)
+}
+
 // GetRandomWordsForServer mocks base method.
 func (m *MockStore) GetRandomWordsForServer(ctx context.Context, arg db.GetRandomWordsForServerParams) ([]db.GetRandomWordsForServerRow, error) {
 	m.ctrl.T.Helper()
@@ -252,6 +282,36 @@ func (m *MockStore) GetServerLeaderboard(ctx context.Context, arg db.GetServerLe
 func (mr *MockStoreMockRecorder) GetServerLeaderboard(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerLeaderboard", reflect.TypeOf((*MockStore)(nil).GetServerLeaderboard), ctx, arg)
+}
+
+// GetServerLeaderboardByWindow mocks base method.
+func (m *MockStore) GetServerLeaderboardByWindow(ctx context.Context, arg db.GetServerLeaderboardByWindowParams) ([]db.GetServerLeaderboardByWindowRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServerLeaderboardByWindow", ctx, arg)
+	ret0, _ := ret[0].([]db.GetServerLeaderboardByWindowRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServerLeaderboardByWindow indicates an expected call of GetServerLeaderboardByWindow.
+func (mr *MockStoreMockRecorder) GetServerLeaderboardByWindow(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerLeaderboardByWindow", reflect.TypeOf((*MockStore)(nil).GetServerLeaderboardByWindow), ctx, arg)
+}
+
+// GetServerLeaderboardByWindowCount mocks base method.
+func (m *MockStore) GetServerLeaderboardByWindowCount(ctx context.Context, arg db.GetServerLeaderboardByWindowCountParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServerLeaderboardByWindowCount", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServerLeaderboardByWindowCount indicates an expected call of GetServerLeaderboardByWindowCount.
+func (mr *MockStoreMockRecorder) GetServerLeaderboardByWindowCount(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerLeaderboardByWindowCount", reflect.TypeOf((*MockStore)(nil).GetServerLeaderboardByWindowCount), ctx, arg)
 }
 
 // GetServerUserPermissions mocks base method.

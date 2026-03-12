@@ -32,15 +32,34 @@ SELECT
     updated_at
 FROM server_player_stats
 WHERE server_id = sqlc.arg(server_id)
-AND (
-    sqlc.narg(after_total_pnl)::numeric IS NULL
-    OR total_pnl < sqlc.narg(after_total_pnl)
-    OR (total_pnl = sqlc.narg(after_total_pnl) AND user_id < sqlc.narg(after_id))
-)
-ORDER BY total_pnl DESC, user_id DESC
-LIMIT sqlc.arg(page_size);
+ORDER BY total_pnl DESC, user_id
+LIMIT sqlc.arg(page_size)
+OFFSET sqlc.arg(page_offset);
 
 -- name: GetTotalServerPlayerStatsCount :one
 SELECT COUNT(*)
 FROM server_player_stats
 WHERE server_id = sqlc.arg(server_id);
+
+-- name: GetServerLeaderboardByWindow :many
+SELECT
+    gp.user_id,
+    COUNT(*)::int AS total_games,
+    SUM(gp.score)::int AS total_score,
+    SUM(gp.pnl)::numeric AS total_pnl,
+    SUM(g.game_stake)::numeric AS total_volume
+FROM game_players gp
+    JOIN games g ON g.id = gp.game_id
+WHERE g.server_id = sqlc.arg(server_id)
+AND g.ended_at > now() - sqlc.arg(time_window)::interval
+GROUP BY gp.user_id
+ORDER BY total_pnl DESC, gp.user_id
+LIMIT sqlc.arg(page_size)
+OFFSET sqlc.arg(page_offset);
+
+-- name: GetServerLeaderboardByWindowCount :one
+SELECT COUNT(DISTINCT gp.user_id)
+FROM game_players gp
+    JOIN games g ON g.id = gp.game_id
+WHERE g.server_id = sqlc.arg(server_id)
+AND g.ended_at > now() - sqlc.arg(time_window)::interval;

@@ -21,23 +21,18 @@ SELECT
     total_volume,
     updated_at
 FROM user_stats
-WHERE (
-    $1::numeric IS NULL
-    OR total_pnl < $1
-    OR (total_pnl = $1 AND user_id < $2)
-)
-ORDER BY total_pnl DESC, user_id DESC
-LIMIT $3
+ORDER BY total_pnl DESC, user_id
+LIMIT $2
+OFFSET $1
 `
 
 type GetGlobalLeaderboardParams struct {
-	AfterTotalPnl pgtype.Numeric `json:"after_total_pnl"`
-	AfterID       pgtype.UUID    `json:"after_id"`
-	PageSize      int32          `json:"page_size"`
+	PageOffset int32 `json:"page_offset"`
+	PageSize   int32 `json:"page_size"`
 }
 
 func (q *Queries) GetGlobalLeaderboard(ctx context.Context, arg GetGlobalLeaderboardParams) ([]UserStat, error) {
-	rows, err := q.db.Query(ctx, getGlobalLeaderboard, arg.AfterTotalPnl, arg.AfterID, arg.PageSize)
+	rows, err := q.db.Query(ctx, getGlobalLeaderboard, arg.PageOffset, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +56,76 @@ func (q *Queries) GetGlobalLeaderboard(ctx context.Context, arg GetGlobalLeaderb
 		return nil, err
 	}
 	return items, nil
+}
+
+const getGlobalLeaderboardByWindow = `-- name: GetGlobalLeaderboardByWindow :many
+SELECT
+    gp.user_id,
+    COUNT(*)::int AS total_games,
+    SUM(gp.score)::int AS total_score,
+    SUM(gp.pnl)::numeric AS total_pnl,
+    SUM(g.game_stake)::numeric AS total_volume
+FROM game_players gp
+    JOIN games g ON g.id = gp.game_id
+WHERE g.ended_at > now() - $1::interval
+GROUP BY gp.user_id
+ORDER BY total_pnl DESC, gp.user_id
+LIMIT $3
+OFFSET $2
+`
+
+type GetGlobalLeaderboardByWindowParams struct {
+	TimeWindow pgtype.Interval `json:"time_window"`
+	PageOffset int32           `json:"page_offset"`
+	PageSize   int32           `json:"page_size"`
+}
+
+type GetGlobalLeaderboardByWindowRow struct {
+	UserID      uuid.UUID      `json:"user_id"`
+	TotalGames  int32          `json:"total_games"`
+	TotalScore  int32          `json:"total_score"`
+	TotalPnl    pgtype.Numeric `json:"total_pnl"`
+	TotalVolume pgtype.Numeric `json:"total_volume"`
+}
+
+func (q *Queries) GetGlobalLeaderboardByWindow(ctx context.Context, arg GetGlobalLeaderboardByWindowParams) ([]GetGlobalLeaderboardByWindowRow, error) {
+	rows, err := q.db.Query(ctx, getGlobalLeaderboardByWindow, arg.TimeWindow, arg.PageOffset, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetGlobalLeaderboardByWindowRow{}
+	for rows.Next() {
+		var i GetGlobalLeaderboardByWindowRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.TotalGames,
+			&i.TotalScore,
+			&i.TotalPnl,
+			&i.TotalVolume,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getGlobalLeaderboardByWindowCount = `-- name: GetGlobalLeaderboardByWindowCount :one
+SELECT COUNT(DISTINCT gp.user_id)
+FROM game_players gp
+    JOIN games g ON g.id = gp.game_id
+WHERE g.ended_at > now() - $1::interval
+`
+
+func (q *Queries) GetGlobalLeaderboardByWindowCount(ctx context.Context, timeWindow pgtype.Interval) (int64, error) {
+	row := q.db.QueryRow(ctx, getGlobalLeaderboardByWindowCount, timeWindow)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getTotalUserStatsCount = `-- name: GetTotalUserStatsCount :one

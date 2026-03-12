@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -32,8 +33,7 @@ func TestMain(m *testing.M) {
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
 	)
 	if err != nil {
-		fmt.Printf("failed to load config: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to load config: %v", err)
 	}
 
 	testClient = s3.NewFromConfig(cfg, func(o *s3.Options) {
@@ -45,20 +45,19 @@ func TestMain(m *testing.M) {
 		Bucket: aws.String(testBucket),
 	})
 	if err != nil {
-		fmt.Printf("failed to create test bucket: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to create test bucket: %v", err)
 	}
 
 	store, err := NewS3Store(endpoint, region, accessKey, secretKey)
 	if err != nil {
-		fmt.Printf("failed to create store: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to create store: %v", err)
 	}
 	testStore = store
 
 	code := m.Run()
 
 	cleanupBucket(context.Background())
+
 	os.Exit(code)
 }
 
@@ -67,8 +66,7 @@ func cleanupBucket(ctx context.Context) {
 		Bucket: aws.String(testBucket),
 	})
 	if err != nil {
-		fmt.Printf("failed to list objects for cleanup: %v\n", err)
-		return
+		log.Fatalf("failed to list objects for cleanup: %v", err)
 	}
 
 	for _, obj := range list.Contents {
@@ -77,8 +75,7 @@ func cleanupBucket(ctx context.Context) {
 			Key:    obj.Key,
 		})
 		if err != nil {
-			fmt.Printf("failed to delete objects during cleanup: %v\n", err)
-			return
+			log.Fatalf("failed to delete objects during cleanup: %v", err)
 		}
 	}
 
@@ -86,7 +83,6 @@ func cleanupBucket(ctx context.Context) {
 		Bucket: aws.String(testBucket),
 	})
 	if err != nil {
-		fmt.Printf("failed to delete test bucket: %v\n", err)
-		return
+		log.Fatalf("failed to delete test bucket: %v", err)
 	}
 }

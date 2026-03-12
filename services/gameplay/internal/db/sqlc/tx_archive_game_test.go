@@ -30,21 +30,21 @@ func TestArchiveGameTx(t *testing.T) {
 		PlayerResults: []GamePlayerResult{
 			{
 				UserID:            player1,
-				Score:             300,
-				Pnl:               big.NewInt(1000000000000000),
-				Position:          1,
-				RoundsPlayed:      10,
-				ProvisionalPayout: big.NewInt(3000000000000000),
-				TotalStakeLost:    big.NewInt(2000000000000000),
-				IsEvicted:         false,
-			},
-			{
-				UserID:            player2,
 				Score:             200,
 				Pnl:               big.NewInt(-500000000000000),
 				Position:          2,
 				RoundsPlayed:      10,
 				ProvisionalPayout: big.NewInt(1500000000000000),
+				TotalStakeLost:    big.NewInt(2000000000000000),
+				IsEvicted:         false,
+			},
+			{
+				UserID:            player2,
+				Score:             300,
+				Pnl:               big.NewInt(1000000000000000),
+				Position:          1,
+				RoundsPlayed:      10,
+				ProvisionalPayout: big.NewInt(3000000000000000),
 				TotalStakeLost:    big.NewInt(2000000000000000),
 				IsEvicted:         false,
 			},
@@ -84,19 +84,19 @@ func TestArchiveGameTx(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, leaderboard, 3)
-	require.Equal(t, player1.String(), leaderboard[0].UserID.String())
-	require.Equal(t, player2.String(), leaderboard[1].UserID.String())
+	require.Equal(t, player2.String(), leaderboard[0].UserID.String())
+	require.Equal(t, player1.String(), leaderboard[1].UserID.String())
 	require.Equal(t, player3.String(), leaderboard[2].UserID.String())
 
 	stats1, err := testStore.GetUserStats(context.Background(), player1)
 	require.NoError(t, err)
 	require.Equal(t, int32(1), stats1.TotalGames)
-	require.Equal(t, int32(300), stats1.TotalScore)
+	require.Equal(t, int32(200), stats1.TotalScore)
 
 	stats2, err := testStore.GetUserStats(context.Background(), player2)
 	require.NoError(t, err)
 	require.Equal(t, int32(1), stats2.TotalGames)
-	require.Equal(t, int32(200), stats2.TotalScore)
+	require.Equal(t, int32(300), stats2.TotalScore)
 
 	serverLeaderboard, err := testStore.GetServerLeaderboard(context.Background(), GetServerLeaderboardParams{
 		ServerID: server.ID,
