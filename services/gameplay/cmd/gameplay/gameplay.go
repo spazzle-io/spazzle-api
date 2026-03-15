@@ -113,7 +113,7 @@ func main() {
 
 	serverCfg.GfClient, serverCfg.GsManager = startGameServices(ctx, waitGroup, serverCfg)
 
-	go runTaskProcessor(redisOpt, serverCfg)
+	taskProcessor := runTaskProcessor(redisOpt, serverCfg)
 
 	runGRPCServer(ctx, waitGroup, serverCfg)
 	runGatewayServer(ctx, waitGroup, serverCfg)
@@ -123,6 +123,11 @@ func main() {
 	}
 
 	stopInterruptCtx()
+
+	taskProcessor.Stop()
+	if err = taskDistributor.Close(); err != nil {
+		log.Error().Err(err).Msg("could not close task distributor")
+	}
 
 	if err = redisCache.Close(); err != nil {
 		log.Error().Err(err).Msg("could not close redis cache")
@@ -267,7 +272,7 @@ func startGameServices(
 	return gfClient, gsManager
 }
 
-func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) {
+func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) worker.TaskProcessor {
 	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.Store, serverCfg.ObjectStore)
 
 	err := taskProcessor.Start()
@@ -276,4 +281,5 @@ func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerCo
 	}
 
 	log.Info().Msg("task processor started")
+	return taskProcessor
 }

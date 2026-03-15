@@ -35,7 +35,6 @@ func (a *Activities) ArchiveGame(
 		},
 		asynq.MaxRetry(5),
 		asynq.Timeout(10*time.Minute),
-		asynq.Retention(24*time.Hour),
 	)
 	return &ArchiveGameResult{}, err
 }
