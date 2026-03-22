@@ -40,7 +40,7 @@ SELECT
     total_volume,
     updated_at
 FROM user_stats
-ORDER BY total_pnl DESC, user_id
+ORDER BY total_pnl DESC, total_score DESC, user_id DESC
 LIMIT sqlc.arg(page_size)
 OFFSET sqlc.arg(page_offset);
 
@@ -58,7 +58,7 @@ FROM game_players gp
     JOIN games g ON g.id = gp.game_id
 WHERE g.ended_at > now() - sqlc.arg(time_window)::interval
 GROUP BY gp.user_id
-ORDER BY total_pnl DESC, gp.user_id
+ORDER BY total_pnl DESC, total_score DESC, gp.user_id DESC
 LIMIT sqlc.arg(page_size)
 OFFSET sqlc.arg(page_offset);
 

@@ -99,9 +99,9 @@ CREATE INDEX ON "game_players" ("user_id", "game_id");
 
 CREATE INDEX ON "game_players" ("game_id", "position" ASC);
 
-CREATE INDEX ON "user_stats" ("total_pnl" DESC);
+CREATE INDEX ON "user_stats" ("total_pnl" DESC, "total_score" DESC);
 
-CREATE INDEX ON "server_player_stats" ("server_id", "total_pnl" DESC);
+CREATE INDEX ON "server_player_stats" ("server_id", "total_pnl" DESC, "total_score" DESC);
 
 CREATE INDEX ON "server_player_stats" ("user_id");
 

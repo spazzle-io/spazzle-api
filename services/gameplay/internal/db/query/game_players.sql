@@ -31,8 +31,9 @@ AND (
     OR position > sqlc.narg(after_position)
     OR (position = sqlc.narg(after_position) AND user_id < sqlc.narg(after_id))
 )
-ORDER BY position ASC, user_id DESC
-LIMIT sqlc.arg(page_size);
+ORDER BY position ASC, score DESC, user_id DESC
+LIMIT sqlc.arg(page_size)
+OFFSET sqlc.arg(page_offset);
 
 -- name: GetTotalGamePlayersCount :one
 SELECT COUNT(*)
