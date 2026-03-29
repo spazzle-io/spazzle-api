@@ -24,6 +24,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ServerSortBy int32
+
+const (
+	ServerSortBy_SERVER_SORT_BY_UNSPECIFIED ServerSortBy = 0
+	ServerSortBy_SERVER_SORT_BY_NEW         ServerSortBy = 1
+	ServerSortBy_SERVER_SORT_BY_TRENDING    ServerSortBy = 2
+	ServerSortBy_SERVER_SORT_BY_POPULAR     ServerSortBy = 3
+)
+
+// Enum value maps for ServerSortBy.
+var (
+	ServerSortBy_name = map[int32]string{
+		0: "SERVER_SORT_BY_UNSPECIFIED",
+		1: "SERVER_SORT_BY_NEW",
+		2: "SERVER_SORT_BY_TRENDING",
+		3: "SERVER_SORT_BY_POPULAR",
+	}
+	ServerSortBy_value = map[string]int32{
+		"SERVER_SORT_BY_UNSPECIFIED": 0,
+		"SERVER_SORT_BY_NEW":         1,
+		"SERVER_SORT_BY_TRENDING":    2,
+		"SERVER_SORT_BY_POPULAR":     3,
+	}
+)
+
+func (x ServerSortBy) Enum() *ServerSortBy {
+	p := new(ServerSortBy)
+	*p = x
+	return p
+}
+
+func (x ServerSortBy) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ServerSortBy) Descriptor() protoreflect.EnumDescriptor {
+	return file_gameplay_v1_rpc_server_service_proto_enumTypes[0].Descriptor()
+}
+
+func (ServerSortBy) Type() protoreflect.EnumType {
+	return &file_gameplay_v1_rpc_server_service_proto_enumTypes[0]
+}
+
+func (x ServerSortBy) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ServerSortBy.Descriptor instead.
+func (ServerSortBy) EnumDescriptor() ([]byte, []int) {
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{0}
+}
+
 type CreateServerRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -840,110 +892,6 @@ func (x *UpdateServerResponse) GetServer() *Server {
 	return nil
 }
 
-type JoinServerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *JoinServerRequest) Reset() {
-	*x = JoinServerRequest{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *JoinServerRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*JoinServerRequest) ProtoMessage() {}
-
-func (x *JoinServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use JoinServerRequest.ProtoReflect.Descriptor instead.
-func (*JoinServerRequest) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *JoinServerRequest) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-type JoinServerResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	JoinCode      string                 `protobuf:"bytes,2,opt,name=join_code,json=joinCode,proto3" json:"join_code,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *JoinServerResponse) Reset() {
-	*x = JoinServerResponse{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *JoinServerResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*JoinServerResponse) ProtoMessage() {}
-
-func (x *JoinServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use JoinServerResponse.ProtoReflect.Descriptor instead.
-func (*JoinServerResponse) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *JoinServerResponse) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-func (x *JoinServerResponse) GetJoinCode() string {
-	if x != nil {
-		return x.JoinCode
-	}
-	return ""
-}
-
-func (x *JoinServerResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
 type ArchiveServerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
@@ -953,7 +901,7 @@ type ArchiveServerRequest struct {
 
 func (x *ArchiveServerRequest) Reset() {
 	*x = ArchiveServerRequest{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[16]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -965,7 +913,7 @@ func (x *ArchiveServerRequest) String() string {
 func (*ArchiveServerRequest) ProtoMessage() {}
 
 func (x *ArchiveServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[16]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -978,7 +926,7 @@ func (x *ArchiveServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveServerRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveServerRequest) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{16}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ArchiveServerRequest) GetServerId() string {
@@ -997,7 +945,7 @@ type ArchiveServerResponse struct {
 
 func (x *ArchiveServerResponse) Reset() {
 	*x = ArchiveServerResponse{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[17]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1009,7 +957,7 @@ func (x *ArchiveServerResponse) String() string {
 func (*ArchiveServerResponse) ProtoMessage() {}
 
 func (x *ArchiveServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[17]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1022,7 +970,7 @@ func (x *ArchiveServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveServerResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveServerResponse) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{17}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ArchiveServerResponse) GetServer() *Server {
@@ -1054,7 +1002,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[18]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1066,7 +1014,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[18]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1079,7 +1027,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{18}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Server) GetId() string {
@@ -1204,7 +1152,7 @@ type UserServer struct {
 
 func (x *UserServer) Reset() {
 	*x = UserServer{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[19]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1216,7 +1164,7 @@ func (x *UserServer) String() string {
 func (*UserServer) ProtoMessage() {}
 
 func (x *UserServer) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[19]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1229,7 +1177,7 @@ func (x *UserServer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserServer.ProtoReflect.Descriptor instead.
 func (*UserServer) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{19}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UserServer) GetId() string {
@@ -1355,7 +1303,7 @@ type ListServersCursor struct {
 
 func (x *ListServersCursor) Reset() {
 	*x = ListServersCursor{}
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[20]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1367,7 +1315,7 @@ func (x *ListServersCursor) String() string {
 func (*ListServersCursor) ProtoMessage() {}
 
 func (x *ListServersCursor) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[20]
+	mi := &file_gameplay_v1_rpc_server_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1380,7 +1328,7 @@ func (x *ListServersCursor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListServersCursor.ProtoReflect.Descriptor instead.
 func (*ListServersCursor) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{20}
+	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListServersCursor) GetAfterCreatedAt() *timestamppb.Timestamp {
@@ -1463,14 +1411,7 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\x13round_duration_secs\x18\x06 \x01(\v2\x1b.google.protobuf.Int32ValueR\x11roundDurationSecs\x12K\n" +
 	"\x13num_drawing_options\x18\a \x01(\v2\x1b.google.protobuf.Int32ValueR\x11numDrawingOptions\"C\n" +
 	"\x14UpdateServerResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"=\n" +
-	"\x11JoinServerRequest\x12(\n" +
-	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"\x89\x01\n" +
-	"\x12JoinServerResponse\x12\x1b\n" +
-	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x1b\n" +
-	"\tjoin_code\x18\x02 \x01(\tR\bjoinCode\x129\n" +
-	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"@\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"@\n" +
 	"\x14ArchiveServerRequest\x12(\n" +
 	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"D\n" +
 	"\x15ArchiveServerResponse\x12+\n" +
@@ -1521,7 +1462,12 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\x11ListServersCursor\x12D\n" +
 	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
 	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSizeB\xad\x01\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize*\x7f\n" +
+	"\fServerSortBy\x12\x1e\n" +
+	"\x1aSERVER_SORT_BY_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12SERVER_SORT_BY_NEW\x10\x01\x12\x1b\n" +
+	"\x17SERVER_SORT_BY_TRENDING\x10\x02\x12\x1a\n" +
+	"\x16SERVER_SORT_BY_POPULAR\x10\x03B\xad\x01\n" +
 	"\x0fcom.gameplay.v1B\x15RpcServerServiceProtoP\x01Z6github.com/spazzle-io/spazzle-api/services/gameplay/pb\xa2\x02\x03GXX\xaa\x02\vGameplay.V1\xca\x02\vGameplay\\V1\xe2\x02\x17Gameplay\\V1\\GPBMetadata\xea\x02\fGameplay::V1b\x06proto3"
 
 var (
@@ -1536,67 +1482,66 @@ func file_gameplay_v1_rpc_server_service_proto_rawDescGZIP() []byte {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescData
 }
 
-var file_gameplay_v1_rpc_server_service_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_gameplay_v1_rpc_server_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_gameplay_v1_rpc_server_service_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_gameplay_v1_rpc_server_service_proto_goTypes = []any{
-	(*CreateServerRequest)(nil),              // 0: gameplay.v1.CreateServerRequest
-	(*CreateServerResponse)(nil),             // 1: gameplay.v1.CreateServerResponse
-	(*GetServerRequest)(nil),                 // 2: gameplay.v1.GetServerRequest
-	(*GetServerResponse)(nil),                // 3: gameplay.v1.GetServerResponse
-	(*GetServerByNameRequest)(nil),           // 4: gameplay.v1.GetServerByNameRequest
-	(*GetServerByNameResponse)(nil),          // 5: gameplay.v1.GetServerByNameResponse
-	(*ListServersRequest)(nil),               // 6: gameplay.v1.ListServersRequest
-	(*ListServersResponse)(nil),              // 7: gameplay.v1.ListServersResponse
-	(*ListUserServersRequest)(nil),           // 8: gameplay.v1.ListUserServersRequest
-	(*ListUserServersResponse)(nil),          // 9: gameplay.v1.ListUserServersResponse
-	(*GetUserServerPermissionsRequest)(nil),  // 10: gameplay.v1.GetUserServerPermissionsRequest
-	(*GetUserServerPermissionsResponse)(nil), // 11: gameplay.v1.GetUserServerPermissionsResponse
-	(*UpdateServerRequest)(nil),              // 12: gameplay.v1.UpdateServerRequest
-	(*UpdateServerResponse)(nil),             // 13: gameplay.v1.UpdateServerResponse
-	(*JoinServerRequest)(nil),                // 14: gameplay.v1.JoinServerRequest
-	(*JoinServerResponse)(nil),               // 15: gameplay.v1.JoinServerResponse
-	(*ArchiveServerRequest)(nil),             // 16: gameplay.v1.ArchiveServerRequest
-	(*ArchiveServerResponse)(nil),            // 17: gameplay.v1.ArchiveServerResponse
-	(*Server)(nil),                           // 18: gameplay.v1.Server
-	(*UserServer)(nil),                       // 19: gameplay.v1.UserServer
-	(*ListServersCursor)(nil),                // 20: gameplay.v1.ListServersCursor
-	(*timestamppb.Timestamp)(nil),            // 21: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),           // 22: google.protobuf.StringValue
-	(*wrapperspb.Int32Value)(nil),            // 23: google.protobuf.Int32Value
-	(*wrapperspb.BoolValue)(nil),             // 24: google.protobuf.BoolValue
+	(ServerSortBy)(0),                        // 0: gameplay.v1.ServerSortBy
+	(*CreateServerRequest)(nil),              // 1: gameplay.v1.CreateServerRequest
+	(*CreateServerResponse)(nil),             // 2: gameplay.v1.CreateServerResponse
+	(*GetServerRequest)(nil),                 // 3: gameplay.v1.GetServerRequest
+	(*GetServerResponse)(nil),                // 4: gameplay.v1.GetServerResponse
+	(*GetServerByNameRequest)(nil),           // 5: gameplay.v1.GetServerByNameRequest
+	(*GetServerByNameResponse)(nil),          // 6: gameplay.v1.GetServerByNameResponse
+	(*ListServersRequest)(nil),               // 7: gameplay.v1.ListServersRequest
+	(*ListServersResponse)(nil),              // 8: gameplay.v1.ListServersResponse
+	(*ListUserServersRequest)(nil),           // 9: gameplay.v1.ListUserServersRequest
+	(*ListUserServersResponse)(nil),          // 10: gameplay.v1.ListUserServersResponse
+	(*GetUserServerPermissionsRequest)(nil),  // 11: gameplay.v1.GetUserServerPermissionsRequest
+	(*GetUserServerPermissionsResponse)(nil), // 12: gameplay.v1.GetUserServerPermissionsResponse
+	(*UpdateServerRequest)(nil),              // 13: gameplay.v1.UpdateServerRequest
+	(*UpdateServerResponse)(nil),             // 14: gameplay.v1.UpdateServerResponse
+	(*ArchiveServerRequest)(nil),             // 15: gameplay.v1.ArchiveServerRequest
+	(*ArchiveServerResponse)(nil),            // 16: gameplay.v1.ArchiveServerResponse
+	(*Server)(nil),                           // 17: gameplay.v1.Server
+	(*UserServer)(nil),                       // 18: gameplay.v1.UserServer
+	(*ListServersCursor)(nil),                // 19: gameplay.v1.ListServersCursor
+	(*timestamppb.Timestamp)(nil),            // 20: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),           // 21: google.protobuf.StringValue
+	(*wrapperspb.Int32Value)(nil),            // 22: google.protobuf.Int32Value
+	(*wrapperspb.BoolValue)(nil),             // 23: google.protobuf.BoolValue
 }
 var file_gameplay_v1_rpc_server_service_proto_depIdxs = []int32{
-	18, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
-	18, // 1: gameplay.v1.GetServerResponse.server:type_name -> gameplay.v1.Server
-	18, // 2: gameplay.v1.GetServerByNameResponse.server:type_name -> gameplay.v1.Server
-	21, // 3: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	22, // 4: gameplay.v1.ListServersRequest.after_id:type_name -> google.protobuf.StringValue
-	23, // 5: gameplay.v1.ListServersRequest.page_size:type_name -> google.protobuf.Int32Value
-	18, // 6: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
-	20, // 7: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	21, // 8: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	22, // 9: gameplay.v1.ListUserServersRequest.after_id:type_name -> google.protobuf.StringValue
-	23, // 10: gameplay.v1.ListUserServersRequest.page_size:type_name -> google.protobuf.Int32Value
-	19, // 11: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
-	20, // 12: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	22, // 13: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
-	24, // 14: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
-	22, // 15: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
-	23, // 16: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
-	23, // 17: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
-	23, // 18: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
-	18, // 19: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
-	21, // 20: gameplay.v1.JoinServerResponse.expires_at:type_name -> google.protobuf.Timestamp
-	18, // 21: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
-	21, // 22: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
-	21, // 23: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
-	21, // 24: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
-	21, // 25: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
-	21, // 26: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
-	27, // [27:27] is the sub-list for method output_type
-	27, // [27:27] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	17, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
+	17, // 1: gameplay.v1.GetServerResponse.server:type_name -> gameplay.v1.Server
+	17, // 2: gameplay.v1.GetServerByNameResponse.server:type_name -> gameplay.v1.Server
+	20, // 3: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	21, // 4: gameplay.v1.ListServersRequest.after_id:type_name -> google.protobuf.StringValue
+	22, // 5: gameplay.v1.ListServersRequest.page_size:type_name -> google.protobuf.Int32Value
+	17, // 6: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
+	19, // 7: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	20, // 8: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	21, // 9: gameplay.v1.ListUserServersRequest.after_id:type_name -> google.protobuf.StringValue
+	22, // 10: gameplay.v1.ListUserServersRequest.page_size:type_name -> google.protobuf.Int32Value
+	18, // 11: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
+	19, // 12: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	21, // 13: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
+	23, // 14: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
+	21, // 15: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
+	22, // 16: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
+	22, // 17: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
+	22, // 18: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
+	17, // 19: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
+	17, // 20: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
+	20, // 21: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
+	20, // 22: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
+	20, // 23: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
+	20, // 24: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
+	20, // 25: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_gameplay_v1_rpc_server_service_proto_init() }
@@ -1609,13 +1554,14 @@ func file_gameplay_v1_rpc_server_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gameplay_v1_rpc_server_service_proto_rawDesc), len(file_gameplay_v1_rpc_server_service_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   21,
+			NumEnums:      1,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_gameplay_v1_rpc_server_service_proto_goTypes,
 		DependencyIndexes: file_gameplay_v1_rpc_server_service_proto_depIdxs,
+		EnumInfos:         file_gameplay_v1_rpc_server_service_proto_enumTypes,
 		MessageInfos:      file_gameplay_v1_rpc_server_service_proto_msgTypes,
 	}.Build()
 	File_gameplay_v1_rpc_server_service_proto = out.File

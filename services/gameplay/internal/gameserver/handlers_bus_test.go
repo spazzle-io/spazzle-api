@@ -71,8 +71,6 @@ func awaitDirectMsg(gs *GameServer, targetUserID uuid.UUID, timeout time.Duratio
 	}
 }
 
-const broadcastTimeout = 500 * time.Millisecond
-
 func TestHandlePlayersJoined(t *testing.T) {
 	t.Run("adds players and removes rejected ones", func(t *testing.T) {
 		_, gs := createTestGameServer(t)
@@ -237,7 +235,7 @@ func TestHandleArtistSelected(t *testing.T) {
 		artistID := uuid.New()
 		gs.mu.Lock()
 		gs.clients[artistID] = map[uuid.UUID]*Client{
-			uuid.New(): {isSpectating: false},
+			uuid.New(): newStubClient(t, gs, uuid.New(), Player),
 		}
 		gs.mu.Unlock()
 
@@ -277,8 +275,8 @@ func TestHandleArtistSelected(t *testing.T) {
 
 		gs.mu.Lock()
 		gs.clients[artistID] = map[uuid.UUID]*Client{
-			uuid.New(): {isSpectating: true},
-			uuid.New(): {isSpectating: true},
+			uuid.New(): newStubClient(t, gs, uuid.New(), Spectator),
+			uuid.New(): newStubClient(t, gs, uuid.New(), Spectator),
 		}
 		gs.mu.Unlock()
 
@@ -341,7 +339,7 @@ func TestHandleNextArtistSelected(t *testing.T) {
 		nextArtist := uuid.New()
 		gs.mu.Lock()
 		gs.clients[nextArtist] = map[uuid.UUID]*Client{
-			uuid.New(): {isSpectating: false},
+			uuid.New(): newStubClient(t, gs, uuid.New(), Player),
 		}
 		gs.mu.Unlock()
 
@@ -381,8 +379,8 @@ func TestHandleNextArtistSelected(t *testing.T) {
 
 		gs.mu.Lock()
 		gs.clients[nextArtist] = map[uuid.UUID]*Client{
-			uuid.New(): {isSpectating: true},
-			uuid.New(): {isSpectating: true},
+			uuid.New(): newStubClient(t, gs, uuid.New(), Spectator),
+			uuid.New(): newStubClient(t, gs, uuid.New(), Spectator),
 		}
 		gs.mu.Unlock()
 

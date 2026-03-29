@@ -17,14 +17,6 @@ const (
 	ErrCodeServerError    ClientErrorCode = "server_error"
 )
 
-type JoinErrorReason string
-
-const (
-	JoinErrorReasonUnknown          JoinErrorReason = "UNKNOWN"
-	JoinErrorReasonGameServerClosed JoinErrorReason = "GAME_SERVER_CLOSED"
-	JoinErrorReasonGameEnding       JoinErrorReason = "GAME_ENDING"
-)
-
 type ClientError struct {
 	Code    ClientErrorCode `json:"code"`
 	Message string          `json:"message,omitempty"`

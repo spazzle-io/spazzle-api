@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 
 	"github.com/google/uuid"
@@ -33,17 +35,9 @@ func newClientWsMsg(t *testing.T, msgType string, payload any) []byte {
 	return msg
 }
 
-func newTestClient(gs *GameServer, userID uuid.UUID, spectating bool) *Client {
-	return &Client{
-		userID:       userID,
-		connID:       uuid.New(),
-		gameServer:   gs,
-		send:         make(chan *OutgoingMessage, 8),
-		isSpectating: spectating,
-	}
-}
+func registerClientOnServer(t *testing.T, gs *GameServer, c *Client) {
+	t.Helper()
 
-func registerClientOnServer(gs *GameServer, c *Client) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
@@ -53,9 +47,9 @@ func registerClientOnServer(gs *GameServer, c *Client) {
 	gs.clients[c.userID][c.connID] = c
 }
 
-func makeActivePlayer(gs *GameServer, userID uuid.UUID) *Client {
-	c := newTestClient(gs, userID, false)
-	registerClientOnServer(gs, c)
+func makeActivePlayer(t *testing.T, gs *GameServer, userID uuid.UUID) *Client {
+	c := newStubClient(t, gs, userID, Player)
+	registerClientOnServer(t, gs, c)
 
 	gs.mu.Lock()
 	gs.activePlayers[userID] = true
@@ -64,10 +58,10 @@ func makeActivePlayer(gs *GameServer, userID uuid.UUID) *Client {
 	return c
 }
 
-func makeArtistClient(gs *GameServer) *Client {
+func makeArtistClient(t *testing.T, gs *GameServer) *Client {
 	artistID := gs.getCurrentArtist()
-	c := newTestClient(gs, artistID, false)
-	registerClientOnServer(gs, c)
+	c := newStubClient(t, gs, artistID, Player)
+	registerClientOnServer(t, gs, c)
 
 	return c
 }
@@ -92,7 +86,7 @@ func requireClientNoMsg(t *testing.T, c *Client) {
 	case outMsg := <-c.send:
 		t.Fatalf("unexpected message on client send channel: %+v", outMsg)
 	case <-time.After(200 * time.Millisecond):
-		// OK — nothing received.
+		// ok. nothing received.
 	}
 }
 
@@ -100,8 +94,8 @@ func TestHandleClientWsMessage_IgnoresNonJoinWhenGameInactive(t *testing.T) {
 	_, gs := createTestGameServer(t)
 	gs.isGameActive.Store(false)
 
-	client := newTestClient(gs, uuid.New(), false)
-	registerClientOnServer(gs, client)
+	client := newStubClient(t, gs, uuid.New(), Player)
+	registerClientOnServer(t, gs, client)
 
 	msg := newClientWsMsg(t, gameevents.TypeGuessWord, gameevents.GuessWordPayload{Guess: "test"})
 
@@ -113,8 +107,8 @@ func TestHandleClientWsMessage_IgnoresNonJoinWhenGameInactive(t *testing.T) {
 func TestHandleClientWsMessage_InvalidJSON(t *testing.T) {
 	_, gs := createInitializedTestGameServer(t)
 
-	client := newTestClient(gs, uuid.New(), false)
-	registerClientOnServer(gs, client)
+	client := newStubClient(t, gs, uuid.New(), Player)
+	registerClientOnServer(t, gs, client)
 
 	gs.handleClientWsMessage(client, []byte(`not json`))
 
@@ -123,9 +117,26 @@ func TestHandleClientWsMessage_InvalidJSON(t *testing.T) {
 
 func TestHandleJoinGame(t *testing.T) {
 	t.Run("successful registration", func(t *testing.T) {
-		_, gs := createTestGameServer(t)
+		mocks, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
 
-		client := newTestClient(gs, uuid.New(), false)
+		mocks.Cache.EXPECT().
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(1).
+			DoAndReturn(func(ctx context.Context, key string, dest *gamecache.JoinCodeEntry) error {
+				*dest = gamecache.JoinCodeEntry{
+					UserID:   client.userID,
+					ServerID: gs.serverID,
+					GameID:   gs.GetGameID(),
+					Role:     string(client.Role()),
+				}
+				return nil
+			})
+
+		mocks.Cache.EXPECT().
+			Del(gomock.Any(), gomock.Any()).
+			Times(1).
+			Return(nil)
 
 		registerCh := make(chan bool, 1)
 		go func() {
@@ -137,9 +148,268 @@ func TestHandleJoinGame(t *testing.T) {
 			}
 		}()
 
-		gs.handleJoinGame(client)
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
 
+		requireClientNoMsg(t, client)
 		require.True(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("invalid payload sends error", func(t *testing.T) {
+		_, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, `{invalid`)
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientReceivedMsg(t, client)
+		require.False(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("joining a closed server sends error", func(t *testing.T) {
+		_, gs := createInitializedTestGameServer(t)
+		gs.isClosed.Store(true)
+
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientReceivedMsg(t, client)
+		require.False(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("joining an inactive game sends error", func(t *testing.T) {
+		_, gs := createInitializedTestGameServer(t)
+		gs.isGameActive.Store(false)
+
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		payload, err := json.Marshal(gameevents.JoinGamePayload{JoinCode: "valid code"})
+		require.NoError(t, err)
+		require.NotEmpty(t, payload)
+
+		gs.handleJoinGame(client, &WsMessage{
+			Type:    gameevents.TypeJoinGame,
+			Payload: payload,
+		})
+
+		requireClientReceivedMsg(t, client)
+		require.False(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("could not validate join code", func(t *testing.T) {
+		mocks, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		mocks.Cache.EXPECT().
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(1).
+			DoAndReturn(func(ctx context.Context, key string, dest *gamecache.JoinCodeEntry) error {
+				*dest = gamecache.JoinCodeEntry{}
+				return errors.New("could not validate join code")
+			})
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientReceivedMsg(t, client)
+		require.False(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("join code user id does not match calling user id", func(t *testing.T) {
+		mocks, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		mocks.Cache.EXPECT().
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(1).
+			DoAndReturn(func(ctx context.Context, key string, dest *gamecache.JoinCodeEntry) error {
+				*dest = gamecache.JoinCodeEntry{
+					UserID:   uuid.New(),
+					ServerID: gs.serverID,
+					GameID:   gs.GetGameID(),
+					Role:     string(client.Role()),
+				}
+				return nil
+			})
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientReceivedMsg(t, client)
+		require.False(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("join code role could not be parsed", func(t *testing.T) {
+		mocks, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		mocks.Cache.EXPECT().
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(1).
+			DoAndReturn(func(ctx context.Context, key string, dest *gamecache.JoinCodeEntry) error {
+				*dest = gamecache.JoinCodeEntry{
+					UserID:   client.userID,
+					ServerID: gs.serverID,
+					GameID:   gs.GetGameID(),
+					Role:     "invalid role",
+				}
+				return nil
+			})
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientReceivedMsg(t, client)
+		require.False(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("could not invalidate join code", func(t *testing.T) {
+		mocks, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		mocks.Cache.EXPECT().
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(1).
+			DoAndReturn(func(ctx context.Context, key string, dest *gamecache.JoinCodeEntry) error {
+				*dest = gamecache.JoinCodeEntry{
+					UserID:   client.userID,
+					ServerID: gs.serverID,
+					GameID:   gs.GetGameID(),
+					Role:     string(client.Role()),
+				}
+				return nil
+			})
+
+		mocks.Cache.EXPECT().
+			Del(gomock.Any(), gomock.Any()).
+			Times(1).
+			Return(errors.New("could not invalidate join code"))
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientNoMsg(t, client)
+		require.True(t, <-registerCh)
+		require.Equal(t, Player, client.Role())
+	})
+
+	t.Run("join game with different role", func(t *testing.T) {
+		mocks, gs := createInitializedTestGameServer(t)
+		client := makeActivePlayer(t, gs, uuid.New())
+
+		mocks.Cache.EXPECT().
+			Get(gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(1).
+			DoAndReturn(func(ctx context.Context, key string, dest *gamecache.JoinCodeEntry) error {
+				*dest = gamecache.JoinCodeEntry{
+					UserID:   client.userID,
+					ServerID: gs.serverID,
+					GameID:   gs.GetGameID(),
+					Role:     string(Moderator),
+				}
+				return nil
+			})
+
+		mocks.Cache.EXPECT().
+			Del(gomock.Any(), gomock.Any()).
+			Times(1).
+			Return(nil)
+
+		registerCh := make(chan bool, 1)
+		go func() {
+			select {
+			case <-gs.register:
+				registerCh <- true
+			case <-time.After(broadcastTimeout):
+				registerCh <- false
+			}
+		}()
+
+		msg := newClientWsMsg(t, gameevents.TypeJoinGame, gameevents.JoinGamePayload{JoinCode: "valid code"})
+		gs.handleClientWsMessage(client, msg)
+
+		requireClientNoMsg(t, client)
+		require.True(t, <-registerCh)
+		require.Equal(t, Moderator, client.Role())
 	})
 }
 
@@ -148,7 +418,7 @@ func TestHandleGuessWord(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		guesserID := uuid.New()
-		client := makeActivePlayer(gs, guesserID)
+		client := makeActivePlayer(t, gs, guesserID)
 
 		gs.mu.Lock()
 		gs.currentWord = "banana"
@@ -157,7 +427,7 @@ func TestHandleGuessWord(t *testing.T) {
 		mocks.GfClient.EXPECT().
 			RecordCorrectGuesses(
 				gomock.Eq(gs.serverID),
-				gomock.Eq(gs.getGameID()),
+				gomock.Eq(gs.GetGameID()),
 				gomock.Eq(gs.getCurrentRound()),
 				gomock.Any(),
 			).Times(1)
@@ -187,7 +457,7 @@ func TestHandleGuessWord(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		guesserID := uuid.New()
-		client := makeActivePlayer(gs, guesserID)
+		client := makeActivePlayer(t, gs, guesserID)
 
 		gs.mu.Lock()
 		gs.currentWord = "banana"
@@ -215,8 +485,8 @@ func TestHandleGuessWord(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		artistID := gs.getCurrentArtist()
-		_ = makeActivePlayer(gs, artistID)
-		client := makeArtistClient(gs)
+		_ = makeActivePlayer(t, gs, artistID)
+		client := makeArtistClient(t, gs)
 
 		msg := newClientWsMsg(t, gameevents.TypeGuessWord, gameevents.GuessWordPayload{Guess: "test"})
 		gs.handleClientWsMessage(client, msg)
@@ -226,8 +496,8 @@ func TestHandleGuessWord(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		spectatorID := uuid.New()
-		client := newTestClient(gs, spectatorID, true)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, spectatorID, Spectator)
+		registerClientOnServer(t, gs, client)
 
 		gs.mu.Lock()
 		gs.activePlayers[spectatorID] = true
@@ -241,7 +511,7 @@ func TestHandleGuessWord(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		guesserID := uuid.New()
-		client := makeActivePlayer(gs, guesserID)
+		client := makeActivePlayer(t, gs, guesserID)
 
 		gs.mu.Lock()
 		gs.currentWord = "banana"
@@ -266,7 +536,7 @@ func TestHandleGuessWord(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		guesserID := uuid.New()
-		client := makeActivePlayer(gs, guesserID)
+		client := makeActivePlayer(t, gs, guesserID)
 
 		gs.mu.Lock()
 		gs.currentWord = "banana"
@@ -281,8 +551,8 @@ func TestHandleGuessWord(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		outsiderID := uuid.New()
-		client := newTestClient(gs, outsiderID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, outsiderID, Player)
+		registerClientOnServer(t, gs, client)
 
 		msg := newClientWsMsg(t, gameevents.TypeGuessWord, gameevents.GuessWordPayload{Guess: "test"})
 		gs.handleClientWsMessage(client, msg)
@@ -292,7 +562,7 @@ func TestHandleGuessWord(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		guesserID := uuid.New()
-		client := makeActivePlayer(gs, guesserID)
+		client := makeActivePlayer(t, gs, guesserID)
 
 		msg := newClientWsMsg(t, gameevents.TypeGuessWord, gameevents.GuessWordPayload{Guess: "   "})
 		gs.handleClientWsMessage(client, msg)
@@ -302,7 +572,7 @@ func TestHandleGuessWord(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		guesserID := uuid.New()
-		client := makeActivePlayer(gs, guesserID)
+		client := makeActivePlayer(t, gs, guesserID)
 
 		gs.mu.Lock()
 		gs.currentWord = "banana"
@@ -324,8 +594,8 @@ func TestHandleSelectWord(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		artistID := gs.getCurrentArtist()
-		_ = makeActivePlayer(gs, artistID)
-		client := makeArtistClient(gs)
+		_ = makeActivePlayer(t, gs, artistID)
+		client := makeArtistClient(t, gs)
 
 		mocks.Cache.EXPECT().
 			Get(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -348,8 +618,8 @@ func TestHandleSelectWord(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		nonArtist := uuid.New()
-		client := newTestClient(gs, nonArtist, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, nonArtist, Player)
+		registerClientOnServer(t, gs, client)
 
 		msg := newClientWsMsg(t, gameevents.TypeSelectWord, gameevents.SelectWordPayload{Word: "test"})
 		gs.handleClientWsMessage(client, msg)
@@ -359,7 +629,7 @@ func TestHandleSelectWord(t *testing.T) {
 
 	t.Run("empty word sends error", func(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
-		client := makeArtistClient(gs)
+		client := makeArtistClient(t, gs)
 
 		msg := newClientWsMsg(t, gameevents.TypeSelectWord, gameevents.SelectWordPayload{Word: "  "})
 		gs.handleClientWsMessage(client, msg)
@@ -369,7 +639,7 @@ func TestHandleSelectWord(t *testing.T) {
 
 	t.Run("invalid payload sends error", func(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
-		client := makeArtistClient(gs)
+		client := makeArtistClient(t, gs)
 
 		msg := newClientWsMsg(t, gameevents.TypeSelectWord, `{invalid`)
 		gs.handleClientWsMessage(client, msg)
@@ -421,7 +691,7 @@ func TestHandleSelectWord(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				mocks, gs := createInitializedTestGameServer(t)
-				client := makeArtistClient(gs)
+				client := makeArtistClient(t, gs)
 
 				tc.buildStubs(mocks, gs)
 
@@ -437,7 +707,7 @@ func TestHandleSelectWord(t *testing.T) {
 func TestHandleGetWordChoices(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
-		client := makeArtistClient(gs)
+		client := makeArtistClient(t, gs)
 
 		gs.currentWord = ""
 
@@ -475,8 +745,8 @@ func TestHandleGetWordChoices(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		nonArtist := uuid.New()
-		client := newTestClient(gs, nonArtist, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, nonArtist, Player)
+		registerClientOnServer(t, gs, client)
 
 		msg := newClientWsMsg(t, gameevents.TypeGetWordChoices, struct{}{})
 		gs.handleClientWsMessage(client, msg)
@@ -486,7 +756,7 @@ func TestHandleGetWordChoices(t *testing.T) {
 
 	t.Run("skipped when word already selected", func(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
-		client := makeArtistClient(gs)
+		client := makeArtistClient(t, gs)
 
 		require.NotEmpty(t, gs.getCurrentWord())
 
@@ -498,7 +768,7 @@ func TestHandleGetWordChoices(t *testing.T) {
 
 	t.Run("error getting word choices", func(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
-		client := makeArtistClient(gs)
+		client := makeArtistClient(t, gs)
 
 		gs.currentWord = ""
 
@@ -519,8 +789,8 @@ func TestHandleWarnPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		targetID := uuid.New()
 
@@ -550,8 +820,8 @@ func TestHandleWarnPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		mocks.Store.EXPECT().
 			GetServerUserPermissions(gomock.Any(), db.GetServerUserPermissionsParams{
@@ -568,8 +838,8 @@ func TestHandleWarnPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		mocks.Store.EXPECT().
 			GetServerUserPermissions(gomock.Any(), gomock.Any()).
@@ -587,7 +857,7 @@ func TestHandleReportPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		reporterID := uuid.New()
-		client := makeActivePlayer(gs, reporterID)
+		client := makeActivePlayer(t, gs, reporterID)
 
 		reportedID := uuid.New()
 
@@ -603,8 +873,8 @@ func TestHandleReportPlayer(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		spectatorID := uuid.New()
-		client := newTestClient(gs, spectatorID, true)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, spectatorID, Spectator)
+		registerClientOnServer(t, gs, client)
 
 		gs.mu.Lock()
 		gs.activePlayers[spectatorID] = true
@@ -618,8 +888,8 @@ func TestHandleReportPlayer(t *testing.T) {
 		_, gs := createInitializedTestGameServer(t)
 
 		outsiderID := uuid.New()
-		client := newTestClient(gs, outsiderID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, outsiderID, Player)
+		registerClientOnServer(t, gs, client)
 
 		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportedID: uuid.New()})
 		gs.handleClientWsMessage(client, msg)
@@ -631,8 +901,8 @@ func TestHandleClearPlayerReports(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		targetID := uuid.New()
 
@@ -655,8 +925,8 @@ func TestHandleClearPlayerReports(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		mocks.Store.EXPECT().
 			GetServerUserPermissions(gomock.Any(), db.GetServerUserPermissionsParams{
@@ -675,8 +945,8 @@ func TestHandleEjectPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		targetID := uuid.New()
 
@@ -699,8 +969,8 @@ func TestHandleEjectPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		mocks.Store.EXPECT().
 			GetServerUserPermissions(gomock.Any(), db.GetServerUserPermissionsParams{
@@ -717,8 +987,8 @@ func TestHandleEjectPlayer(t *testing.T) {
 		mocks, gs := createInitializedTestGameServer(t)
 
 		callerID := uuid.New()
-		client := newTestClient(gs, callerID, false)
-		registerClientOnServer(gs, client)
+		client := newStubClient(t, gs, callerID, Player)
+		registerClientOnServer(t, gs, client)
 
 		mocks.Store.EXPECT().
 			GetServerUserPermissions(gomock.Any(), gomock.Any()).

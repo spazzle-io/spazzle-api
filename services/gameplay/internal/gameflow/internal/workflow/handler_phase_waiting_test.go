@@ -4,6 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"github.com/stretchr/testify/require"
@@ -20,7 +24,19 @@ func TestPhaseWaiting(t *testing.T) {
 }
 
 func (s *PhaseWaitingTestSuite) TestTransitionsToPhasePrepareRound() {
-	s.SetupDefaultActivities()
+	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.PublishGameEventResult{
+			MessageID: "some-message-id",
+		}, nil)
+	s.env.OnActivity(s.activities.SelectRandomWord, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.SelectRandomWordResult{
+			Word: gofakeit.Word(),
+		}, nil)
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	gameID := uuid.New()
@@ -69,7 +85,19 @@ func (s *PhaseWaitingTestSuite) TestTransitionsToPhasePrepareRound() {
 }
 
 func (s *PhaseWaitingTestSuite) TestNotEnoughPlayers_StaysInWaitingPhase() {
-	s.SetupDefaultActivities()
+	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.PublishGameEventResult{
+			MessageID: "some-message-id",
+		}, nil)
+	s.env.OnActivity(s.activities.SelectRandomWord, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.SelectRandomWordResult{
+			Word: gofakeit.Word(),
+		}, nil)
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	gameID := uuid.New()

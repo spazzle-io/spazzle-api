@@ -7,31 +7,37 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
-	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
-func handlePhaseEndGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
-	logger.Info("entering end-game phase")
+func handlePhaseEndGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
+	state.Logger().Info("entering end-game phase")
 
 	for {
-		err := endGame(ctx, state, notifyCh, logger)
+		err := endGame(ctx, state, notifyCh)
 		if err == nil {
 			break
 		}
 
-		logger.Warn("error occurred in the end-game phase", "error", err)
+		state.Logger().Warn("error occurred in the end-game phase", "error", err)
 
 		if err = workflow.Sleep(ctx, phaseCooldownDuration); err != nil {
-			logger.Warn("failed to cooldown after end-game phase attempt", "error", err)
+			state.Logger().Warn("failed to cooldown after end-game phase attempt", "error", err)
 		}
 	}
 }
 
-func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) error {
+func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) error {
 	results := getFinalPlayerResults(state)
 
 	state.EndedAt = workflow.Now(ctx).UTC()
+
+	// TODO: gameResult should only broadcast the top 10 players and not all players as this will scale linearly with
+	// number of players and exceed our 4KB write limit on wss connections.
+	// Proposed impl: gameResult.Results to be set to results[:min(10, len(results))]
+
+	// TODO: given the change to only broadcast the top 10 players, use the new publish game event activity to send
+	// an end game message to each player in one batch.
 
 	gameResult := gameevents.GameEndedPayload{
 		TotalRounds: state.CurrentRound,
@@ -52,10 +58,10 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, 
 		GameEndedAt:   state.EndedAt,
 	}).Get(ctx, nil)
 	if err != nil {
-		logger.Error("failed to execute archive game activity", "error", err)
+		state.Logger().Error("failed to execute archive game activity", "error", err)
 	}
 
-	logger.Info("game ended")
+	state.Logger().Info("game ended")
 	return nil
 }
 

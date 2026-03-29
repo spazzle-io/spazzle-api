@@ -26,7 +26,7 @@ var File_gameplay_v1_service_gameplay_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\n" +
-	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto\x1a*gameplay/v1/rpc_server_admin_service.proto\x1a\"gameplay/v1/rpc_word_service.proto\x1a\"gameplay/v1/rpc_game_service.proto2\xc5\f\n" +
+	"\"gameplay/v1/service_gameplay.proto\x12\vgameplay.v1\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a$gameplay/v1/rpc_server_service.proto\x1a*gameplay/v1/rpc_server_admin_service.proto\x1a\"gameplay/v1/rpc_word_service.proto\x1a\"gameplay/v1/rpc_game_service.proto2\xa4\v\n" +
 	"\rServerService\x12\x9d\x01\n" +
 	"\fCreateServer\x12 .gameplay.v1.CreateServerRequest\x1a!.gameplay.v1.CreateServerResponse\"H\x92A2\x12\rCreate server\x1a\x13Create a new serverb\f\n" +
 	"\n" +
@@ -42,12 +42,7 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\fUpdateServer\x12 .gameplay.v1.UpdateServerRequest\x1a!.gameplay.v1.UpdateServerResponse\"N\x92A,\x12\rUpdate server\x1a\rUpdate serverb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/servers/{server_id}\x12\x9e\x01\n" +
-	"\n" +
-	"JoinServer\x12\x1e.gameplay.v1.JoinServerRequest\x1a\x1f.gameplay.v1.JoinServerResponse\"O\x92A(\x12\vJoin server\x1a\vJoin serverb\f\n" +
-	"\n" +
-	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/servers/{server_id}/join\x12\xb0\x01\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/servers/{server_id}\x12\xb0\x01\n" +
 	"\rArchiveServer\x12!.gameplay.v1.ArchiveServerRequest\x1a\".gameplay.v1.ArchiveServerResponse\"X\x92A.\x12\x0eArchive server\x1a\x0eArchive serverb\f\n" +
 	"\n" +
 	"\n" +
@@ -82,13 +77,18 @@ const file_gameplay_v1_service_gameplay_proto_rawDesc = "" +
 	"\x0eRemoveAllWords\x12\".gameplay.v1.RemoveAllWordsRequest\x1a#.gameplay.v1.RemoveAllWordsResponse\"s\x92AN\x12\x1eRemove all words from a server\x1a\x1eRemove all words from a serverb\f\n" +
 	"\n" +
 	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c*\x1a/servers/{server_id}/words2\xf4\x01\n" +
-	"\vGameService\x12\xe4\x01\n" +
+	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02\x1c*\x1a/servers/{server_id}/words2\xda\r\n" +
+	"\vGameService\x12\xcc\x01\n" +
+	"\x0eGetCurrentGame\x12\".gameplay.v1.GetCurrentGameRequest\x1a#.gameplay.v1.GetCurrentGameResponse\"q\x92AD\x12\x10Get current game\x1a.Get live game state for a server's active gameb\x00\x82\xd3\xe4\x93\x02$\x12\"/servers/{server_id}/games/current\x12\x8f\x01\n" +
+	"\aGetGame\x12\x1b.gameplay.v1.GetGameRequest\x1a\x1c.gameplay.v1.GetGameResponse\"I\x92A.\x12\bGet game\x1a Get details for a completed gameb\x00\x82\xd3\xe4\x93\x02\x12\x12\x10/games/{game_id}\x12\xd0\x01\n" +
+	"\x12GetGameLeaderboard\x12&.gameplay.v1.GetGameLeaderboardRequest\x1a'.gameplay.v1.GetGameLeaderboardResponse\"i\x92AB\x12\x14Get game leaderboard\x1a(Get player rankings for a completed gameb\x00\x82\xd3\xe4\x93\x02\x1e\x12\x1c/games/{game_id}/leaderboard\x12\xbb\x01\n" +
+	"\x0fListServerGames\x12#.gameplay.v1.ListServerGamesRequest\x1a$.gameplay.v1.ListServerGamesResponse\"]\x92A8\x12\x11List server games\x1a!List completed games for a serverb\x00\x82\xd3\xe4\x93\x02\x1c\x12\x1a/servers/{server_id}/games\x12\xd0\x01\n" +
+	"\x14GetServerLeaderboard\x12(.gameplay.v1.GetServerLeaderboardRequest\x1a).gameplay.v1.GetServerLeaderboardResponse\"c\x92A8\x12\x16Get server leaderboard\x1a\x1cGet top players for a serverb\x00\x82\xd3\xe4\x93\x02\"\x12 /servers/{server_id}/leaderboard\x12\xbd\x01\n" +
+	"\rListUserGames\x12!.gameplay.v1.ListUserGamesRequest\x1a\".gameplay.v1.ListUserGamesResponse\"e\x92AD\x12\x0fList user games\x1a/List games a user has played across all serversb\x00\x82\xd3\xe4\x93\x02\x18\x12\x16/users/{user_id}/games\x12\xc2\x01\n" +
+	"\x14GetGlobalLeaderboard\x12(.gameplay.v1.GetGlobalLeaderboardRequest\x1a).gameplay.v1.GetGlobalLeaderboardResponse\"U\x92A>\x12\x16Get global leaderboard\x1a\"Get top players across all serversb\x00\x82\xd3\xe4\x93\x02\x0e\x12\f/leaderboard\x12\xa5\x01\n" +
+	"\bJoinGame\x12\x1c.gameplay.v1.JoinGameRequest\x1a\x1d.gameplay.v1.JoinGameResponse\"\\\x92A/\x12\tJoin game\x1a Join the active game on a serverb\x00\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/servers/{server_id}/games:join\x12\xd8\x01\n" +
 	"\n" +
-	"ReplayGame\x12\x1e.gameplay.v1.ReplayGameRequest\x1a\x1f.gameplay.v1.ReplayGameResponse\"\x94\x01\x92A^\x12\vReplay game\x1aAReplay game events from a specific point in a game's event streamb\f\n" +
-	"\n" +
-	"\n" +
-	"\x06bearer\x12\x00\x82\xd3\xe4\x93\x02-\x12+/servers/{server_id}/games/{game_id}/replayB\xcf\x02\x92A\x9f\x01\x124\n" +
+	"ReplayGame\x12\x1e.gameplay.v1.ReplayGameRequest\x1a\x1f.gameplay.v1.ReplayGameResponse\"\x88\x01\x92AR\x12\vReplay game\x1aAReplay game events from a specific point in a game's event streamb\x00\x82\xd3\xe4\x93\x02-\x12+/servers/{server_id}/games/{game_id}/replayB\xcf\x02\x92A\x9f\x01\x124\n" +
 	"\x10Gameplay Service\"\x1d\n" +
 	"\aSpazzle\x12\x12https://spazzle.io2\x010ZY\n" +
 	"W\n" +
@@ -106,35 +106,49 @@ var file_gameplay_v1_service_gameplay_proto_goTypes = []any{
 	(*ListUserServersRequest)(nil),           // 4: gameplay.v1.ListUserServersRequest
 	(*GetUserServerPermissionsRequest)(nil),  // 5: gameplay.v1.GetUserServerPermissionsRequest
 	(*UpdateServerRequest)(nil),              // 6: gameplay.v1.UpdateServerRequest
-	(*JoinServerRequest)(nil),                // 7: gameplay.v1.JoinServerRequest
-	(*ArchiveServerRequest)(nil),             // 8: gameplay.v1.ArchiveServerRequest
-	(*AddServerAdminRequest)(nil),            // 9: gameplay.v1.AddServerAdminRequest
-	(*ListServerAdminsRequest)(nil),          // 10: gameplay.v1.ListServerAdminsRequest
-	(*RemoveServerAdminRequest)(nil),         // 11: gameplay.v1.RemoveServerAdminRequest
-	(*AddWordsRequest)(nil),                  // 12: gameplay.v1.AddWordsRequest
-	(*GetRandomWordsRequest)(nil),            // 13: gameplay.v1.GetRandomWordsRequest
-	(*ListWordsRequest)(nil),                 // 14: gameplay.v1.ListWordsRequest
-	(*RemoveWordsRequest)(nil),               // 15: gameplay.v1.RemoveWordsRequest
-	(*RemoveAllWordsRequest)(nil),            // 16: gameplay.v1.RemoveAllWordsRequest
-	(*ReplayGameRequest)(nil),                // 17: gameplay.v1.ReplayGameRequest
-	(*CreateServerResponse)(nil),             // 18: gameplay.v1.CreateServerResponse
-	(*GetServerResponse)(nil),                // 19: gameplay.v1.GetServerResponse
-	(*GetServerByNameResponse)(nil),          // 20: gameplay.v1.GetServerByNameResponse
-	(*ListServersResponse)(nil),              // 21: gameplay.v1.ListServersResponse
-	(*ListUserServersResponse)(nil),          // 22: gameplay.v1.ListUserServersResponse
-	(*GetUserServerPermissionsResponse)(nil), // 23: gameplay.v1.GetUserServerPermissionsResponse
-	(*UpdateServerResponse)(nil),             // 24: gameplay.v1.UpdateServerResponse
-	(*JoinServerResponse)(nil),               // 25: gameplay.v1.JoinServerResponse
-	(*ArchiveServerResponse)(nil),            // 26: gameplay.v1.ArchiveServerResponse
-	(*AddServerAdminResponse)(nil),           // 27: gameplay.v1.AddServerAdminResponse
-	(*ListServerAdminsResponse)(nil),         // 28: gameplay.v1.ListServerAdminsResponse
-	(*RemoveServerAdminResponse)(nil),        // 29: gameplay.v1.RemoveServerAdminResponse
-	(*AddWordsResponse)(nil),                 // 30: gameplay.v1.AddWordsResponse
-	(*GetRandomWordsResponse)(nil),           // 31: gameplay.v1.GetRandomWordsResponse
-	(*ListWordsResponse)(nil),                // 32: gameplay.v1.ListWordsResponse
-	(*RemoveWordsResponse)(nil),              // 33: gameplay.v1.RemoveWordsResponse
-	(*RemoveAllWordsResponse)(nil),           // 34: gameplay.v1.RemoveAllWordsResponse
-	(*ReplayGameResponse)(nil),               // 35: gameplay.v1.ReplayGameResponse
+	(*ArchiveServerRequest)(nil),             // 7: gameplay.v1.ArchiveServerRequest
+	(*AddServerAdminRequest)(nil),            // 8: gameplay.v1.AddServerAdminRequest
+	(*ListServerAdminsRequest)(nil),          // 9: gameplay.v1.ListServerAdminsRequest
+	(*RemoveServerAdminRequest)(nil),         // 10: gameplay.v1.RemoveServerAdminRequest
+	(*AddWordsRequest)(nil),                  // 11: gameplay.v1.AddWordsRequest
+	(*GetRandomWordsRequest)(nil),            // 12: gameplay.v1.GetRandomWordsRequest
+	(*ListWordsRequest)(nil),                 // 13: gameplay.v1.ListWordsRequest
+	(*RemoveWordsRequest)(nil),               // 14: gameplay.v1.RemoveWordsRequest
+	(*RemoveAllWordsRequest)(nil),            // 15: gameplay.v1.RemoveAllWordsRequest
+	(*GetCurrentGameRequest)(nil),            // 16: gameplay.v1.GetCurrentGameRequest
+	(*GetGameRequest)(nil),                   // 17: gameplay.v1.GetGameRequest
+	(*GetGameLeaderboardRequest)(nil),        // 18: gameplay.v1.GetGameLeaderboardRequest
+	(*ListServerGamesRequest)(nil),           // 19: gameplay.v1.ListServerGamesRequest
+	(*GetServerLeaderboardRequest)(nil),      // 20: gameplay.v1.GetServerLeaderboardRequest
+	(*ListUserGamesRequest)(nil),             // 21: gameplay.v1.ListUserGamesRequest
+	(*GetGlobalLeaderboardRequest)(nil),      // 22: gameplay.v1.GetGlobalLeaderboardRequest
+	(*JoinGameRequest)(nil),                  // 23: gameplay.v1.JoinGameRequest
+	(*ReplayGameRequest)(nil),                // 24: gameplay.v1.ReplayGameRequest
+	(*CreateServerResponse)(nil),             // 25: gameplay.v1.CreateServerResponse
+	(*GetServerResponse)(nil),                // 26: gameplay.v1.GetServerResponse
+	(*GetServerByNameResponse)(nil),          // 27: gameplay.v1.GetServerByNameResponse
+	(*ListServersResponse)(nil),              // 28: gameplay.v1.ListServersResponse
+	(*ListUserServersResponse)(nil),          // 29: gameplay.v1.ListUserServersResponse
+	(*GetUserServerPermissionsResponse)(nil), // 30: gameplay.v1.GetUserServerPermissionsResponse
+	(*UpdateServerResponse)(nil),             // 31: gameplay.v1.UpdateServerResponse
+	(*ArchiveServerResponse)(nil),            // 32: gameplay.v1.ArchiveServerResponse
+	(*AddServerAdminResponse)(nil),           // 33: gameplay.v1.AddServerAdminResponse
+	(*ListServerAdminsResponse)(nil),         // 34: gameplay.v1.ListServerAdminsResponse
+	(*RemoveServerAdminResponse)(nil),        // 35: gameplay.v1.RemoveServerAdminResponse
+	(*AddWordsResponse)(nil),                 // 36: gameplay.v1.AddWordsResponse
+	(*GetRandomWordsResponse)(nil),           // 37: gameplay.v1.GetRandomWordsResponse
+	(*ListWordsResponse)(nil),                // 38: gameplay.v1.ListWordsResponse
+	(*RemoveWordsResponse)(nil),              // 39: gameplay.v1.RemoveWordsResponse
+	(*RemoveAllWordsResponse)(nil),           // 40: gameplay.v1.RemoveAllWordsResponse
+	(*GetCurrentGameResponse)(nil),           // 41: gameplay.v1.GetCurrentGameResponse
+	(*GetGameResponse)(nil),                  // 42: gameplay.v1.GetGameResponse
+	(*GetGameLeaderboardResponse)(nil),       // 43: gameplay.v1.GetGameLeaderboardResponse
+	(*ListServerGamesResponse)(nil),          // 44: gameplay.v1.ListServerGamesResponse
+	(*GetServerLeaderboardResponse)(nil),     // 45: gameplay.v1.GetServerLeaderboardResponse
+	(*ListUserGamesResponse)(nil),            // 46: gameplay.v1.ListUserGamesResponse
+	(*GetGlobalLeaderboardResponse)(nil),     // 47: gameplay.v1.GetGlobalLeaderboardResponse
+	(*JoinGameResponse)(nil),                 // 48: gameplay.v1.JoinGameResponse
+	(*ReplayGameResponse)(nil),               // 49: gameplay.v1.ReplayGameResponse
 }
 var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	0,  // 0: gameplay.v1.ServerService.CreateServer:input_type -> gameplay.v1.CreateServerRequest
@@ -144,37 +158,51 @@ var file_gameplay_v1_service_gameplay_proto_depIdxs = []int32{
 	4,  // 4: gameplay.v1.ServerService.ListUserServers:input_type -> gameplay.v1.ListUserServersRequest
 	5,  // 5: gameplay.v1.ServerService.GetUserServerPermissions:input_type -> gameplay.v1.GetUserServerPermissionsRequest
 	6,  // 6: gameplay.v1.ServerService.UpdateServer:input_type -> gameplay.v1.UpdateServerRequest
-	7,  // 7: gameplay.v1.ServerService.JoinServer:input_type -> gameplay.v1.JoinServerRequest
-	8,  // 8: gameplay.v1.ServerService.ArchiveServer:input_type -> gameplay.v1.ArchiveServerRequest
-	9,  // 9: gameplay.v1.ServerAdminService.AddServerAdmin:input_type -> gameplay.v1.AddServerAdminRequest
-	10, // 10: gameplay.v1.ServerAdminService.ListServerAdmins:input_type -> gameplay.v1.ListServerAdminsRequest
-	11, // 11: gameplay.v1.ServerAdminService.RemoveServerAdmin:input_type -> gameplay.v1.RemoveServerAdminRequest
-	12, // 12: gameplay.v1.WordService.AddWords:input_type -> gameplay.v1.AddWordsRequest
-	13, // 13: gameplay.v1.WordService.GetRandomWords:input_type -> gameplay.v1.GetRandomWordsRequest
-	14, // 14: gameplay.v1.WordService.ListWords:input_type -> gameplay.v1.ListWordsRequest
-	15, // 15: gameplay.v1.WordService.RemoveWords:input_type -> gameplay.v1.RemoveWordsRequest
-	16, // 16: gameplay.v1.WordService.RemoveAllWords:input_type -> gameplay.v1.RemoveAllWordsRequest
-	17, // 17: gameplay.v1.GameService.ReplayGame:input_type -> gameplay.v1.ReplayGameRequest
-	18, // 18: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
-	19, // 19: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
-	20, // 20: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
-	21, // 21: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
-	22, // 22: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
-	23, // 23: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
-	24, // 24: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
-	25, // 25: gameplay.v1.ServerService.JoinServer:output_type -> gameplay.v1.JoinServerResponse
-	26, // 26: gameplay.v1.ServerService.ArchiveServer:output_type -> gameplay.v1.ArchiveServerResponse
-	27, // 27: gameplay.v1.ServerAdminService.AddServerAdmin:output_type -> gameplay.v1.AddServerAdminResponse
-	28, // 28: gameplay.v1.ServerAdminService.ListServerAdmins:output_type -> gameplay.v1.ListServerAdminsResponse
-	29, // 29: gameplay.v1.ServerAdminService.RemoveServerAdmin:output_type -> gameplay.v1.RemoveServerAdminResponse
-	30, // 30: gameplay.v1.WordService.AddWords:output_type -> gameplay.v1.AddWordsResponse
-	31, // 31: gameplay.v1.WordService.GetRandomWords:output_type -> gameplay.v1.GetRandomWordsResponse
-	32, // 32: gameplay.v1.WordService.ListWords:output_type -> gameplay.v1.ListWordsResponse
-	33, // 33: gameplay.v1.WordService.RemoveWords:output_type -> gameplay.v1.RemoveWordsResponse
-	34, // 34: gameplay.v1.WordService.RemoveAllWords:output_type -> gameplay.v1.RemoveAllWordsResponse
-	35, // 35: gameplay.v1.GameService.ReplayGame:output_type -> gameplay.v1.ReplayGameResponse
-	18, // [18:36] is the sub-list for method output_type
-	0,  // [0:18] is the sub-list for method input_type
+	7,  // 7: gameplay.v1.ServerService.ArchiveServer:input_type -> gameplay.v1.ArchiveServerRequest
+	8,  // 8: gameplay.v1.ServerAdminService.AddServerAdmin:input_type -> gameplay.v1.AddServerAdminRequest
+	9,  // 9: gameplay.v1.ServerAdminService.ListServerAdmins:input_type -> gameplay.v1.ListServerAdminsRequest
+	10, // 10: gameplay.v1.ServerAdminService.RemoveServerAdmin:input_type -> gameplay.v1.RemoveServerAdminRequest
+	11, // 11: gameplay.v1.WordService.AddWords:input_type -> gameplay.v1.AddWordsRequest
+	12, // 12: gameplay.v1.WordService.GetRandomWords:input_type -> gameplay.v1.GetRandomWordsRequest
+	13, // 13: gameplay.v1.WordService.ListWords:input_type -> gameplay.v1.ListWordsRequest
+	14, // 14: gameplay.v1.WordService.RemoveWords:input_type -> gameplay.v1.RemoveWordsRequest
+	15, // 15: gameplay.v1.WordService.RemoveAllWords:input_type -> gameplay.v1.RemoveAllWordsRequest
+	16, // 16: gameplay.v1.GameService.GetCurrentGame:input_type -> gameplay.v1.GetCurrentGameRequest
+	17, // 17: gameplay.v1.GameService.GetGame:input_type -> gameplay.v1.GetGameRequest
+	18, // 18: gameplay.v1.GameService.GetGameLeaderboard:input_type -> gameplay.v1.GetGameLeaderboardRequest
+	19, // 19: gameplay.v1.GameService.ListServerGames:input_type -> gameplay.v1.ListServerGamesRequest
+	20, // 20: gameplay.v1.GameService.GetServerLeaderboard:input_type -> gameplay.v1.GetServerLeaderboardRequest
+	21, // 21: gameplay.v1.GameService.ListUserGames:input_type -> gameplay.v1.ListUserGamesRequest
+	22, // 22: gameplay.v1.GameService.GetGlobalLeaderboard:input_type -> gameplay.v1.GetGlobalLeaderboardRequest
+	23, // 23: gameplay.v1.GameService.JoinGame:input_type -> gameplay.v1.JoinGameRequest
+	24, // 24: gameplay.v1.GameService.ReplayGame:input_type -> gameplay.v1.ReplayGameRequest
+	25, // 25: gameplay.v1.ServerService.CreateServer:output_type -> gameplay.v1.CreateServerResponse
+	26, // 26: gameplay.v1.ServerService.GetServer:output_type -> gameplay.v1.GetServerResponse
+	27, // 27: gameplay.v1.ServerService.GetServerByName:output_type -> gameplay.v1.GetServerByNameResponse
+	28, // 28: gameplay.v1.ServerService.ListServers:output_type -> gameplay.v1.ListServersResponse
+	29, // 29: gameplay.v1.ServerService.ListUserServers:output_type -> gameplay.v1.ListUserServersResponse
+	30, // 30: gameplay.v1.ServerService.GetUserServerPermissions:output_type -> gameplay.v1.GetUserServerPermissionsResponse
+	31, // 31: gameplay.v1.ServerService.UpdateServer:output_type -> gameplay.v1.UpdateServerResponse
+	32, // 32: gameplay.v1.ServerService.ArchiveServer:output_type -> gameplay.v1.ArchiveServerResponse
+	33, // 33: gameplay.v1.ServerAdminService.AddServerAdmin:output_type -> gameplay.v1.AddServerAdminResponse
+	34, // 34: gameplay.v1.ServerAdminService.ListServerAdmins:output_type -> gameplay.v1.ListServerAdminsResponse
+	35, // 35: gameplay.v1.ServerAdminService.RemoveServerAdmin:output_type -> gameplay.v1.RemoveServerAdminResponse
+	36, // 36: gameplay.v1.WordService.AddWords:output_type -> gameplay.v1.AddWordsResponse
+	37, // 37: gameplay.v1.WordService.GetRandomWords:output_type -> gameplay.v1.GetRandomWordsResponse
+	38, // 38: gameplay.v1.WordService.ListWords:output_type -> gameplay.v1.ListWordsResponse
+	39, // 39: gameplay.v1.WordService.RemoveWords:output_type -> gameplay.v1.RemoveWordsResponse
+	40, // 40: gameplay.v1.WordService.RemoveAllWords:output_type -> gameplay.v1.RemoveAllWordsResponse
+	41, // 41: gameplay.v1.GameService.GetCurrentGame:output_type -> gameplay.v1.GetCurrentGameResponse
+	42, // 42: gameplay.v1.GameService.GetGame:output_type -> gameplay.v1.GetGameResponse
+	43, // 43: gameplay.v1.GameService.GetGameLeaderboard:output_type -> gameplay.v1.GetGameLeaderboardResponse
+	44, // 44: gameplay.v1.GameService.ListServerGames:output_type -> gameplay.v1.ListServerGamesResponse
+	45, // 45: gameplay.v1.GameService.GetServerLeaderboard:output_type -> gameplay.v1.GetServerLeaderboardResponse
+	46, // 46: gameplay.v1.GameService.ListUserGames:output_type -> gameplay.v1.ListUserGamesResponse
+	47, // 47: gameplay.v1.GameService.GetGlobalLeaderboard:output_type -> gameplay.v1.GetGlobalLeaderboardResponse
+	48, // 48: gameplay.v1.GameService.JoinGame:output_type -> gameplay.v1.JoinGameResponse
+	49, // 49: gameplay.v1.GameService.ReplayGame:output_type -> gameplay.v1.ReplayGameResponse
+	25, // [25:50] is the sub-list for method output_type
+	0,  // [0:25] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

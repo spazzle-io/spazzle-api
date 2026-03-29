@@ -11,13 +11,7 @@ import (
 
 func TestSendError(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).

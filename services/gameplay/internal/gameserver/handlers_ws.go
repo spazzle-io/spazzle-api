@@ -1,6 +1,7 @@
 package gameserver
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -23,7 +24,7 @@ func (gs *GameServer) handleClientWsMessage(c *Client, msg []byte) {
 		return
 	}
 
-	if !gs.isGameActive.Load() && wsMessage.Type != gameevents.TypeJoinGame {
+	if !gs.isGameActive.Load() {
 		logger.Warn().
 			Str("type", wsMessage.Type).
 			Msg("could not process client ws message. Game is not active")
@@ -32,7 +33,7 @@ func (gs *GameServer) handleClientWsMessage(c *Client, msg []byte) {
 
 	switch wsMessage.Type {
 	case gameevents.TypeJoinGame:
-		gs.handleJoinGame(c)
+		gs.handleJoinGame(c, &wsMessage)
 
 	case gameevents.TypeUpdateDrawing:
 		gs.handleUpdateDrawing(c, &wsMessage)
@@ -55,18 +56,64 @@ func (gs *GameServer) handleClientWsMessage(c *Client, msg []byte) {
 	}
 }
 
-func (gs *GameServer) handleJoinGame(c *Client) {
-	err := gs.Register(c)
-	if err == nil {
+func (gs *GameServer) handleJoinGame(c *Client, msg *WsMessage) {
+	logger := gs.loggerWithClient(c)
+
+	var payload gameevents.JoinGamePayload
+	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+		logger.Error().Err(err).Msg("could not unmarshal join game payload")
+		gs.sendError(c, ErrCodeInvalidRequest, "invalid payload")
 		return
 	}
 
-	reason := JoinErrorReasonUnknown
-	if errors.Is(err, ErrClosedGameServer) {
-		reason = JoinErrorReasonGameServerClosed
+	if gs.IsClosed() {
+		logger.Error().Msg("game server is closed")
+		gs.sendError(c, ErrCodeJoinError, "could not join game")
+		return
 	}
 
-	gs.sendError(c, ErrCodeJoinError, string(reason))
+	if !gs.IsGameActive() {
+		logger.Error().Msg("game server is not active")
+		gs.sendError(c, ErrCodeJoinError, "could not join game")
+		return
+	}
+
+	joinCodeEntry, err := gs.GameCache.ValidateJoinCode(
+		context.Background(), payload.JoinCode, gs.GetServerId(), gs.GetGameID(),
+	)
+	if err != nil {
+		logger.Error().Err(err).Msg("could not validate join code")
+		gs.sendError(c, ErrCodeJoinError, "could not join game")
+		return
+	}
+
+	if joinCodeEntry.UserID != c.userID {
+		logger.Warn().
+			Str("expected_user_id", joinCodeEntry.UserID.String()).
+			Str("actual_user_id", c.userID.String()).
+			Msg("join code user mismatch")
+		gs.sendError(c, ErrCodeJoinError, "could not join game")
+		return
+	}
+
+	role, err := ParseRole(joinCodeEntry.Role)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to parse role")
+		gs.sendError(c, ErrCodeJoinError, "could not join game")
+		return
+	}
+
+	err = gs.Register(c)
+	if err != nil {
+		gs.sendError(c, ErrCodeJoinError, "could not join game")
+		return
+	}
+
+	if err := gs.GameCache.InvalidateJoinCode(context.Background(), payload.JoinCode); err != nil {
+		logger.Warn().Err(err).Msg("failed to invalidate join code")
+	}
+
+	c.role.Store(role)
 }
 
 func (gs *GameServer) handleUpdateDrawing(c *Client, _ *WsMessage) {
@@ -157,7 +204,7 @@ func (gs *GameServer) handleSelectWord(c *Client, msg *WsMessage) {
 }
 
 func (gs *GameServer) handleGuessWord(c *Client, msg *WsMessage) {
-	if gs.isCurrentArtist(c) || !gs.isActivePlayer(c.userID) || c.isSpectating {
+	if gs.isCurrentArtist(c) || !gs.isActivePlayer(c.userID) || !c.IsPlayer() {
 		return
 	}
 
@@ -183,7 +230,7 @@ func (gs *GameServer) handleGuessWord(c *Client, msg *WsMessage) {
 	}
 
 	if isCorrectGuess {
-		gs.GfClient.RecordCorrectGuesses(gs.serverID, gs.getGameID(), gs.getCurrentRound(), []types.CorrectGuess{
+		gs.GfClient.RecordCorrectGuesses(gs.serverID, gs.GetGameID(), gs.getCurrentRound(), []types.CorrectGuess{
 			{
 				PlayerID:  c.userID,
 				Timestamp: time.Now().UTC(),
@@ -267,7 +314,7 @@ func (gs *GameServer) handleWarnPlayer(c *Client, msg *WsMessage) {
 }
 
 func (gs *GameServer) handleReportPlayer(c *Client, msg *WsMessage) {
-	if !gs.isActivePlayer(c.userID) || c.isSpectating {
+	if !gs.isActivePlayer(c.userID) || !c.IsPlayer() {
 		return
 	}
 
@@ -341,11 +388,11 @@ func (gs *GameServer) sendConnectionInfoMsg(c *Client) {
 	logger := gs.loggerWithClient(c)
 
 	payload, err := json.Marshal(&gameevents.ConnectionInfoPayload{
-		ServerID:     gs.serverID,
-		GameID:       gs.getGameID(),
-		UserID:       c.userID,
-		ConnID:       c.connID,
-		IsSpectating: c.isSpectating,
+		ServerID: gs.serverID,
+		GameID:   gs.GetGameID(),
+		UserID:   c.userID,
+		ConnID:   c.connID,
+		Role:     string(c.Role()),
 	})
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to marshal player connected payload")
@@ -368,7 +415,7 @@ func (gs *GameServer) sendConnectionInfoMsg(c *Client) {
 }
 
 func (gs *GameServer) isCurrentArtist(c *Client) bool {
-	if !c.isSpectating && c.userID == gs.getCurrentArtist() {
+	if c.IsPlayer() && c.userID == gs.getCurrentArtist() {
 		return true
 	}
 

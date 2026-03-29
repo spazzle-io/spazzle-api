@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
+
 	"github.com/hibiken/asynq"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
 
@@ -77,6 +79,8 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
 
+	gameCache := gamecache.New(config, redisCache)
+
 	redisOpt, err := asynq.ParseRedisURI(config.RedisConnURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse redis URI for asynq")
@@ -104,6 +108,7 @@ func main() {
 		Config:          config,
 		Store:           store,
 		Cache:           redisCache,
+		GameCache:       gameCache,
 		Bus:             bus,
 		WordStore:       wordStore,
 		ObjectStore:     objectStore,
@@ -187,6 +192,7 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server
 		Config:    serverCfg.Config,
 		Store:     serverCfg.Store,
 		Cache:     serverCfg.Cache,
+		GameCache: serverCfg.GameCache,
 		GfClient:  serverCfg.GfClient,
 		Bus:       serverCfg.Bus,
 		GsManager: serverCfg.GsManager,

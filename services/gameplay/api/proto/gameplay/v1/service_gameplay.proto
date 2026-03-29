@@ -133,23 +133,6 @@ service ServerService {
     };
   }
 
-  rpc JoinServer(JoinServerRequest) returns (JoinServerResponse) {
-    option (google.api.http) = {
-      post: "/servers/{server_id}/join",
-      body: "*"
-    };
-
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Join server";
-      description: "Join server";
-      security: {
-        security_requirement: {
-          key: "bearer"
-        }
-      };
-    };
-  }
-
   rpc ArchiveServer(ArchiveServerRequest) returns (ArchiveServerResponse) {
     option (google.api.http) = {
       post: "/servers/{server_id}/archive",
@@ -300,6 +283,103 @@ service WordService {
 }
 
 service GameService {
+  rpc GetCurrentGame(GetCurrentGameRequest) returns (GetCurrentGameResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/games/current"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get current game";
+      description: "Get live game state for a server's active game";
+      security: {};
+    };
+  }
+
+  rpc GetGame(GetGameRequest) returns (GetGameResponse) {
+    option (google.api.http) = {
+      get: "/games/{game_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get game";
+      description: "Get details for a completed game";
+      security: {};
+    };
+  }
+
+  rpc GetGameLeaderboard(GetGameLeaderboardRequest) returns (GetGameLeaderboardResponse) {
+    option (google.api.http) = {
+      get: "/games/{game_id}/leaderboard"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get game leaderboard";
+      description: "Get player rankings for a completed game";
+      security: {};
+    };
+  }
+
+  rpc ListServerGames(ListServerGamesRequest) returns (ListServerGamesResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/games"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List server games";
+      description: "List completed games for a server";
+      security: {};
+    };
+  }
+
+  rpc GetServerLeaderboard(GetServerLeaderboardRequest) returns (GetServerLeaderboardResponse) {
+    option (google.api.http) = {
+      get: "/servers/{server_id}/leaderboard"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get server leaderboard";
+      description: "Get top players for a server";
+      security: {};
+    };
+  }
+
+  rpc ListUserGames(ListUserGamesRequest) returns (ListUserGamesResponse) {
+    option (google.api.http) = {
+      get: "/users/{user_id}/games"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List user games";
+      description: "List games a user has played across all servers";
+      security: {};
+    };
+  }
+
+  rpc GetGlobalLeaderboard(GetGlobalLeaderboardRequest) returns (GetGlobalLeaderboardResponse) {
+    option (google.api.http) = {
+      get: "/leaderboard"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get global leaderboard";
+      description: "Get top players across all servers";
+      security: {};
+    };
+  }
+
+  rpc JoinGame(JoinGameRequest) returns (JoinGameResponse) {
+    option (google.api.http) = {
+      post: "/servers/{server_id}/games:join"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Join game";
+      description: "Join the active game on a server";
+      security: {};
+    };
+  }
+
   rpc ReplayGame(ReplayGameRequest) returns (ReplayGameResponse) {
     option (google.api.http) = {
       get: "/servers/{server_id}/games/{game_id}/replay"
@@ -308,11 +388,7 @@ service GameService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Replay game";
       description: "Replay game events from a specific point in a game's event stream";
-      security: {
-        security_requirement: {
-          key: "bearer"
-        }
-      };
+      security: {};
     };
   }
 }

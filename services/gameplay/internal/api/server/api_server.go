@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
+
 	commonStorage "github.com/spazzle-io/spazzle-api/libs/common/storage"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
 
@@ -32,6 +34,7 @@ type APIServerConfig struct {
 	Config          util.Config
 	Store           db.Store
 	Cache           commonCache.Cache
+	GameCache       *gamecache.GameCache
 	Bus             eventbus.EventBus
 	GfClient        gameflow.Client
 	GsManager       *gameserver.Manager
@@ -73,6 +76,12 @@ func NewAPIServer(cfg *APIServerConfig) (*APIServer, error) {
 	gameHandler := game.New(&game.HandlerConfig{
 		Config:      cfg.Config,
 		Bus:         cfg.Bus,
+		Cache:       cfg.Cache,
+		GameCache:   cfg.GameCache,
+		Store:       cfg.Store,
+		GfClient:    cfg.GfClient,
+		WordStore:   cfg.WordStore,
+		GsManager:   cfg.GsManager,
 		AuthService: cfg.AuthService,
 	})
 

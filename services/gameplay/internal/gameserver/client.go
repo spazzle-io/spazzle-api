@@ -3,6 +3,8 @@ package gameserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -16,8 +18,8 @@ import (
 
 const (
 	WriteWait             = 5 * time.Second
-	MaxMessageSize        = 1 << 18 // 0.25 MB
-	ClientSendChanBufSize = 256
+	MaxMessageSize        = 4096
+	ClientSendChanBufSize = 128
 )
 
 type TimingProfile struct {
@@ -32,8 +34,16 @@ var (
 	}
 	AggressiveTiming = TimingProfile{
 		PongWait:   10 * time.Second,
-		PingPeriod: 9 * time.Second,
+		PingPeriod: 8 * time.Second,
 	}
+)
+
+type Role string
+
+const (
+	Player    Role = "player"
+	Moderator Role = "moderator"
+	Spectator Role = "spectator"
 )
 
 type Client struct {
@@ -42,7 +52,7 @@ type Client struct {
 	gameServer    *GameServer
 	conn          *websocket.Conn
 	send          chan *OutgoingMessage
-	isSpectating  bool
+	role          atomic.Value
 	timingUpdate  chan TimingProfile
 	currentTiming atomic.Pointer[TimingProfile]
 }
@@ -64,7 +74,7 @@ func NewClient(
 	gameServer *GameServer,
 	conn *websocket.Conn,
 	userID uuid.UUID,
-	isSpectating bool,
+	role Role,
 	opts ...ClientOption,
 ) (*Client, error) {
 	options := &clientOptions{}
@@ -78,9 +88,9 @@ func NewClient(
 		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
 		userID:       userID,
 		connID:       uuid.New(),
-		isSpectating: isSpectating,
 		timingUpdate: make(chan TimingProfile, 1),
 	}
+	client.role.Store(role)
 
 	defaultTiming := DefaultTiming
 	client.currentTiming.Store(&defaultTiming)
@@ -103,6 +113,27 @@ func (c *Client) getLogger() *zerolog.Logger {
 		Logger()
 
 	return &logger
+}
+
+func (c *Client) Role() Role {
+	return c.role.Load().(Role)
+}
+
+func (c *Client) IsPlayer() bool {
+	return c.role.Load().(Role) == Player
+}
+
+func ParseRole(role string) (Role, error) {
+	switch Role(strings.TrimSpace(strings.ToLower(role))) {
+	case Player:
+		return Player, nil
+	case Moderator:
+		return Moderator, nil
+	case Spectator:
+		return Spectator, nil
+	default:
+		return "", errors.New("invalid role")
+	}
 }
 
 func (c *Client) UpdateTiming(profile TimingProfile) {

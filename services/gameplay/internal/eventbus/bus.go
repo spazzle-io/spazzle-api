@@ -92,14 +92,35 @@ func (b *redisEventBus) multiplexerFor(streamType StreamType) *multiplexer {
 	}
 }
 
+func shouldIncludeReplayMsg(msg Message, visibility ReplayVisibility, clientID uuid.UUID) bool {
+	switch visibility {
+	case ReplayVisibilityAll:
+		return true
+
+	case ReplayVisibilityBroadcastOnly:
+		return msg.TargetClientID == uuid.Nil
+
+	case ReplayVisibilityForClient:
+		return msg.TargetClientID == uuid.Nil || msg.TargetClientID == clientID
+
+	default:
+		return false
+	}
+}
+
 func (b *redisEventBus) Replay(
 	ctx context.Context,
 	clientID uuid.UUID,
 	game GameIdentifier,
 	streamType StreamType,
+	visibility ReplayVisibility,
 	after string,
 	limit int,
 ) (ReplayResult, error) {
+	if visibility == ReplayVisibilityForClient && clientID == uuid.Nil {
+		return ReplayResult{}, errors.New("clientID required for ReplayVisibilityForClient")
+	}
+
 	b.mu.RLock()
 	if b.closed {
 		b.mu.RUnlock()
@@ -144,7 +165,7 @@ func (b *redisEventBus) Replay(
 
 			lastID = redisMsg.ID
 
-			if clientID != uuid.Nil && msg.TargetClientID != uuid.Nil && msg.TargetClientID != clientID {
+			if !shouldIncludeReplayMsg(msg, visibility, clientID) {
 				continue
 			}
 

@@ -55,7 +55,7 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 	server, err := h.store.UpdateServer(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to update server")
-		return nil, HandleServerDBError(err)
+		return nil, handler.HandleServerDBError(err)
 	}
 
 	pbServer, err := mapDBServerToPb(&server)

@@ -3,12 +3,31 @@ package game
 import (
 	"fmt"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func mapGameRoleFromPb(gameRole pb.GameRole) (gameserver.Role, error) {
+	var role gameserver.Role
+
+	switch gameRole {
+	case pb.GameRole_GAME_ROLE_PLAYER:
+		role = gameserver.Player
+	case pb.GameRole_GAME_ROLE_SPECTATOR:
+		role = gameserver.Spectator
+	case pb.GameRole_GAME_ROLE_MODERATOR:
+		role = gameserver.Moderator
+	default:
+		return role, fmt.Errorf("unknown game role: %v", gameRole)
+	}
+
+	return role, nil
+}
 
 func mapStreamTypeToPb(streamType eventbus.StreamType) pb.StreamType {
 	var st pb.StreamType
@@ -34,7 +53,7 @@ func mapStreamTypeFromPb(streamType pb.StreamType) (eventbus.StreamType, error) 
 	case pb.StreamType_STREAM_TYPE_DRAWING_UPDATES:
 		st = eventbus.DrawingUpdatesStreamType
 	default:
-		return "", fmt.Errorf("unknown stream type %v", streamType)
+		return st, fmt.Errorf("unknown stream type %v", streamType)
 	}
 
 	return st, nil

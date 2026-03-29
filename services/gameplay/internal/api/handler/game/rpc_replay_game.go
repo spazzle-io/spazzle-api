@@ -4,17 +4,23 @@ import (
 	"context"
 	"strings"
 
+	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
+
 	"buf.build/go/protovalidate"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
-	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	defaultReplayLimit = 500
+	maxReplayLimit     = 1000
 )
 
 func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*pb.ReplayGameResponse, error) {
@@ -23,23 +29,22 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
-	if err != nil {
-		log.Error().Err(err).Msg("access token verification failed")
-		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
-	}
-
 	logger := log.With().
-		Str("user_id", tkPayload.AccessTokenPayload.UserId).
 		Str("game_server_id", req.GetServerId()).
 		Str("game_id", req.GetGameId()).
+		Str("stream_type", req.GetStreamType().String()).
 		Logger()
 
-	userId, err := uuid.Parse(tkPayload.AccessTokenPayload.UserId)
-	if err != nil {
-		logger.Error().Err(err).Msg("invalid user id")
-		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	userID := uuid.Nil
+	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	if err == nil {
+		userID, err = uuid.Parse(tkPayload.AccessTokenPayload.UserId)
+		if err != nil {
+			logger.Error().Err(err).Msg("invalid user id")
+			return nil, status.Error(codes.Internal, handler.InternalServerError)
+		}
 	}
+	logger = logger.With().Str("user_id", userID.String()).Logger()
 
 	gameServerID, err := uuid.Parse(req.GetServerId())
 	if err != nil {
@@ -52,9 +57,6 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		logger.Error().Err(err).Msg("invalid game id")
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidGameIdError)
 	}
-
-	// TODO: Gate replay on the payments service.
-	// Only users with active commitments on the game and those with elevated permissions should be able to replay
 
 	streamType, err := mapStreamTypeFromPb(req.GetStreamType())
 	if err != nil {
@@ -78,10 +80,18 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 
 	limit := req.GetLimit()
 	if limit <= 0 {
-		limit = handler.DefaultPageSize
+		limit = defaultReplayLimit
+	}
+	if limit > maxReplayLimit {
+		limit = maxReplayLimit
 	}
 
-	result, err := h.bus.Replay(ctx, userId, game, streamType, after, int(limit))
+	replayVisibility := eventbus.ReplayVisibilityBroadcastOnly
+	if userID != uuid.Nil {
+		replayVisibility = eventbus.ReplayVisibilityForClient
+	}
+
+	result, err := h.bus.Replay(ctx, userID, game, streamType, replayVisibility, after, int(limit))
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to replay game")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

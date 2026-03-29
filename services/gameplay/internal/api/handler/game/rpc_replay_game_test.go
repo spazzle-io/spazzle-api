@@ -6,12 +6,19 @@ import (
 	"testing"
 	"time"
 
+	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
+	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
+	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
+	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
+	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
 	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
 	mockservices "github.com/spazzle-io/spazzle-api/services/gameplay/internal/services/mock"
-	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -37,15 +44,17 @@ func TestReplayGame(t *testing.T) {
 		checkResponse func(t *testing.T, res *pb.ReplayGameResponse, err error)
 	}{
 		{
-			name: "success",
+			name: "success - authenticated user",
 			req:  replayGameParams,
 			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
+				userID := uuid.New()
+
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
-							UserId: uuid.New().String(),
+							UserId: userID.String(),
 						},
 					}, nil)
 
@@ -55,7 +64,46 @@ func TestReplayGame(t *testing.T) {
 					Return("marker-id", nil)
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq("marker-id"), gomock.Eq(800)).
+					Replay(gomock.Any(), gomock.Eq(userID), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityForClient), gomock.Eq("marker-id"), gomock.Eq(800)).
+					Times(1).
+					Return(eventbus.ReplayResult{
+						Messages: []eventbus.Message{
+							{
+								ID:         "123",
+								Type:       "some type",
+								Timestamp:  time.Now().UTC(),
+								StreamType: eventbus.GameEventsStreamType,
+								Payload:    []byte(`{"word": "cat", "score": 100}`),
+							},
+						},
+						HasMore: true,
+						LastID:  "last-id",
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ReplayGameResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.NotEmpty(t, res.Messages)
+				require.True(t, res.HasMore)
+				require.NotEmpty(t, res.LastId)
+			},
+		},
+		{
+			name: "success - unauthenticated user",
+			req:  replayGameParams,
+			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
+
+				bus.EXPECT().
+					MarkerID(gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.MarkerRoundEnded)).
+					Times(1).
+					Return("marker-id", nil)
+
+				bus.EXPECT().
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq("marker-id"), gomock.Eq(800)).
 					Times(1).
 					Return(eventbus.ReplayResult{
 						Messages: []eventbus.Message{
@@ -96,40 +144,6 @@ func TestReplayGame(t *testing.T) {
 			},
 		},
 		{
-			name: "could not verify access token",
-			req:  replayGameParams,
-			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
-				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("could not verify access token"))
-			},
-			checkResponse: func(t *testing.T, res *pb.ReplayGameResponse, err error) {
-				require.Error(t, err)
-				require.ErrorContains(t, err, handler.UnauthorizedAccessError)
-				require.Empty(t, res)
-			},
-		},
-		{
-			name: "invalid user id",
-			req:  replayGameParams,
-			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
-				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{
-						AccessTokenPayload: &authPb.AccessTokenPayload{
-							UserId: "fake-id",
-						},
-					}, nil)
-			},
-			checkResponse: func(t *testing.T, res *pb.ReplayGameResponse, err error) {
-				require.Error(t, err)
-				require.ErrorContains(t, err, handler.InternalServerError)
-				require.Empty(t, res)
-			},
-		},
-		{
 			name: "user provided after parameter",
 			req: &pb.ReplayGameRequest{
 				ServerId:   uuid.New().String(),
@@ -141,14 +155,10 @@ func TestReplayGame(t *testing.T) {
 				authService.EXPECT().
 					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&authPb.VerifyAccessTokenResponse{
-						AccessTokenPayload: &authPb.AccessTokenPayload{
-							UserId: uuid.New().String(),
-						},
-					}, nil)
+					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq("1772996305636-0"), gomock.Eq(int(handler.DefaultPageSize))).
+					Replay(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq("1772996305636-0"), gomock.Eq(defaultReplayLimit)).
 					Times(1).
 					Return(eventbus.ReplayResult{
 						Messages: []eventbus.Message{
@@ -180,11 +190,17 @@ func TestReplayGame(t *testing.T) {
 			defer ctrl.Finish()
 
 			bus := mockeventbus.NewMockEventBus(ctrl)
+			cache := mockcache.NewMockCache(ctrl)
+			gameCache := gamecache.New(getTestConfig(), cache)
+			store := mockdb.NewMockStore(ctrl)
+			gfClient := mockgameflowclient.NewMockClient(ctrl)
+			wordStore := mockwordstore.NewMockStore(ctrl)
+			gsManager := gameserver.NewManager()
 			authService := mockservices.NewMockAuthGrpcService(ctrl)
 
 			tc.buildStubs(bus, authService)
 
-			gameHandler := newTestHandler(bus, authService)
+			gameHandler := newTestHandler(cache, gameCache, store, bus, gfClient, wordStore, gsManager, authService)
 
 			res, err := gameHandler.ReplayGame(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)

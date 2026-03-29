@@ -13,7 +13,6 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
-	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -22,8 +21,8 @@ const (
 	hintRevealBuffer          = 10 * time.Second
 )
 
-func handlePhaseInRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
-	logger.Info("entering in-round phase")
+func handlePhaseInRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
+	state.Logger().Info("entering in-round phase")
 
 	state.SubPhase = types.SubPhaseConfirmArtist
 
@@ -32,18 +31,18 @@ func handlePhaseInRound(ctx workflow.Context, state *GameState, notifyCh workflo
 
 		switch state.SubPhase {
 		case types.SubPhaseConfirmArtist:
-			err = handleSubPhaseConfirmArtist(ctx, state, notifyCh, logger)
+			err = handleSubPhaseConfirmArtist(ctx, state, notifyCh)
 		case types.SubPhaseWordSelection:
-			err = handleSubPhaseWordSelection(ctx, state, notifyCh, logger)
+			err = handleSubPhaseWordSelection(ctx, state, notifyCh)
 		case types.SubPhaseDrawing:
-			err = handleSubPhaseDrawing(ctx, state, notifyCh, logger)
+			err = handleSubPhaseDrawing(ctx, state, notifyCh)
 		}
 
 		if err != nil {
-			logger.Warn("error occurred in the in-round phase", "error", err)
+			state.Logger().Warn("error occurred in the in-round phase", "error", err)
 
 			if state.CurrentRound > DefaultRoundNumber {
-				logger.Info("ending game due to in-round failure")
+				state.Logger().Info("ending game due to in-round failure")
 				state.Phase = types.PhaseEndRound
 				return
 			}
@@ -60,7 +59,7 @@ func handlePhaseInRound(ctx workflow.Context, state *GameState, notifyCh workflo
 		}
 
 		if err = workflow.Sleep(ctx, phaseCooldownDuration); err != nil {
-			logger.Warn("failed to cooldown after in-round phase attempt", "error", err)
+			state.Logger().Warn("failed to cooldown after in-round phase attempt", "error", err)
 		}
 	}
 }
@@ -69,9 +68,8 @@ func handleSubPhaseConfirmArtist(
 	ctx workflow.Context,
 	state *GameState,
 	notifyCh workflow.Channel,
-	logger log.Logger,
 ) error {
-	logger.Info("entering confirm artist sub-phase")
+	state.Logger().Info("entering confirm artist sub-phase")
 
 	payload := gameevents.ArtistConfirmedPayload{
 		ArtistID:     state.CurrentArtist,
@@ -82,7 +80,7 @@ func handleSubPhaseConfirmArtist(
 		return fmt.Errorf("failed to send artist confirmed event: %w", err)
 	}
 
-	logger.Info("artist confirmed", "artist_id", state.CurrentArtist)
+	state.Logger().Info("artist confirmed", "artist_id", state.CurrentArtist)
 	state.SubPhase = types.SubPhaseWordSelection
 	return nil
 }
@@ -91,9 +89,8 @@ func handleSubPhaseWordSelection(
 	ctx workflow.Context,
 	state *GameState,
 	notifyCh workflow.Channel,
-	logger log.Logger,
 ) error {
-	logger.Info("entering word selection sub-phase")
+	state.Logger().Info("entering word selection sub-phase")
 
 	if strings.TrimSpace(state.CurrentWord.Text) == "" {
 		beginWordSelectionPayload := gameevents.BeginWordSelectionPayload{
@@ -108,7 +105,7 @@ func handleSubPhaseWordSelection(
 			return fmt.Errorf("failed to send begin word selection event: %w", err)
 		}
 
-		if !waitForWordSelection(ctx, state, logger) {
+		if !waitForWordSelection(ctx, state) {
 			return errors.New("failed to select word")
 		}
 	}
@@ -122,13 +119,13 @@ func handleSubPhaseWordSelection(
 		return fmt.Errorf("failed to send word selected event: %w", err)
 	}
 
-	logger.Info("word selected", "word", state.CurrentWord.Text)
+	state.Logger().Info("word selected", "word", state.CurrentWord.Text)
 	state.SubPhase = types.SubPhaseDrawing
 	return nil
 }
 
-func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) error {
-	logger.Info("entering drawing sub-phase")
+func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) error {
+	state.Logger().Info("entering drawing sub-phase")
 
 	beginDrawingPayload := gameevents.BeginDrawingPayload{
 		CurrentRound: state.CurrentRound,
@@ -143,15 +140,15 @@ func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh work
 	defer cancelDrawing()
 
 	workflow.Go(drawingCtx, func(ctx workflow.Context) {
-		handleCorrectGuesses(ctx, state, logger)
+		handleCorrectGuesses(ctx, state)
 	})
 
 	workflow.Go(drawingCtx, func(ctx workflow.Context) {
-		scheduleNextArtistSelection(ctx, state, notifyCh, logger)
+		scheduleNextArtistSelection(ctx, state, notifyCh)
 	})
 
 	workflow.Go(drawingCtx, func(ctx workflow.Context) {
-		scheduleHints(ctx, state, notifyCh, logger)
+		scheduleHints(ctx, state, notifyCh)
 	})
 
 	state.DrawingStartedAt = workflow.Now(ctx).UTC()
@@ -171,9 +168,9 @@ func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh work
 		var signal ArtistDisconnectedSignal
 		c.Receive(ctx, &signal)
 
-		isArtistDisconnected = handleArtistDisconnectedSignal(ctx, state, signal, notifyCh, logger)
+		isArtistDisconnected = handleArtistDisconnectedSignal(ctx, state, signal, notifyCh)
 		if isArtistDisconnected {
-			logger.Warn("artist disconnected during drawing phase")
+			state.Logger().Warn("artist disconnected during drawing phase")
 		}
 	})
 
@@ -184,7 +181,7 @@ func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh work
 		if artist, exists := state.Players[state.CurrentArtist]; exists {
 			if !artist.IsConnected || artist.IsEjected {
 				isArtistDisconnected = true
-				sendArtistDisconnectedEvent(ctx, state, notifyCh, logger)
+				sendArtistDisconnectedEvent(ctx, state, notifyCh)
 			}
 		}
 	})
@@ -199,10 +196,10 @@ func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh work
 	}
 	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeEndDrawing, endDrawingPayload, nil)
 	if err != nil {
-		logger.Error("failed to send end drawing event", "error", err)
+		state.Logger().Error("failed to send end drawing event", "error", err)
 	}
 
-	logger.Info("drawing phase complete")
+	state.Logger().Info("drawing phase complete")
 	state.Phase = types.PhaseEndRound
 	return nil
 }
@@ -212,7 +209,6 @@ func handleArtistDisconnectedSignal(
 	state *GameState,
 	signal ArtistDisconnectedSignal,
 	notifyCh workflow.Channel,
-	logger log.Logger,
 ) (isDisconnected bool) {
 	if signal.GameID != state.GameID || signal.CurrentRound != state.CurrentRound {
 		return
@@ -228,22 +224,22 @@ func handleArtistDisconnectedSignal(
 
 	// TODO: Fine artist
 
-	sendArtistDisconnectedEvent(ctx, state, notifyCh, logger)
+	sendArtistDisconnectedEvent(ctx, state, notifyCh)
 	return true
 }
 
-func sendArtistDisconnectedEvent(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func sendArtistDisconnectedEvent(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	payload := gameevents.ArtistDisconnectedPayload{
 		CurrentRound: state.CurrentRound,
 		ArtistID:     state.CurrentArtist,
 	}
 	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeArtistDisconnected, payload, nil)
 	if err != nil {
-		logger.Error("failed to send artist disconnected event", "error", err)
+		state.Logger().Error("failed to send artist disconnected event", "error", err)
 	}
 }
 
-func waitForWordSelection(ctx workflow.Context, state *GameState, logger log.Logger) (selected bool) {
+func waitForWordSelection(ctx workflow.Context, state *GameState) (selected bool) {
 	timerCtx, cancelTimer := workflow.WithCancel(ctx)
 	defer cancelTimer()
 
@@ -267,11 +263,11 @@ func waitForWordSelection(ctx workflow.Context, state *GameState, logger log.Log
 	})
 
 	selector.AddFuture(workflow.NewTimer(timerCtx, types.WordSelectionTimeout), func(f workflow.Future) {
-		logger.Warn("word selection timeout")
+		state.Logger().Warn("word selection timeout")
 
 		word, err := selectRandomWord(ctx)
 		if err != nil {
-			logger.Error("failed to select random word", "error", err)
+			state.Logger().Error("failed to select random word", "error", err)
 			return
 		}
 
@@ -326,7 +322,7 @@ func toWordTokens(tokens []types.Token) []gameevents.WordToken {
 	return wordTokens
 }
 
-func handleCorrectGuesses(ctx workflow.Context, state *GameState, logger log.Logger) {
+func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
 	state.CorrectGuesses[state.CurrentRound] = make([]types.CorrectGuess, 0)
 	state.CorrectGuessers[state.CurrentRound] = make(map[uuid.UUID]bool)
 
@@ -349,7 +345,7 @@ func handleCorrectGuesses(ctx workflow.Context, state *GameState, logger log.Log
 
 				state.CorrectGuessers[state.CurrentRound][guess.PlayerID] = true
 				state.CorrectGuesses[state.CurrentRound] = append(state.CorrectGuesses[state.CurrentRound], guess)
-				logger.Info("correct guess recorded",
+				state.Logger().Info("correct guess recorded",
 					"player_id", guess.PlayerID, "guessed_at", guess.Timestamp)
 			}
 		})
@@ -362,16 +358,16 @@ func handleCorrectGuesses(ctx workflow.Context, state *GameState, logger log.Log
 	}
 }
 
-func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	if int32(state.CurrentRound) == state.NumRounds {
-		logger.Info("last round. skipping next artist selection")
+		state.Logger().Info("last round. skipping next artist selection")
 		return
 	}
 
 	encodedSelectionDelay := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
 		selectionDelay, err := getNextArtistSelectionDelay(state)
 		if err != nil {
-			logger.Error("failed to get next artist selection delay", "error", err)
+			state.Logger().Error("failed to get next artist selection delay", "error", err)
 			return state.DrawingDuration / 2
 		}
 
@@ -381,7 +377,7 @@ func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyC
 	var selectionDelay time.Duration
 	err := encodedSelectionDelay.Get(&selectionDelay)
 	if err != nil {
-		logger.Error("failed to extract next artist selection delay", "error", err)
+		state.Logger().Error("failed to extract next artist selection delay", "error", err)
 		selectionDelay = state.DrawingDuration / 2
 	}
 
@@ -389,9 +385,9 @@ func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyC
 		return
 	}
 
-	nextArtist, err := selectArtist(ctx, state, logger)
+	nextArtist, err := selectArtist(ctx, state)
 	if err != nil {
-		logger.Error("failed to select next artist", "error", err)
+		state.Logger().Error("failed to select next artist", "error", err)
 		return
 	}
 
@@ -406,11 +402,11 @@ func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyC
 		},
 	)
 	if err != nil {
-		logger.Error("failed to send next artist selected event", "error", err)
+		state.Logger().Error("failed to send next artist selected event", "error", err)
 		return
 	}
 	if !delivered {
-		logger.Warn("failed to deliver next artist selected event")
+		state.Logger().Warn("failed to deliver next artist selected event")
 		if player, exists := state.Players[nextArtist]; exists {
 			player.IsConnected = false
 		}
@@ -418,7 +414,7 @@ func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyC
 	}
 
 	state.NextArtist = nextArtist
-	logger.Info("next artist selected", "next_artist", nextArtist)
+	state.Logger().Info("next artist selected", "next_artist", nextArtist)
 }
 
 func getNextArtistSelectionDelay(state *GameState) (time.Duration, error) {
@@ -443,26 +439,26 @@ func getNextArtistSelectionDelay(state *GameState) (time.Duration, error) {
 	return nextArtistSelectionBuffer + time.Duration(n.Int64()), nil
 }
 
-func scheduleHints(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func scheduleHints(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	if state.DrawingDuration <= 0 {
 		return
 	}
 
 	encodedNumHints := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
-		return getNumHintsForWord(state.CurrentWord, logger)
+		return getNumHintsForWord(state.CurrentWord, state)
 	})
 
 	var numHints int
 	err := encodedNumHints.Get(&numHints)
 	if err != nil {
-		logger.Error("failed to extract number of hints", "error", err)
+		state.Logger().Error("failed to extract number of hints", "error", err)
 		numHints = 1
 	}
 
 	encodedHints := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
-		hints, err := getRandomHintsForWord(state.CurrentWord, numHints, logger)
+		hints, err := getRandomHintsForWord(state.CurrentWord, numHints, state)
 		if err != nil {
-			logger.Error("failed to get random hints for word", "error", err)
+			state.Logger().Error("failed to get random hints for word", "error", err)
 		}
 		return hints
 	})
@@ -470,7 +466,7 @@ func scheduleHints(ctx workflow.Context, state *GameState, notifyCh workflow.Cha
 	var hints []gameevents.WordHint
 	err = encodedHints.Get(&hints)
 	if err != nil {
-		logger.Error("failed to extract hints", "error", err)
+		state.Logger().Error("failed to extract hints", "error", err)
 		return
 	}
 
@@ -505,9 +501,9 @@ func scheduleHints(ctx workflow.Context, state *GameState, notifyCh workflow.Cha
 		}
 		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeWordHintRevealed, payload, nil)
 		if err != nil {
-			logger.Error("failed to send word hint revealed event", "error", err)
+			state.Logger().Error("failed to send word hint revealed event", "error", err)
 		} else {
-			logger.Info("word hint revealed",
+			state.Logger().Info("word hint revealed",
 				"token_idx", hint.WordTokenIdx, "char_idx", hint.CharIdx, "char", hint.Char)
 		}
 	}
@@ -525,7 +521,7 @@ func getMaxHintsForWord(word types.Word) int {
 	return 1 + (totalChars - 4)
 }
 
-func getNumHintsForWord(word types.Word, logger log.Logger) int {
+func getNumHintsForWord(word types.Word, state *GameState) int {
 	maxHints := getMaxHintsForWord(word)
 	if maxHints <= 1 {
 		return 1
@@ -533,14 +529,14 @@ func getNumHintsForWord(word types.Word, logger log.Logger) int {
 
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(maxHints)))
 	if err != nil {
-		logger.Error("failed to generate num hints for word", "error", err)
+		state.Logger().Error("failed to generate num hints for word", "error", err)
 		return maxHints
 	}
 
 	return int(n.Int64()) + 1
 }
 
-func getRandomHintsForWord(word types.Word, numHints int, logger log.Logger) ([]gameevents.WordHint, error) {
+func getRandomHintsForWord(word types.Word, numHints int, state *GameState) ([]gameevents.WordHint, error) {
 	totalChars := 0
 	for _, token := range word.Tokens {
 		totalChars += token.Length
@@ -559,7 +555,7 @@ func getRandomHintsForWord(word types.Word, numHints int, logger log.Logger) ([]
 			if charOffset < token.Length {
 				char, err := commonUtil.CharAt(token.Text, charOffset)
 				if err != nil {
-					logger.Warn("failed to find hint char", "error", err,
+					state.Logger().Warn("failed to find hint char", "error", err,
 						"text", token.Text, "char", charOffset)
 					break
 				}

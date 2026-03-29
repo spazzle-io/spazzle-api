@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+
 	"github.com/stretchr/testify/require"
 
 	"buf.build/go/protovalidate"
@@ -22,8 +24,10 @@ const (
 	ServerNotFoundError      string = "Server not found"
 	InvalidAfterIdError      string = "Invalid after id"
 	ServerNameInUseError     string = "Server name already in use"
+	ServerArchivedError      string = "Server archived"
 	InvalidStakePerGameError string = "Invalid stake per game"
 	InvalidStreamTypeError   string = "Invalid stream type"
+	InvalidGameRoleError     string = "Invalid game role"
 )
 
 func ProtovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {
@@ -82,4 +86,23 @@ func CheckInvalidRequestParams(t *testing.T, err error, expectedFieldViolations 
 	}
 
 	require.ElementsMatch(t, expectedFieldViolations, violations)
+}
+
+func HandleServerDBError(dbError error) error {
+	parsedDBError := db.ParseError(dbError)
+
+	switch {
+	// an unarchived server with the same name exists
+	case parsedDBError.Code == db.UniqueViolationCode &&
+		parsedDBError.ConstraintName == "servers_name_unique_unarchived_idx":
+		return status.Error(codes.AlreadyExists, ServerNameInUseError)
+
+	// no server found
+	case errors.Is(dbError, db.RecordNotFoundError):
+		return status.Error(codes.NotFound, ServerNotFoundError)
+
+	// unknown/internal error
+	default:
+		return status.Error(codes.Internal, InternalServerError)
+	}
 }
