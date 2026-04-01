@@ -62,7 +62,7 @@ jobs:
           workflowcheck -V=full
 
       - name: run-db-migrations
-        run: make migrate_up
+        run: make migrate-up
 
       - name: run-tests
         run: make test short=false
