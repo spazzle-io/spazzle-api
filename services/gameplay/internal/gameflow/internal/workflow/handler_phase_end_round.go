@@ -11,30 +11,29 @@ import (
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
-	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
 const endRoundCooldown = 8 * time.Second
 
-func handlePhaseEndRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
-	logger.Info("entering end-round phase")
+func handlePhaseEndRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
+	state.Logger().Info("entering end-round phase")
 
 	for {
-		err := endRound(ctx, state, notifyCh, logger)
+		err := endRound(ctx, state, notifyCh)
 		if err == nil {
 			break
 		}
 
-		logger.Warn("error occurred in the end-round phase", "error", err)
+		state.Logger().Warn("error occurred in the end-round phase", "error", err)
 
 		if err = workflow.Sleep(ctx, phaseCooldownDuration); err != nil {
-			logger.Warn("failed to cooldown after end-round phase attempt", "error", err)
+			state.Logger().Warn("failed to cooldown after end-round phase attempt", "error", err)
 		}
 	}
 }
 
-func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) error {
+func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) error {
 	results := make([]*gameevents.PlayerRoundResult, 0)
 
 	guesses := getSortedGuesses(state)
@@ -61,6 +60,15 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel,
 	results = CalculateProvisionalPayouts(state, results)
 
 	isFinalRound := int32(state.CurrentRound) >= state.NumRounds
+
+	// TODO: roundResult should only send top 10 guessers for the round + artist in the roundResult.Results list.
+	// This is to prevent this payload from ballooning as it will scale linearly with number of players
+	// and we only have 4KB write limit to player wss connections.
+	// Proposed impl: implement an extractTopResults helper func that takes in correctGuessersResults(already sorted),
+	// artistResult, and n=10. Then return first n from correctGuessersResults and append artist at the end.
+
+	// TODO: With the change to only send top n guessers, we can then use the updated publish game event activity to
+	// send round ended message payloads to each player including the artist in one batch.
 
 	roundResult := gameevents.RoundEndedPayload{
 		Round:           state.CurrentRound,
@@ -92,7 +100,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel,
 
 	err = workflow.Sleep(ctx, endRoundCooldown)
 	if err != nil {
-		logger.Error("failed to sleep after sending end round event", "error", err)
+		state.Logger().Error("failed to sleep after sending end round event", "error", err)
 	}
 
 	if isFinalRound || state.IsTerminated {
@@ -102,7 +110,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel,
 		state.Phase = types.PhasePrepareRound
 	}
 
-	logger.Info("round ended", "round", state.CurrentRound)
+	state.Logger().Info("round ended", "round", state.CurrentRound)
 	return nil
 }
 

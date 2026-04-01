@@ -82,9 +82,17 @@ type ReplayResult struct {
 	LastID   string
 }
 
+type ReplayVisibility int
+
+const (
+	ReplayVisibilityAll ReplayVisibility = iota
+	ReplayVisibilityBroadcastOnly
+	ReplayVisibilityForClient
+)
+
 type EventBus interface {
 	Session(game GameIdentifier) (Session, error)
-	Replay(ctx context.Context, clientID uuid.UUID, game GameIdentifier, streamType StreamType, after string, limit int) (ReplayResult, error)
+	Replay(ctx context.Context, clientID uuid.UUID, game GameIdentifier, streamType StreamType, visibility ReplayVisibility, after string, limit int) (ReplayResult, error)
 	MarkerID(ctx context.Context, game GameIdentifier, streamType StreamType, marker Marker) (string, error)
 	Cleanup(ctx context.Context, game GameIdentifier) error
 	Close() error

@@ -66,9 +66,6 @@ tidy:
 		( cd ./$$mod && go mod tidy ) || exit 1; \
 	done
 
-db_schema:
-	dbml2sql --postgres -o ./$(module)/docs/db/db_schema.sql ./$(module)/docs/db/db.dbml
-
 postgres:
 	docker run --name postgres$(POSTGRES_VERSION) -p $(POSTGRES_PORT):$(POSTGRES_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASS) -d postgres:$(POSTGRES_VERSION)
 
@@ -173,4 +170,4 @@ minio-down:
 minio-logs:
 	docker compose -f docker/minio/docker-compose.minio.yml logs -f
 
-.PHONY: run-module-target test merge-coverage tidy db_schema postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs
+.PHONY: run-module-target test merge-coverage tidy postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs

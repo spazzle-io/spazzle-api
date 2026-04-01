@@ -7,20 +7,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
-	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
-func handlePhasePrepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
-	logger.Info("entering prepare round phase")
+func handlePhasePrepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
+	state.Logger().Info("entering prepare round phase")
 
 	for {
-		err := prepareRound(ctx, state, notifyCh, logger)
+		err := prepareRound(ctx, state, notifyCh)
 		if err != nil {
-			logger.Warn("failed to prepare round", "error", err)
+			state.Logger().Warn("failed to prepare round", "error", err)
 
 			if state.CurrentRound > DefaultRoundNumber {
-				logger.Info("ending game due to prepare round failure")
+				state.Logger().Info("ending game due to prepare round failure")
 				state.Phase = types.PhaseEndRound
 				return
 			}
@@ -36,18 +35,18 @@ func handlePhasePrepareRound(ctx workflow.Context, state *GameState, notifyCh wo
 		}
 
 		if err = workflow.Sleep(ctx, phaseCooldownDuration); err != nil {
-			logger.Warn("failed to cooldown after prepare round phase attempt", "error", err)
+			state.Logger().Warn("failed to cooldown after prepare round phase attempt", "error", err)
 		}
 	}
 }
 
-func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) (err error) {
+func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) (err error) {
 	if !hasEnoughPlayers(state) {
 		state.Phase = types.PhaseWaiting
 		return errors.New("not enough players. returning to waiting phase")
 	}
 
-	artistID, err := selectAndNotifyArtist(ctx, state, notifyCh, logger)
+	artistID, err := selectAndNotifyArtist(ctx, state, notifyCh)
 	if err != nil || artistID == uuid.Nil {
 		return fmt.Errorf("failed to select and notify artist: %w", err)
 	}
@@ -60,7 +59,7 @@ func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Chan
 	state.CurrentArtist = artistID
 	state.Phase = types.PhaseInRound
 
-	logger.Info("selected artist", "artist_id", artistID)
+	state.Logger().Info("selected artist", "artist_id", artistID)
 	return nil
 }
 
@@ -68,12 +67,11 @@ func selectAndNotifyArtist(
 	ctx workflow.Context,
 	state *GameState,
 	notifyCh workflow.Channel,
-	logger log.Logger,
 ) (artistID uuid.UUID, err error) {
 	for {
 		artistID = state.CurrentArtist
 		if artistID == uuid.Nil {
-			artistID, err = selectArtist(ctx, state, logger)
+			artistID, err = selectArtist(ctx, state)
 			if err != nil {
 				return uuid.Nil, fmt.Errorf("failed to select artist: %w", err)
 			}
@@ -94,14 +92,14 @@ func selectAndNotifyArtist(
 		}
 
 		if delivered {
-			logger.Info("artist selected and notified", "artist_id", artistID)
+			state.Logger().Info("artist selected and notified", "artist_id", artistID)
 			return artistID, nil
 		}
 
 		if state.CurrentArtist != uuid.Nil {
 			// TODO: Fine state.CurrentArtist
 			state.CurrentArtist = uuid.Nil
-			logger.Warn("previously selected artist fined for leaving the game", "artist_id", artistID)
+			state.Logger().Warn("previously selected artist fined for leaving the game", "artist_id", artistID)
 		}
 
 		if artist, exists := state.Players[artistID]; exists {

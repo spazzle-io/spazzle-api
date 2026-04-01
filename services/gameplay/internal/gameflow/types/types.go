@@ -70,11 +70,16 @@ type PlayerEjection struct {
 
 type GameStateView struct {
 	GameID            uuid.UUID
+	StartedAt         time.Time
+	DrawingDuration   time.Duration
+	EndedAt           time.Time
 	Phase             Phase
 	SubPhase          SubPhase
 	CurrentRound      uint8
+	NumRounds         int32
 	CurrentArtist     uuid.UUID
 	CurrentWord       Word
 	Players           map[uuid.UUID]bool
 	NumCorrectGuesses map[uint8]int
+	StakePerGame      string
 }

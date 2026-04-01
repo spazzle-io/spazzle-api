@@ -31,6 +31,10 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 			Word: gofakeit.Word(),
 		}, nil)
 
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -122,6 +126,10 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 }
 
 func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -230,6 +238,10 @@ func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
 		Return(&activities.SelectRandomWordResult{
 			Word: gofakeit.Word(),
 		}, nil)
+
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -340,6 +352,10 @@ func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
 			Word: gofakeit.Word(),
 		}, nil)
 
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -429,6 +445,10 @@ func (s *InRoundTestSuite) TestEndDrawingEventSent() {
 			Word: gofakeit.Word(),
 		}, nil)
 
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -517,6 +537,10 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 		Return(&activities.SelectRandomWordResult{
 			Word: gofakeit.Word(),
 		}, nil)
+
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -619,6 +643,10 @@ func (s *InRoundTestSuite) TestSelectsNextArtist() {
 			Word: gofakeit.Word(),
 		}, nil)
 
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -716,6 +744,10 @@ func (s *InRoundTestSuite) TestSendsWordHints() {
 		Return(&activities.SelectRandomWordResult{
 			Word: gofakeit.Word(),
 		}, nil)
+
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -817,6 +849,10 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSen
 		Return(&activities.SelectRandomWordResult{
 			Word: gofakeit.Word(),
 		}, nil)
+
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -934,6 +970,10 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
 		Return(&activities.SelectRandomWordResult{
 			Word: gofakeit.Word(),
 		}, nil)
+
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
 
 	serverID := uuid.New()
 	instanceID := uuid.New()

@@ -242,7 +242,7 @@ func (gs *GameServer) getUserClients(userID uuid.UUID, includeSpectators bool) [
 
 	clients := make([]*Client, 0)
 	for _, client := range gs.clients[userID] {
-		if !client.isSpectating || includeSpectators {
+		if client.IsPlayer() || includeSpectators {
 			clients = append(clients, client)
 		}
 	}
@@ -255,7 +255,7 @@ func (gs *GameServer) userHasNonSpectatingClients(userID uuid.UUID) bool {
 	defer gs.mu.RUnlock()
 
 	for _, client := range gs.clients[userID] {
-		if !client.isSpectating {
+		if client.IsPlayer() {
 			return true
 		}
 	}

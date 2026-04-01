@@ -34,6 +34,10 @@ func (s *EndRoundTestSuite) TestEndRound() {
 			Word: gofakeit.Word(),
 		}, nil)
 
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 

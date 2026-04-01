@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"go.temporal.io/sdk/log"
-
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/workflow"
 )
@@ -31,7 +29,7 @@ func getEligibleArtists(state *GameState) []uuid.UUID {
 	return eligibleArtists
 }
 
-func selectArtist(ctx workflow.Context, state *GameState, logger log.Logger) (uuid.UUID, error) {
+func selectArtist(ctx workflow.Context, state *GameState) (uuid.UUID, error) {
 	eligibleArtists := getEligibleArtists(state)
 
 	if len(eligibleArtists) == 0 {
@@ -47,7 +45,7 @@ func selectArtist(ctx workflow.Context, state *GameState, logger log.Logger) (uu
 		maxVal := big.NewInt(int64(len(eligibleArtists)))
 		n, err := rand.Int(rand.Reader, maxVal)
 		if err != nil {
-			logger.Warn("failed to generate random artist ID", "err", err)
+			state.Logger().Warn("failed to generate random artist ID", "err", err)
 			return eligibleArtists[0]
 		}
 		return eligibleArtists[n.Int64()]

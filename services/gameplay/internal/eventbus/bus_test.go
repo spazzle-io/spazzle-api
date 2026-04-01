@@ -143,7 +143,7 @@ func TestReplay_AllMessages_NoClientFiltering(t *testing.T) {
 		publishedIDs = append(publishedIDs, id)
 	}
 
-	result, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, StartFromBeginning().String(), 10)
+	result, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, ReplayVisibilityAll, StartFromBeginning().String(), 10)
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 5)
@@ -195,10 +195,62 @@ func TestReplay_WithClientFiltering(t *testing.T) {
 		publishedIDs = append(publishedIDs, id)
 	}
 
-	result, err := bus.Replay(context.Background(), clientID, game, GameEventsStreamType, StartFromBeginning().String(), 10)
+	result, err := bus.Replay(context.Background(), clientID, game, GameEventsStreamType, ReplayVisibilityForClient, StartFromBeginning().String(), 10)
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 5)
+	require.False(t, result.HasMore)
+	require.Equal(t, publishedIDs[8], result.LastID)
+}
+
+func TestReplay_BroadcastOnly(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping event bus test in short mode")
+	}
+
+	bus := newEventBus(t)
+	game := newGameIdentifier()
+
+	session, err := bus.Session(game)
+	require.NoError(t, err)
+
+	clientID := uuid.New()
+
+	var publishedIDs []string
+	// publish some messages without a target client ID
+	for i := 0; i < 2; i++ {
+		msg := PublishMessage{
+			Type: "replay_event",
+		}
+		id, err := session.Publish(context.Background(), GameEventsStreamType, msg)
+		require.NoError(t, err)
+		publishedIDs = append(publishedIDs, id)
+	}
+	// publish some messages with a different target client ID
+	for i := 0; i < 4; i++ {
+		msg := PublishMessage{
+			Type:           "replay_event",
+			TargetClientID: uuid.New(),
+		}
+		id, err := session.Publish(context.Background(), GameEventsStreamType, msg)
+		require.NoError(t, err)
+		publishedIDs = append(publishedIDs, id)
+	}
+	// publish some messages with this client's ID as the target
+	for i := 0; i < 3; i++ {
+		msg := PublishMessage{
+			Type:           "replay_event",
+			TargetClientID: clientID,
+		}
+		id, err := session.Publish(context.Background(), GameEventsStreamType, msg)
+		require.NoError(t, err)
+		publishedIDs = append(publishedIDs, id)
+	}
+
+	result, err := bus.Replay(context.Background(), clientID, game, GameEventsStreamType, ReplayVisibilityBroadcastOnly, StartFromBeginning().String(), 10)
+	require.NoError(t, err)
+
+	require.Len(t, result.Messages, 2)
 	require.False(t, result.HasMore)
 	require.Equal(t, publishedIDs[8], result.LastID)
 }
@@ -219,12 +271,28 @@ func TestReplay_WithLimit(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	result, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, StartFromBeginning().String(), 3)
+	result, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, ReplayVisibilityAll, StartFromBeginning().String(), 3)
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 3)
 	require.True(t, result.HasMore)
 	require.NotEmpty(t, result.LastID)
+}
+
+func TestReplay_ClientFiltering_InvalidClientId(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping event bus test in short mode")
+	}
+
+	bus := newEventBus(t)
+	game := newGameIdentifier()
+
+	result, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, ReplayVisibilityForClient, StartFromBeginning().String(), 3)
+	require.Error(t, err)
+
+	require.Len(t, result.Messages, 0)
+	require.False(t, result.HasMore)
+	require.Empty(t, result.LastID)
 }
 
 func TestReplay_Pagination(t *testing.T) {
@@ -244,19 +312,19 @@ func TestReplay_Pagination(t *testing.T) {
 	}
 
 	// First page
-	page1, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, StartFromBeginning().String(), 4)
+	page1, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, ReplayVisibilityAll, StartFromBeginning().String(), 4)
 	require.NoError(t, err)
 	require.Len(t, page1.Messages, 4)
 	require.True(t, page1.HasMore)
 
 	// Second page
-	page2, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, page1.LastID, 4)
+	page2, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, ReplayVisibilityAll, page1.LastID, 4)
 	require.NoError(t, err)
 	require.Len(t, page2.Messages, 4)
 	require.True(t, page2.HasMore)
 
 	// Third page
-	page3, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, page2.LastID, 4)
+	page3, err := bus.Replay(context.Background(), uuid.Nil, game, GameEventsStreamType, ReplayVisibilityAll, page2.LastID, 4)
 	require.NoError(t, err)
 	require.Len(t, page3.Messages, 2)
 	require.False(t, page3.HasMore)
@@ -274,7 +342,7 @@ func TestReplay_AfterClose(t *testing.T) {
 
 	game := newGameIdentifier()
 
-	result, err := bus.Replay(context.Background(), uuid.New(), game, GameEventsStreamType, StartFromBeginning().String(), 4)
+	result, err := bus.Replay(context.Background(), uuid.New(), game, GameEventsStreamType, ReplayVisibilityAll, StartFromBeginning().String(), 4)
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrClosedEventBus)
 

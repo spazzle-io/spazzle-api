@@ -29,7 +29,7 @@ func TestListServers(t *testing.T) {
 		checkResponse func(t *testing.T, res *pb.ListServersResponse, err error)
 	}{
 		{
-			name: "success",
+			name: "success - undefined sort by",
 			req: &pb.ListServersRequest{
 				PageSize: &wrapperspb.Int32Value{
 					Value: handler.DefaultPageSize,
@@ -45,6 +45,133 @@ func TestListServers(t *testing.T) {
 							CreatedAt: time.Now().UTC(),
 							StakePerGame: pgtype.Numeric{
 								Int:   big.NewInt(12),
+								Valid: true,
+							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(120),
+								Valid: true,
+							},
+						},
+					}, nil)
+
+				store.EXPECT().
+					GetTotalServerCount(gomock.Any()).
+					Times(1).
+					Return(int64(1), nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, res)
+
+				require.NotEmpty(t, res.Servers)
+				require.NotEmpty(t, res.Cursor)
+				require.Equal(t, int64(1), res.TotalCount)
+			},
+		},
+		{
+			name: "success - sort by new",
+			req: &pb.ListServersRequest{
+				PageSize: &wrapperspb.Int32Value{
+					Value: handler.DefaultPageSize,
+				},
+				SortBy: pb.ServerSortBy_SERVER_SORT_BY_NEW,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListServers(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return([]db.Server{
+						{
+							ID:        uuid.New(),
+							CreatedAt: time.Now().UTC(),
+							StakePerGame: pgtype.Numeric{
+								Int:   big.NewInt(12),
+								Valid: true,
+							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(120),
+								Valid: true,
+							},
+						},
+					}, nil)
+
+				store.EXPECT().
+					GetTotalServerCount(gomock.Any()).
+					Times(1).
+					Return(int64(1), nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, res)
+
+				require.NotEmpty(t, res.Servers)
+				require.NotEmpty(t, res.Cursor)
+				require.Equal(t, int64(1), res.TotalCount)
+			},
+		},
+		{
+			name: "success - sort by popular",
+			req: &pb.ListServersRequest{
+				PageSize: &wrapperspb.Int32Value{
+					Value: handler.DefaultPageSize,
+				},
+				SortBy: pb.ServerSortBy_SERVER_SORT_BY_POPULAR,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListServersByPopular(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return([]db.Server{
+						{
+							ID:        uuid.New(),
+							CreatedAt: time.Now().UTC(),
+							StakePerGame: pgtype.Numeric{
+								Int:   big.NewInt(12),
+								Valid: true,
+							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(120),
+								Valid: true,
+							},
+						},
+					}, nil)
+
+				store.EXPECT().
+					GetTotalServerCount(gomock.Any()).
+					Times(1).
+					Return(int64(1), nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ListServersResponse, err error) {
+				require.NoError(t, err)
+				require.NotEmpty(t, res)
+
+				require.NotEmpty(t, res.Servers)
+				require.NotEmpty(t, res.Cursor)
+				require.Equal(t, int64(1), res.TotalCount)
+			},
+		},
+		{
+			name: "success - sort by trending",
+			req: &pb.ListServersRequest{
+				PageSize: &wrapperspb.Int32Value{
+					Value: handler.DefaultPageSize,
+				},
+				SortBy: pb.ServerSortBy_SERVER_SORT_BY_TRENDING,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					ListServersByTrending(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return([]db.Server{
+						{
+							ID:        uuid.New(),
+							CreatedAt: time.Now().UTC(),
+							StakePerGame: pgtype.Numeric{
+								Int:   big.NewInt(12),
+								Valid: true,
+							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(120),
 								Valid: true,
 							},
 						},
@@ -83,6 +210,10 @@ func TestListServers(t *testing.T) {
 								Int:   big.NewInt(12),
 								Valid: true,
 							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(120),
+								Valid: true,
+							},
 						},
 					}, nil)
 
@@ -114,6 +245,10 @@ func TestListServers(t *testing.T) {
 							CreatedAt: time.Now().UTC(),
 							StakePerGame: pgtype.Numeric{
 								Int:   big.NewInt(12),
+								Valid: true,
+							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(120),
 								Valid: true,
 							},
 						},

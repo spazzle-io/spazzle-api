@@ -15,6 +15,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	pgconn "github.com/jackc/pgx/v5/pgconn"
+	pgtype "github.com/jackc/pgx/v5/pgtype"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -103,6 +104,36 @@ func (mr *MockStoreMockRecorder) AddWordsToServer(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWordsToServer", reflect.TypeOf((*MockStore)(nil).AddWordsToServer), ctx, arg)
 }
 
+// ArchiveGameTx mocks base method.
+func (m *MockStore) ArchiveGameTx(ctx context.Context, params db.ArchiveGameTxParams) (db.ArchiveGameTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveGameTx", ctx, params)
+	ret0, _ := ret[0].(db.ArchiveGameTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ArchiveGameTx indicates an expected call of ArchiveGameTx.
+func (mr *MockStoreMockRecorder) ArchiveGameTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveGameTx", reflect.TypeOf((*MockStore)(nil).ArchiveGameTx), ctx, params)
+}
+
+// CreateGame mocks base method.
+func (m *MockStore) CreateGame(ctx context.Context, arg db.CreateGameParams) (db.Game, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGame", ctx, arg)
+	ret0, _ := ret[0].(db.Game)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateGame indicates an expected call of CreateGame.
+func (mr *MockStoreMockRecorder) CreateGame(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGame", reflect.TypeOf((*MockStore)(nil).CreateGame), ctx, arg)
+}
+
 // CreateServer mocks base method.
 func (m *MockStore) CreateServer(ctx context.Context, arg db.CreateServerParams) (db.Server, error) {
 	m.ctrl.T.Helper()
@@ -116,6 +147,81 @@ func (m *MockStore) CreateServer(ctx context.Context, arg db.CreateServerParams)
 func (mr *MockStoreMockRecorder) CreateServer(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateServer", reflect.TypeOf((*MockStore)(nil).CreateServer), ctx, arg)
+}
+
+// GetGameById mocks base method.
+func (m *MockStore) GetGameById(ctx context.Context, gameID uuid.UUID) (db.Game, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameById", ctx, gameID)
+	ret0, _ := ret[0].(db.Game)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameById indicates an expected call of GetGameById.
+func (mr *MockStoreMockRecorder) GetGameById(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameById", reflect.TypeOf((*MockStore)(nil).GetGameById), ctx, gameID)
+}
+
+// GetGameLeaderboard mocks base method.
+func (m *MockStore) GetGameLeaderboard(ctx context.Context, arg db.GetGameLeaderboardParams) ([]db.GamePlayer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGameLeaderboard", ctx, arg)
+	ret0, _ := ret[0].([]db.GamePlayer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGameLeaderboard indicates an expected call of GetGameLeaderboard.
+func (mr *MockStoreMockRecorder) GetGameLeaderboard(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGameLeaderboard", reflect.TypeOf((*MockStore)(nil).GetGameLeaderboard), ctx, arg)
+}
+
+// GetGlobalLeaderboard mocks base method.
+func (m *MockStore) GetGlobalLeaderboard(ctx context.Context, arg db.GetGlobalLeaderboardParams) ([]db.UserStat, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGlobalLeaderboard", ctx, arg)
+	ret0, _ := ret[0].([]db.UserStat)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGlobalLeaderboard indicates an expected call of GetGlobalLeaderboard.
+func (mr *MockStoreMockRecorder) GetGlobalLeaderboard(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalLeaderboard", reflect.TypeOf((*MockStore)(nil).GetGlobalLeaderboard), ctx, arg)
+}
+
+// GetGlobalLeaderboardByWindow mocks base method.
+func (m *MockStore) GetGlobalLeaderboardByWindow(ctx context.Context, arg db.GetGlobalLeaderboardByWindowParams) ([]db.GetGlobalLeaderboardByWindowRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGlobalLeaderboardByWindow", ctx, arg)
+	ret0, _ := ret[0].([]db.GetGlobalLeaderboardByWindowRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGlobalLeaderboardByWindow indicates an expected call of GetGlobalLeaderboardByWindow.
+func (mr *MockStoreMockRecorder) GetGlobalLeaderboardByWindow(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalLeaderboardByWindow", reflect.TypeOf((*MockStore)(nil).GetGlobalLeaderboardByWindow), ctx, arg)
+}
+
+// GetGlobalLeaderboardByWindowCount mocks base method.
+func (m *MockStore) GetGlobalLeaderboardByWindowCount(ctx context.Context, timeWindow pgtype.Interval) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGlobalLeaderboardByWindowCount", ctx, timeWindow)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGlobalLeaderboardByWindowCount indicates an expected call of GetGlobalLeaderboardByWindowCount.
+func (mr *MockStoreMockRecorder) GetGlobalLeaderboardByWindowCount(ctx, timeWindow any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalLeaderboardByWindowCount", reflect.TypeOf((*MockStore)(nil).GetGlobalLeaderboardByWindowCount), ctx, timeWindow)
 }
 
 // GetRandomWordsForServer mocks base method.
@@ -163,6 +269,51 @@ func (mr *MockStoreMockRecorder) GetServerByName(ctx, name any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerByName", reflect.TypeOf((*MockStore)(nil).GetServerByName), ctx, name)
 }
 
+// GetServerLeaderboard mocks base method.
+func (m *MockStore) GetServerLeaderboard(ctx context.Context, arg db.GetServerLeaderboardParams) ([]db.ServerPlayerStat, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServerLeaderboard", ctx, arg)
+	ret0, _ := ret[0].([]db.ServerPlayerStat)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServerLeaderboard indicates an expected call of GetServerLeaderboard.
+func (mr *MockStoreMockRecorder) GetServerLeaderboard(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerLeaderboard", reflect.TypeOf((*MockStore)(nil).GetServerLeaderboard), ctx, arg)
+}
+
+// GetServerLeaderboardByWindow mocks base method.
+func (m *MockStore) GetServerLeaderboardByWindow(ctx context.Context, arg db.GetServerLeaderboardByWindowParams) ([]db.GetServerLeaderboardByWindowRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServerLeaderboardByWindow", ctx, arg)
+	ret0, _ := ret[0].([]db.GetServerLeaderboardByWindowRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServerLeaderboardByWindow indicates an expected call of GetServerLeaderboardByWindow.
+func (mr *MockStoreMockRecorder) GetServerLeaderboardByWindow(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerLeaderboardByWindow", reflect.TypeOf((*MockStore)(nil).GetServerLeaderboardByWindow), ctx, arg)
+}
+
+// GetServerLeaderboardByWindowCount mocks base method.
+func (m *MockStore) GetServerLeaderboardByWindowCount(ctx context.Context, arg db.GetServerLeaderboardByWindowCountParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServerLeaderboardByWindowCount", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServerLeaderboardByWindowCount indicates an expected call of GetServerLeaderboardByWindowCount.
+func (mr *MockStoreMockRecorder) GetServerLeaderboardByWindowCount(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerLeaderboardByWindowCount", reflect.TypeOf((*MockStore)(nil).GetServerLeaderboardByWindowCount), ctx, arg)
+}
+
 // GetServerUserPermissions mocks base method.
 func (m *MockStore) GetServerUserPermissions(ctx context.Context, arg db.GetServerUserPermissionsParams) (db.GetServerUserPermissionsRow, error) {
 	m.ctrl.T.Helper()
@@ -176,6 +327,21 @@ func (m *MockStore) GetServerUserPermissions(ctx context.Context, arg db.GetServ
 func (mr *MockStoreMockRecorder) GetServerUserPermissions(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServerUserPermissions", reflect.TypeOf((*MockStore)(nil).GetServerUserPermissions), ctx, arg)
+}
+
+// GetTotalGamePlayersCount mocks base method.
+func (m *MockStore) GetTotalGamePlayersCount(ctx context.Context, gameID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalGamePlayersCount", ctx, gameID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalGamePlayersCount indicates an expected call of GetTotalGamePlayersCount.
+func (mr *MockStoreMockRecorder) GetTotalGamePlayersCount(ctx, gameID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalGamePlayersCount", reflect.TypeOf((*MockStore)(nil).GetTotalGamePlayersCount), ctx, gameID)
 }
 
 // GetTotalServerCount mocks base method.
@@ -193,6 +359,51 @@ func (mr *MockStoreMockRecorder) GetTotalServerCount(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalServerCount", reflect.TypeOf((*MockStore)(nil).GetTotalServerCount), ctx)
 }
 
+// GetTotalServerGamesCount mocks base method.
+func (m *MockStore) GetTotalServerGamesCount(ctx context.Context, serverID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalServerGamesCount", ctx, serverID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalServerGamesCount indicates an expected call of GetTotalServerGamesCount.
+func (mr *MockStoreMockRecorder) GetTotalServerGamesCount(ctx, serverID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalServerGamesCount", reflect.TypeOf((*MockStore)(nil).GetTotalServerGamesCount), ctx, serverID)
+}
+
+// GetTotalServerPlayerStatsCount mocks base method.
+func (m *MockStore) GetTotalServerPlayerStatsCount(ctx context.Context, serverID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalServerPlayerStatsCount", ctx, serverID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalServerPlayerStatsCount indicates an expected call of GetTotalServerPlayerStatsCount.
+func (mr *MockStoreMockRecorder) GetTotalServerPlayerStatsCount(ctx, serverID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalServerPlayerStatsCount", reflect.TypeOf((*MockStore)(nil).GetTotalServerPlayerStatsCount), ctx, serverID)
+}
+
+// GetTotalUserGamesCount mocks base method.
+func (m *MockStore) GetTotalUserGamesCount(ctx context.Context, userID uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalUserGamesCount", ctx, userID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalUserGamesCount indicates an expected call of GetTotalUserGamesCount.
+func (mr *MockStoreMockRecorder) GetTotalUserGamesCount(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalUserGamesCount", reflect.TypeOf((*MockStore)(nil).GetTotalUserGamesCount), ctx, userID)
+}
+
 // GetTotalUserServersCount mocks base method.
 func (m *MockStore) GetTotalUserServersCount(ctx context.Context, userID uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
@@ -206,6 +417,51 @@ func (m *MockStore) GetTotalUserServersCount(ctx context.Context, userID uuid.UU
 func (mr *MockStoreMockRecorder) GetTotalUserServersCount(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalUserServersCount", reflect.TypeOf((*MockStore)(nil).GetTotalUserServersCount), ctx, userID)
+}
+
+// GetTotalUserStatsCount mocks base method.
+func (m *MockStore) GetTotalUserStatsCount(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalUserStatsCount", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalUserStatsCount indicates an expected call of GetTotalUserStatsCount.
+func (mr *MockStoreMockRecorder) GetTotalUserStatsCount(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalUserStatsCount", reflect.TypeOf((*MockStore)(nil).GetTotalUserStatsCount), ctx)
+}
+
+// GetUserStats mocks base method.
+func (m *MockStore) GetUserStats(ctx context.Context, userID uuid.UUID) (db.UserStat, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserStats", ctx, userID)
+	ret0, _ := ret[0].(db.UserStat)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserStats indicates an expected call of GetUserStats.
+func (mr *MockStoreMockRecorder) GetUserStats(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserStats", reflect.TypeOf((*MockStore)(nil).GetUserStats), ctx, userID)
+}
+
+// InsertGamePlayers mocks base method.
+func (m *MockStore) InsertGamePlayers(ctx context.Context, arg []db.InsertGamePlayersParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertGamePlayers", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InsertGamePlayers indicates an expected call of InsertGamePlayers.
+func (mr *MockStoreMockRecorder) InsertGamePlayers(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertGamePlayers", reflect.TypeOf((*MockStore)(nil).InsertGamePlayers), ctx, arg)
 }
 
 // ListServerAdmins mocks base method.
@@ -223,6 +479,21 @@ func (mr *MockStoreMockRecorder) ListServerAdmins(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServerAdmins", reflect.TypeOf((*MockStore)(nil).ListServerAdmins), ctx, arg)
 }
 
+// ListServerGames mocks base method.
+func (m *MockStore) ListServerGames(ctx context.Context, arg db.ListServerGamesParams) ([]db.Game, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListServerGames", ctx, arg)
+	ret0, _ := ret[0].([]db.Game)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListServerGames indicates an expected call of ListServerGames.
+func (mr *MockStoreMockRecorder) ListServerGames(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServerGames", reflect.TypeOf((*MockStore)(nil).ListServerGames), ctx, arg)
+}
+
 // ListServers mocks base method.
 func (m *MockStore) ListServers(ctx context.Context, arg db.ListServersParams) ([]db.Server, error) {
 	m.ctrl.T.Helper()
@@ -236,6 +507,51 @@ func (m *MockStore) ListServers(ctx context.Context, arg db.ListServersParams) (
 func (mr *MockStoreMockRecorder) ListServers(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServers", reflect.TypeOf((*MockStore)(nil).ListServers), ctx, arg)
+}
+
+// ListServersByPopular mocks base method.
+func (m *MockStore) ListServersByPopular(ctx context.Context, arg db.ListServersByPopularParams) ([]db.Server, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListServersByPopular", ctx, arg)
+	ret0, _ := ret[0].([]db.Server)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListServersByPopular indicates an expected call of ListServersByPopular.
+func (mr *MockStoreMockRecorder) ListServersByPopular(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServersByPopular", reflect.TypeOf((*MockStore)(nil).ListServersByPopular), ctx, arg)
+}
+
+// ListServersByTrending mocks base method.
+func (m *MockStore) ListServersByTrending(ctx context.Context, arg db.ListServersByTrendingParams) ([]db.Server, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListServersByTrending", ctx, arg)
+	ret0, _ := ret[0].([]db.Server)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListServersByTrending indicates an expected call of ListServersByTrending.
+func (mr *MockStoreMockRecorder) ListServersByTrending(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServersByTrending", reflect.TypeOf((*MockStore)(nil).ListServersByTrending), ctx, arg)
+}
+
+// ListUserGames mocks base method.
+func (m *MockStore) ListUserGames(ctx context.Context, arg db.ListUserGamesParams) ([]db.ListUserGamesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUserGames", ctx, arg)
+	ret0, _ := ret[0].([]db.ListUserGamesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUserGames indicates an expected call of ListUserGames.
+func (mr *MockStoreMockRecorder) ListUserGames(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserGames", reflect.TypeOf((*MockStore)(nil).ListUserGames), ctx, arg)
 }
 
 // ListUserServers mocks base method.
@@ -266,6 +582,20 @@ func (m *MockStore) ListWords(ctx context.Context, arg db.ListWordsParams) ([]db
 func (mr *MockStoreMockRecorder) ListWords(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWords", reflect.TypeOf((*MockStore)(nil).ListWords), ctx, arg)
+}
+
+// RecomputeTrendingScores mocks base method.
+func (m *MockStore) RecomputeTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RecomputeTrendingScores", ctx, trendingWindow)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RecomputeTrendingScores indicates an expected call of RecomputeTrendingScores.
+func (mr *MockStoreMockRecorder) RecomputeTrendingScores(ctx, trendingWindow any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecomputeTrendingScores", reflect.TypeOf((*MockStore)(nil).RecomputeTrendingScores), ctx, trendingWindow)
 }
 
 // RemoveAllServerWordsTx mocks base method.
@@ -357,6 +687,20 @@ func (mr *MockStoreMockRecorder) RemoveWordsFromServer(ctx, arg any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveWordsFromServer", reflect.TypeOf((*MockStore)(nil).RemoveWordsFromServer), ctx, arg)
 }
 
+// ResetTrendingScores mocks base method.
+func (m *MockStore) ResetTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetTrendingScores", ctx, trendingWindow)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResetTrendingScores indicates an expected call of ResetTrendingScores.
+func (mr *MockStoreMockRecorder) ResetTrendingScores(ctx, trendingWindow any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetTrendingScores", reflect.TypeOf((*MockStore)(nil).ResetTrendingScores), ctx, trendingWindow)
+}
+
 // UpdateServer mocks base method.
 func (m *MockStore) UpdateServer(ctx context.Context, arg db.UpdateServerParams) (db.Server, error) {
 	m.ctrl.T.Helper()
@@ -370,4 +714,46 @@ func (m *MockStore) UpdateServer(ctx context.Context, arg db.UpdateServerParams)
 func (mr *MockStoreMockRecorder) UpdateServer(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateServer", reflect.TypeOf((*MockStore)(nil).UpdateServer), ctx, arg)
+}
+
+// UpdateServerGameStats mocks base method.
+func (m *MockStore) UpdateServerGameStats(ctx context.Context, arg db.UpdateServerGameStatsParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateServerGameStats", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateServerGameStats indicates an expected call of UpdateServerGameStats.
+func (mr *MockStoreMockRecorder) UpdateServerGameStats(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateServerGameStats", reflect.TypeOf((*MockStore)(nil).UpdateServerGameStats), ctx, arg)
+}
+
+// UpsertServerPlayerStats mocks base method.
+func (m *MockStore) UpsertServerPlayerStats(ctx context.Context, arg db.UpsertServerPlayerStatsParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertServerPlayerStats", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertServerPlayerStats indicates an expected call of UpsertServerPlayerStats.
+func (mr *MockStoreMockRecorder) UpsertServerPlayerStats(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertServerPlayerStats", reflect.TypeOf((*MockStore)(nil).UpsertServerPlayerStats), ctx, arg)
+}
+
+// UpsertUserStats mocks base method.
+func (m *MockStore) UpsertUserStats(ctx context.Context, arg db.UpsertUserStatsParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertUserStats", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertUserStats indicates an expected call of UpsertUserStats.
+func (mr *MockStoreMockRecorder) UpsertUserStats(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserStats", reflect.TypeOf((*MockStore)(nil).UpsertUserStats), ctx, arg)
 }

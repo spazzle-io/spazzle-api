@@ -1,9 +1,7 @@
 package workflow
 
 import (
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
 )
@@ -26,17 +24,4 @@ func (s *WorkflowTestSuite) SetupTest() {
 
 func (s *WorkflowTestSuite) AfterTest(_, _ string) {
 	s.env.AssertExpectations(s.T())
-}
-
-func (s *WorkflowTestSuite) SetupDefaultActivities() {
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
-		Maybe().
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
-	s.env.OnActivity(s.activities.SelectRandomWord, mock.Anything, mock.Anything).
-		Maybe().
-		Return(&activities.SelectRandomWordResult{
-			Word: gofakeit.Word(),
-		}, nil)
 }

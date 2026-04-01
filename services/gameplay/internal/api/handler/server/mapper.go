@@ -17,6 +17,11 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		return nil, err
 	}
 
+	totalVolume, err := db.ParseDBNumericWeiToStr(server.TotalVolume)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.Server{
 		Id:                server.ID.String(),
 		Name:              server.Name,
@@ -32,6 +37,10 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		IsArchived:        server.IsArchived,
 		ArchivedAt:        archivedAt,
 		CreatedAt:         timestamppb.New(server.CreatedAt),
+		TotalGames:        server.TotalGames,
+		TotalVolume:       totalVolume,
+		TotalPlayers:      server.TotalPlayers,
+		TrendingScore:     server.TrendingScore,
 	}, nil
 }
 
@@ -59,6 +68,11 @@ func mapDBUserServerToPb(userServer *db.ListUserServersRow) (*pb.UserServer, err
 		return nil, err
 	}
 
+	totalVolume, err := db.ParseDBNumericWeiToStr(userServer.TotalVolume)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.UserServer{
 		Id:                userServer.ID.String(),
 		Name:              userServer.Name,
@@ -76,6 +90,10 @@ func mapDBUserServerToPb(userServer *db.ListUserServersRow) (*pb.UserServer, err
 		IsArchived:        userServer.IsArchived,
 		ArchivedAt:        archivedAt,
 		CreatedAt:         timestamppb.New(userServer.CreatedAt),
+		TotalGames:        userServer.TotalGames,
+		TotalVolume:       totalVolume,
+		TotalPlayers:      userServer.TotalPlayers,
+		TrendingScore:     userServer.TrendingScore,
 	}, nil
 }
 

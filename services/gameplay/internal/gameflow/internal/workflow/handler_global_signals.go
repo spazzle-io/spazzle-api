@@ -4,49 +4,48 @@ import (
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
-	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
-func registerGlobalSignalHandlers(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func registerGlobalSignalHandlers(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handlePlayersJoinedSignal(ctx, state, notifyCh, logger)
+		handlePlayersJoinedSignal(ctx, state, notifyCh)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handlePlayersLeftSignal(ctx, state, notifyCh, logger)
+		handlePlayersLeftSignal(ctx, state, notifyCh)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handlePlayerReports(ctx, state, notifyCh, logger)
+		handlePlayerReports(ctx, state, notifyCh)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handleClearPlayerReports(ctx, state, notifyCh, logger)
+		handleClearPlayerReports(ctx, state, notifyCh)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handlePlayerEjections(ctx, state, notifyCh, logger)
+		handlePlayerEjections(ctx, state, notifyCh)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handleGameServerInstanceHeartbeatSignal(ctx, state, logger)
+		handleGameServerInstanceHeartbeatSignal(ctx, state)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handleGameServerInstanceUnregisterSignal(ctx, state, logger)
+		handleGameServerInstanceUnregisterSignal(ctx, state)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handleEventAckSignal(ctx, state, notifyCh, logger)
+		handleEventAckSignal(ctx, state, notifyCh)
 	})
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
-		handleTerminateGameSignal(ctx, state, notifyCh, logger)
+		handleTerminateGameSignal(ctx, state, notifyCh)
 	})
 }
 
-func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalPlayersJoin)
 	selector := workflow.NewSelector(ctx)
 
@@ -94,7 +93,7 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 		}
 
 		if len(payload.AddedPlayers) > 0 || len(payload.RejectedPlayers) > 0 {
-			logger.Info(
+			state.Logger().Info(
 				"players joined game workflow",
 				"num_players_joined", len(payload.AddedPlayers),
 				"num_players_rejected", len(payload.RejectedPlayers),
@@ -104,7 +103,7 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 
 			_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersJoined, payload, nil)
 			if err != nil {
-				logger.Error("failed to send players joined event", "error", err)
+				state.Logger().Error("failed to send players joined event", "error", err)
 			}
 		}
 	})
@@ -114,7 +113,7 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 	}
 }
 
-func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalPlayersLeave)
 	selector := workflow.NewSelector(ctx)
 
@@ -137,7 +136,7 @@ func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh wo
 		}
 
 		if len(payload.PlayerIDs) > 0 {
-			logger.Info(
+			state.Logger().Info(
 				"players left game workflow",
 				"num_players_left", len(payload.PlayerIDs),
 			)
@@ -146,7 +145,7 @@ func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh wo
 
 			_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersLeft, payload, nil)
 			if err != nil {
-				logger.Error("failed to send players left event", "error", err)
+				state.Logger().Error("failed to send players left event", "error", err)
 			}
 		}
 	})
@@ -156,14 +155,14 @@ func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh wo
 	}
 }
 
-func handlePlayerReports(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handlePlayerReports(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalPlayersReported)
 	selector := workflow.NewSelector(ctx)
 
 	selector.AddReceive(ch, func(c workflow.ReceiveChannel, more bool) {
 		var sig PlayersReportedSignal
 		c.Receive(ctx, &sig)
-		processPlayerReports(ctx, state, sig, notifyCh, logger)
+		processPlayerReports(ctx, state, sig, notifyCh)
 	})
 
 	for {
@@ -171,7 +170,7 @@ func handlePlayerReports(ctx workflow.Context, state *GameState, notifyCh workfl
 	}
 }
 
-func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalClearPlayerReports)
 	selector := workflow.NewSelector(ctx)
 
@@ -192,11 +191,11 @@ func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh w
 		}
 		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayerReportsCleared, payload, nil)
 		if err != nil {
-			logger.Error("failed to send player reports cleared event", "error", err)
+			state.Logger().Error("failed to send player reports cleared event", "error", err)
 			return
 		}
 
-		logger.Info("player reports cleared", "player_ids", sig.PlayerIDs)
+		state.Logger().Info("player reports cleared", "player_ids", sig.PlayerIDs)
 	})
 
 	for {
@@ -204,7 +203,7 @@ func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh w
 	}
 }
 
-func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalPlayersEjected)
 	selector := workflow.NewSelector(ctx)
 
@@ -247,11 +246,11 @@ func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh work
 		}
 		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersEjected, payload, nil)
 		if err != nil {
-			logger.Error("failed to send players ejected event", "error", err)
+			state.Logger().Error("failed to send players ejected event", "error", err)
 			return
 		}
 
-		logger.Info("players ejected", "ejections", sig.Ejections)
+		state.Logger().Info("players ejected", "ejections", sig.Ejections)
 	})
 
 	for {
@@ -259,7 +258,7 @@ func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh work
 	}
 }
 
-func handleGameServerInstanceHeartbeatSignal(ctx workflow.Context, state *GameState, logger log.Logger) {
+func handleGameServerInstanceHeartbeatSignal(ctx workflow.Context, state *GameState) {
 	ch := workflow.GetSignalChannel(ctx, SignalGameServerInstanceHeartbeat)
 	selector := workflow.NewSelector(ctx)
 
@@ -273,7 +272,7 @@ func handleGameServerInstanceHeartbeatSignal(ctx workflow.Context, state *GameSt
 			LastSeen:   workflow.Now(ctx).UTC(),
 		}
 
-		pruneGameServerInstances(ctx, state, logger)
+		pruneGameServerInstances(ctx, state)
 	})
 
 	for {
@@ -281,7 +280,7 @@ func handleGameServerInstanceHeartbeatSignal(ctx workflow.Context, state *GameSt
 	}
 }
 
-func handleGameServerInstanceUnregisterSignal(ctx workflow.Context, state *GameState, logger log.Logger) {
+func handleGameServerInstanceUnregisterSignal(ctx workflow.Context, state *GameState) {
 	ch := workflow.GetSignalChannel(ctx, SignalGameServerInstanceUnregistered)
 	selector := workflow.NewSelector(ctx)
 
@@ -293,13 +292,13 @@ func handleGameServerInstanceUnregisterSignal(ctx workflow.Context, state *GameS
 		if _, exists := state.GameServerInstances[sig.InstanceID]; exists {
 			delete(state.GameServerInstances, sig.InstanceID)
 
-			logger.Info(
+			state.Logger().Info(
 				"unregistered game server instance",
 				"instance_id", sig.InstanceID,
 			)
 		}
 
-		pruneGameServerInstances(ctx, state, logger)
+		pruneGameServerInstances(ctx, state)
 	})
 
 	for {
@@ -307,7 +306,7 @@ func handleGameServerInstanceUnregisterSignal(ctx workflow.Context, state *GameS
 	}
 }
 
-func handleEventAckSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handleEventAckSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalEventAck)
 	selector := workflow.NewSelector(ctx)
 
@@ -318,7 +317,7 @@ func handleEventAckSignal(ctx workflow.Context, state *GameState, notifyCh workf
 
 		pending, exists := state.PendingAcks[sig.CorrelationID]
 		if !exists {
-			logger.Warn(
+			state.Logger().Warn(
 				"received ACK for an unknown correlation ID",
 				"correlation_id", sig.CorrelationID,
 				"instance_id", sig.InstanceID,
@@ -327,7 +326,7 @@ func handleEventAckSignal(ctx workflow.Context, state *GameState, notifyCh workf
 		}
 
 		pending.ReceivedFrom[sig.InstanceID] = sig.Status
-		logger.Info(
+		state.Logger().Info(
 			"received event ACK",
 			"correlation_id", sig.CorrelationID,
 			"instance_id", sig.InstanceID,
@@ -343,7 +342,7 @@ func handleEventAckSignal(ctx workflow.Context, state *GameState, notifyCh workf
 	}
 }
 
-func handleTerminateGameSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
+func handleTerminateGameSignal(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	ch := workflow.GetSignalChannel(ctx, SignalTerminateGame)
 	selector := workflow.NewSelector(ctx)
 
@@ -358,7 +357,7 @@ func handleTerminateGameSignal(ctx workflow.Context, state *GameState, notifyCh 
 		state.IsTerminated = true
 		notifyCh.Send(ctx, struct{}{})
 
-		logger.Info("terminating game", "reason", sig.Reason)
+		state.Logger().Info("terminating game", "reason", sig.Reason)
 	})
 
 	for {
@@ -366,7 +365,7 @@ func handleTerminateGameSignal(ctx workflow.Context, state *GameState, notifyCh 
 	}
 }
 
-func pruneGameServerInstances(ctx workflow.Context, state *GameState, logger log.Logger) {
+func pruneGameServerInstances(ctx workflow.Context, state *GameState) {
 	var numPrunedInstances uint16
 
 	currentTime := workflow.Now(ctx).UTC()
@@ -388,7 +387,7 @@ func pruneGameServerInstances(ctx workflow.Context, state *GameState, logger log
 	state.GameServerInstancesLastPrunedAt = currentTime
 
 	if numPrunedInstances > 0 {
-		logger.Info(
+		state.Logger().Info(
 			"pruned game server instances",
 			"num_instances", len(state.GameServerInstances),
 			"num_pruned_instances", numPrunedInstances,
@@ -401,13 +400,12 @@ func processPlayerReports(
 	state *GameState,
 	signal PlayersReportedSignal,
 	notifyCh workflow.Channel,
-	logger log.Logger,
 ) {
 	var reports []gameevents.PlayerReport
 
 	for _, report := range signal.Reports {
 		if state.Players[report.ReporterID] == state.Players[report.ReportedID] {
-			logger.Warn(
+			state.Logger().Warn(
 				"invalid player report. self reporting is not allowed",
 				"reporter", report.ReporterID, "reported", report.ReportedID,
 			)
@@ -417,7 +415,7 @@ func processPlayerReports(
 		_, reporterExists := state.Players[report.ReporterID]
 		_, reportedExists := state.Players[report.ReportedID]
 		if !reporterExists || !reportedExists {
-			logger.Warn(
+			state.Logger().Warn(
 				"invalid player report. player not in game",
 				"reporter", report.ReporterID, "reported", report.ReportedID,
 				"reporter_exists", reporterExists, "reported_exists", reportedExists,
@@ -430,7 +428,7 @@ func processPlayerReports(
 		}
 
 		if state.PlayerReports[report.ReportedID][report.ReporterID] {
-			logger.Info("duplicate player report ignored",
+			state.Logger().Info("duplicate player report ignored",
 				"reporter", report.ReporterID, "reported", report.ReportedID)
 			continue
 		}
@@ -445,7 +443,7 @@ func processPlayerReports(
 			TotalReports: numPlayerReports,
 		})
 
-		logger.Info("player report recorded",
+		state.Logger().Info("player report recorded",
 			"reporter", report.ReporterID, "reported", report.ReportedID, "total_reports", numPlayerReports)
 	}
 
@@ -459,6 +457,6 @@ func processPlayerReports(
 	}
 	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayersReported, payload, nil)
 	if err != nil {
-		logger.Error("failed to send players reported event", "error", err)
+		state.Logger().Error("failed to send players reported event", "error", err)
 	}
 }

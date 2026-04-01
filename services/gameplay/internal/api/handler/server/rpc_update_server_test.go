@@ -79,6 +79,10 @@ func TestUpdateServer(t *testing.T) {
 							Int:   big.NewInt(12),
 							Valid: true,
 						},
+						TotalVolume: pgtype.Numeric{
+							Int:   big.NewInt(1000),
+							Valid: true,
+						},
 					}, nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateServerResponse, err error) {
@@ -116,6 +120,10 @@ func TestUpdateServer(t *testing.T) {
 						ID: uuid.New(),
 						StakePerGame: pgtype.Numeric{
 							Int:   big.NewInt(12),
+							Valid: true,
+						},
+						TotalVolume: pgtype.Numeric{
+							Int:   big.NewInt(1000),
 							Valid: true,
 						},
 					}, nil)

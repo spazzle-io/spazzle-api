@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
+
 	"github.com/hibiken/asynq"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
 
@@ -77,6 +79,8 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
 
+	gameCache := gamecache.New(config, redisCache)
+
 	redisOpt, err := asynq.ParseRedisURI(config.RedisConnURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse redis URI for asynq")
@@ -104,6 +108,7 @@ func main() {
 		Config:          config,
 		Store:           store,
 		Cache:           redisCache,
+		GameCache:       gameCache,
 		Bus:             bus,
 		WordStore:       wordStore,
 		ObjectStore:     objectStore,
@@ -113,7 +118,7 @@ func main() {
 
 	serverCfg.GfClient, serverCfg.GsManager = startGameServices(ctx, waitGroup, serverCfg)
 
-	go runTaskProcessor(redisOpt, serverCfg)
+	taskProcessor := runTaskProcessor(redisOpt, serverCfg)
 
 	runGRPCServer(ctx, waitGroup, serverCfg)
 	runGatewayServer(ctx, waitGroup, serverCfg)
@@ -123,6 +128,11 @@ func main() {
 	}
 
 	stopInterruptCtx()
+
+	taskProcessor.Stop()
+	if err = taskDistributor.Close(); err != nil {
+		log.Error().Err(err).Msg("could not close task distributor")
+	}
 
 	if err = redisCache.Close(); err != nil {
 		log.Error().Err(err).Msg("could not close redis cache")
@@ -182,6 +192,7 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server
 		Config:    serverCfg.Config,
 		Store:     serverCfg.Store,
 		Cache:     serverCfg.Cache,
+		GameCache: serverCfg.GameCache,
 		GfClient:  serverCfg.GfClient,
 		Bus:       serverCfg.Bus,
 		GsManager: serverCfg.GsManager,
@@ -267,8 +278,8 @@ func startGameServices(
 	return gfClient, gsManager
 }
 
-func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.ObjectStore)
+func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) worker.TaskProcessor {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.Store, serverCfg.ObjectStore)
 
 	err := taskProcessor.Start()
 	if err != nil {
@@ -276,4 +287,5 @@ func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerCo
 	}
 
 	log.Info().Msg("task processor started")
+	return taskProcessor
 }

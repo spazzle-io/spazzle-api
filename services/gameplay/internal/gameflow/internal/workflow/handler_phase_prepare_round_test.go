@@ -22,6 +22,10 @@ func TestPhasePrepareRound(t *testing.T) {
 }
 
 func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -96,6 +100,10 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 }
 
 func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
@@ -157,6 +165,10 @@ func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 }
 
 func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() {
+	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
+		Maybe().
+		Return(&activities.ArchiveGameResult{})
+
 	serverID := uuid.New()
 	instanceID := uuid.New()
 
