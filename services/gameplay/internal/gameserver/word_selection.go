@@ -59,7 +59,7 @@ func (gs *GameServer) chooseWord(word string) error {
 		return ErrWordNotInChoices
 	}
 
-	if err = gs.GfClient.SelectWord(gs.serverID, gs.getGameID(), gs.getCurrentRound(), word); err != nil {
+	if err = gs.GfClient.SelectWord(gs.serverID, gs.GetGameID(), gs.getCurrentRound(), word); err != nil {
 		return fmt.Errorf("failed to select word: %w", err)
 	}
 
@@ -71,7 +71,7 @@ func (gs *GameServer) getWordChoicesCacheKey() string {
 		gs.Env.ServiceName,
 		wordChoicesCachePrefix,
 		gs.serverID.String(),
-		gs.getGameID().String(),
+		gs.GetGameID().String(),
 		gs.getCurrentArtist().String(),
 	)
 }

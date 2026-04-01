@@ -29,6 +29,127 @@
     "application/json"
   ],
   "paths": {
+    "/games/{gameId}": {
+      "get": {
+        "summary": "Get game",
+        "description": "Get details for a completed game",
+        "operationId": "GameService_GetGame",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetGameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
+    "/games/{gameId}/leaderboard": {
+      "get": {
+        "summary": "Get game leaderboard",
+        "description": "Get player rankings for a completed game",
+        "operationId": "GameService_GetGameLeaderboard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetGameLeaderboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
+    "/leaderboard": {
+      "get": {
+        "summary": "Get global leaderboard",
+        "description": "Get top players across all servers",
+        "operationId": "GameService_GetGlobalLeaderboard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetGlobalLeaderboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "timeWindow",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TIME_WINDOW_UNSPECIFIED",
+              "TIME_WINDOW_TODAY",
+              "TIME_WINDOW_WEEKLY",
+              "TIME_WINDOW_MONTHLY",
+              "TIME_WINDOW_ALL_TIME"
+            ],
+            "default": "TIME_WINDOW_UNSPECIFIED"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
     "/servers": {
       "get": {
         "summary": "List servers",
@@ -50,13 +171,6 @@
         },
         "parameters": [
           {
-            "name": "afterCreatedAt",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
             "name": "afterId",
             "in": "query",
             "required": false,
@@ -64,6 +178,40 @@
           },
           {
             "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SERVER_SORT_BY_UNSPECIFIED",
+              "SERVER_SORT_BY_NEW",
+              "SERVER_SORT_BY_TRENDING",
+              "SERVER_SORT_BY_POPULAR"
+            ],
+            "default": "SERVER_SORT_BY_UNSPECIFIED"
+          },
+          {
+            "name": "afterCreatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterTrendingScore",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "afterTotalGames",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -461,6 +609,92 @@
         ]
       }
     },
+    "/servers/{serverId}/games": {
+      "get": {
+        "summary": "List server games",
+        "description": "List completed games for a server",
+        "operationId": "GameService_ListServerGames",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListServerGamesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "afterEndedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
+    "/servers/{serverId}/games/current": {
+      "get": {
+        "summary": "Get current game",
+        "description": "Get live game state for a server's active game",
+        "operationId": "GameService_GetCurrentGame",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetCurrentGameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
     "/servers/{serverId}/games/{gameId}/replay": {
       "get": {
         "summary": "Replay game",
@@ -522,23 +756,19 @@
         "tags": [
           "GameService"
         ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        "security": []
       }
     },
-    "/servers/{serverId}/join": {
+    "/servers/{serverId}/games:join": {
       "post": {
-        "summary": "Join server",
-        "description": "Join server",
-        "operationId": "ServerService_JoinServer",
+        "summary": "Join game",
+        "description": "Join the active game on a server",
+        "operationId": "GameService_JoinGame",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1JoinServerResponse"
+              "$ref": "#/definitions/v1JoinGameResponse"
             }
           },
           "default": {
@@ -560,18 +790,68 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ServerServiceJoinServerBody"
+              "$ref": "#/definitions/GameServiceJoinGameBody"
             }
           }
         ],
         "tags": [
-          "ServerService"
+          "GameService"
         ],
-        "security": [
-          {
-            "bearer": []
+        "security": []
+      }
+    },
+    "/servers/{serverId}/leaderboard": {
+      "get": {
+        "summary": "Get server leaderboard",
+        "description": "Get top players for a server",
+        "operationId": "GameService_GetServerLeaderboard",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetServerLeaderboardResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
           }
-        ]
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "timeWindow",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "TIME_WINDOW_UNSPECIFIED",
+              "TIME_WINDOW_TODAY",
+              "TIME_WINDOW_WEEKLY",
+              "TIME_WINDOW_MONTHLY",
+              "TIME_WINDOW_ALL_TIME"
+            ],
+            "default": "TIME_WINDOW_UNSPECIFIED"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
       }
     },
     "/servers/{serverId}/permissions/{userId}": {
@@ -836,9 +1116,103 @@
           }
         ]
       }
+    },
+    "/users/{userId}/games": {
+      "get": {
+        "summary": "List user games",
+        "description": "List games a user has played across all servers",
+        "operationId": "GameService_ListUserGames",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListUserGamesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "afterEndedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
+    "/users/{userId}/stats": {
+      "get": {
+        "summary": "Get user stats",
+        "description": "Get a user's all-time game statistics",
+        "operationId": "GameService_GetUserStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
     }
   },
   "definitions": {
+    "GameServiceJoinGameBody": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "$ref": "#/definitions/v1GameRole"
+        }
+      }
+    },
     "ServerAdminServiceAddServerAdminBody": {
       "type": "object",
       "properties": {
@@ -848,9 +1222,6 @@
       }
     },
     "ServerServiceArchiveServerBody": {
-      "type": "object"
-    },
-    "ServerServiceJoinServerBody": {
       "type": "object"
     },
     "ServerServiceUpdateServerBody": {
@@ -999,6 +1370,196 @@
         }
       }
     },
+    "v1CurrentGameInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "subPhase": {
+          "type": "string"
+        },
+        "currentRound": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "numRounds": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "currentArtist": {
+          "type": "string"
+        },
+        "numPlayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "drawingDurationMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "stakePerGame": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GameInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "serverId": {
+          "type": "string"
+        },
+        "numRounds": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "numPlayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalPot": {
+          "type": "string"
+        },
+        "stakePerGame": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1GamePlayerEntry": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "score": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pnl": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "roundsPlayed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "provisionalPayout": {
+          "type": "string"
+        },
+        "totalStakeLost": {
+          "type": "string"
+        },
+        "isEvicted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1GameRole": {
+      "type": "string",
+      "enum": [
+        "GAME_ROLE_UNSPECIFIED",
+        "GAME_ROLE_PLAYER",
+        "GAME_ROLE_SPECTATOR",
+        "GAME_ROLE_MODERATOR"
+      ],
+      "default": "GAME_ROLE_UNSPECIFIED"
+    },
+    "v1GamesCursor": {
+      "type": "object",
+      "properties": {
+        "afterEndedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterId": {
+          "type": "string"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1GetCurrentGameResponse": {
+      "type": "object",
+      "properties": {
+        "game": {
+          "$ref": "#/definitions/v1CurrentGameInfo"
+        }
+      }
+    },
+    "v1GetGameLeaderboardResponse": {
+      "type": "object",
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GamePlayerEntry"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1GetGameResponse": {
+      "type": "object",
+      "properties": {
+        "game": {
+          "$ref": "#/definitions/v1GameInfo"
+        }
+      }
+    },
+    "v1GetGlobalLeaderboardResponse": {
+      "type": "object",
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LeaderboardEntry"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "timeWindow": {
+          "$ref": "#/definitions/v1TimeWindow"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "v1GetRandomWordsResponse": {
       "type": "object",
       "properties": {
@@ -1016,6 +1577,29 @@
       "properties": {
         "server": {
           "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1GetServerLeaderboardResponse": {
+      "type": "object",
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1LeaderboardEntry"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "timeWindow": {
+          "$ref": "#/definitions/v1TimeWindow"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1041,18 +1625,85 @@
         }
       }
     },
-    "v1JoinServerResponse": {
+    "v1GetUserStatsResponse": {
       "type": "object",
       "properties": {
-        "serverId": {
+        "userId": {
+          "type": "string"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalScore": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalPnl": {
+          "type": "string"
+        },
+        "totalVolume": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1JoinGameResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/v1JoinGameStatus"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "gameId": {
           "type": "string"
         },
         "joinCode": {
           "type": "string"
         },
-        "expiresAt": {
+        "joinCodeExpiresAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "retryAfterMs": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1JoinGameStatus": {
+      "type": "string",
+      "enum": [
+        "JOIN_GAME_STATUS_UNSPECIFIED",
+        "JOIN_GAME_STATUS_SUCCESS",
+        "JOIN_GAME_STATUS_GAME_ENDING"
+      ],
+      "default": "JOIN_GAME_STATUS_UNSPECIFIED"
+    },
+    "v1LeaderboardEntry": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalScore": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalPnl": {
+          "type": "string"
+        },
+        "totalVolume": {
+          "type": "string"
         }
       }
     },
@@ -1091,17 +1742,44 @@
         }
       }
     },
+    "v1ListServerGamesResponse": {
+      "type": "object",
+      "properties": {
+        "games": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1GameInfo"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1GamesCursor"
+        }
+      }
+    },
     "v1ListServersCursor": {
       "type": "object",
       "properties": {
-        "afterCreatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
         "afterId": {
           "type": "string"
         },
         "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "afterCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterTrendingScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "afterTotalGames": {
           "type": "integer",
           "format": "int32"
         }
@@ -1121,8 +1799,30 @@
           "type": "string",
           "format": "int64"
         },
+        "sortBy": {
+          "$ref": "#/definitions/v1ServerSortBy"
+        },
         "cursor": {
           "$ref": "#/definitions/v1ListServersCursor"
+        }
+      }
+    },
+    "v1ListUserGamesResponse": {
+      "type": "object",
+      "properties": {
+        "games": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserGameEntry"
+          }
+        },
+        "totalCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "cursor": {
+          "$ref": "#/definitions/v1GamesCursor"
         }
       }
     },
@@ -1302,6 +2002,21 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalVolume": {
+          "type": "string"
+        },
+        "totalPlayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "trendingScore": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -1320,6 +2035,16 @@
         }
       }
     },
+    "v1ServerSortBy": {
+      "type": "string",
+      "enum": [
+        "SERVER_SORT_BY_UNSPECIFIED",
+        "SERVER_SORT_BY_NEW",
+        "SERVER_SORT_BY_TRENDING",
+        "SERVER_SORT_BY_POPULAR"
+      ],
+      "default": "SERVER_SORT_BY_UNSPECIFIED"
+    },
     "v1StreamType": {
       "type": "string",
       "enum": [
@@ -1329,11 +2054,54 @@
       ],
       "default": "STREAM_TYPE_UNSPECIFIED"
     },
+    "v1TimeWindow": {
+      "type": "string",
+      "enum": [
+        "TIME_WINDOW_UNSPECIFIED",
+        "TIME_WINDOW_TODAY",
+        "TIME_WINDOW_WEEKLY",
+        "TIME_WINDOW_MONTHLY",
+        "TIME_WINDOW_ALL_TIME"
+      ],
+      "default": "TIME_WINDOW_UNSPECIFIED"
+    },
     "v1UpdateServerResponse": {
       "type": "object",
       "properties": {
         "server": {
           "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1UserGameEntry": {
+      "type": "object",
+      "properties": {
+        "game": {
+          "$ref": "#/definitions/v1GameInfo"
+        },
+        "score": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pnl": {
+          "type": "string"
+        },
+        "provisionalPayout": {
+          "type": "string"
+        },
+        "stakeLost": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "roundsPlayed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isEvicted": {
+          "type": "boolean"
         }
       }
     },
@@ -1394,6 +2162,21 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalVolume": {
+          "type": "string"
+        },
+        "totalPlayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "trendingScore": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

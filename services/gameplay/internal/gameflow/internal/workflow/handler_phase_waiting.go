@@ -2,16 +2,15 @@ package workflow
 
 import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
-	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
-func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflow.Channel, logger log.Logger) {
-	logger.Info("entering waiting phase")
+func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
+	state.Logger().Info("entering waiting phase")
 
 	for {
 		if hasEnoughPlayers(state) {
-			logger.Info("enough players are present in workflow to proceed")
+			state.Logger().Info("enough players are present in workflow to proceed")
 			state.Phase = types.PhasePrepareRound
 			break
 		}

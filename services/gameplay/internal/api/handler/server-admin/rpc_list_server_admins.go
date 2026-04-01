@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
-	serverrpc "github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/server"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -57,7 +56,7 @@ func (h *Handler) ListServerAdmins(ctx context.Context, req *pb.ListServerAdmins
 	server, err := h.store.GetServerById(ctx, serverId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get server")
-		return nil, serverrpc.HandleServerDBError(err)
+		return nil, handler.HandleServerDBError(err)
 	}
 
 	serverAdmins, err := h.store.ListServerAdmins(ctx, params)

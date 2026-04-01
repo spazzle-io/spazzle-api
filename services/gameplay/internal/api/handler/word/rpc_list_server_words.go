@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
-	serverrpc "github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/server"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/middleware"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
@@ -68,7 +67,7 @@ func (h *Handler) ListWords(ctx context.Context, req *pb.ListWordsRequest) (*pb.
 	server, err := h.store.GetServerById(ctx, serverUserCtx.ServerId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get server")
-		return nil, serverrpc.HandleServerDBError(err)
+		return nil, handler.HandleServerDBError(err)
 	}
 
 	words, err := h.store.ListWords(ctx, params)

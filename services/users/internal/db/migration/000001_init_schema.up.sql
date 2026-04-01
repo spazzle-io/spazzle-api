@@ -1,7 +1,3 @@
--- SQL dump generated using DBML (dbml-lang.org)
--- Database: PostgreSQL
--- Generated at: 2026-01-05T06:14:18.868Z
-
 CREATE TABLE "users" (
   "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
   "wallet_address" text UNIQUE NOT NULL,
@@ -9,4 +5,4 @@ CREATE TABLE "users" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE INDEX ON "users" ("wallet_address");
+CREATE INDEX users_created_at_id_desc ON users (created_at DESC, id DESC);

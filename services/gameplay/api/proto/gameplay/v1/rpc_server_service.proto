@@ -39,15 +39,19 @@ message GetServerByNameResponse {
 }
 
 message ListServersRequest {
-  google.protobuf.Timestamp after_created_at = 1;
-  google.protobuf.StringValue after_id = 2;
-  google.protobuf.Int32Value page_size = 3;
+  google.protobuf.StringValue after_id = 1;
+  google.protobuf.Int32Value page_size = 2;
+  ServerSortBy sort_by = 3;
+  google.protobuf.Timestamp after_created_at = 4;
+  google.protobuf.DoubleValue after_trending_score = 5;
+  google.protobuf.Int32Value after_total_games = 6;
 }
 
 message ListServersResponse {
   repeated Server servers = 1;
   int64 total_count = 2;
-  ListServersCursor cursor = 3;
+  ServerSortBy sort_by = 3;
+  ListServersCursor cursor = 4;
 }
 
 message ListUserServersRequest {
@@ -89,22 +93,19 @@ message UpdateServerResponse {
   Server server = 1;
 }
 
-message JoinServerRequest {
-  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-}
-
-message JoinServerResponse {
-  string server_id = 1;
-  string join_code = 2;
-  google.protobuf.Timestamp expires_at = 3;
-}
-
 message ArchiveServerRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
 }
 
 message ArchiveServerResponse {
   Server server = 1;
+}
+
+enum ServerSortBy {
+  SERVER_SORT_BY_UNSPECIFIED = 0;
+  SERVER_SORT_BY_NEW = 1;
+  SERVER_SORT_BY_TRENDING = 2;
+  SERVER_SORT_BY_POPULAR = 3;
 }
 
 message Server {
@@ -122,6 +123,10 @@ message Server {
   bool is_archived = 12;
   google.protobuf.Timestamp archived_at = 13;
   google.protobuf.Timestamp created_at = 14;
+  int32 total_games = 15;
+  string total_volume = 16;
+  int32 total_players = 17;
+  double trending_score = 18;
 }
 
 message UserServer {
@@ -141,10 +146,16 @@ message UserServer {
   bool is_admin = 14;
   google.protobuf.Timestamp archived_at = 15;
   google.protobuf.Timestamp created_at = 16;
+  int32 total_games = 17;
+  string total_volume = 18;
+  int32 total_players = 19;
+  double trending_score = 20;
 }
 
 message ListServersCursor {
-  google.protobuf.Timestamp after_created_at = 1;
-  string after_id = 2;
-  int32 page_size = 3;
+  string after_id = 1;
+  int32 page_size = 2;
+  google.protobuf.Timestamp after_created_at = 3;
+  double after_trending_score = 4;
+  int32 after_total_games = 5;
 }

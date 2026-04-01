@@ -14,9 +14,10 @@ const (
 )
 
 var (
-	RecordNotFoundError = pgx.ErrNoRows
-	ErrUserAlreadyAdmin = errors.New("user is already a registered server admin")
-	ErrServerNotfound   = errors.New("server not found")
+	RecordNotFoundError  = pgx.ErrNoRows
+	ErrUserAlreadyAdmin  = errors.New("user is already a registered server admin")
+	ErrServerNotfound    = errors.New("server not found")
+	ErrGameAlreadyExists = errors.New("game already exists")
 )
 
 type Error struct {

@@ -13,6 +13,7 @@ linters:
     rules:
       - linters:
           - goconst
+          - gosec
         path: _test\.go
       - linters:
           - gosec

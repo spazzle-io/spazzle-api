@@ -11,9 +11,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Game struct {
+	ID         uuid.UUID      `json:"id"`
+	ServerID   uuid.UUID      `json:"server_id"`
+	NumRounds  int32          `json:"num_rounds"`
+	NumPlayers int32          `json:"num_players"`
+	TotalPot   pgtype.Numeric `json:"total_pot"`
+	GameStake  pgtype.Numeric `json:"game_stake"`
+	StartedAt  time.Time      `json:"started_at"`
+	EndedAt    time.Time      `json:"ended_at"`
+	CreatedAt  time.Time      `json:"created_at"`
+}
+
+type GamePlayer struct {
+	GameID            uuid.UUID      `json:"game_id"`
+	UserID            uuid.UUID      `json:"user_id"`
+	Score             int32          `json:"score"`
+	Pnl               pgtype.Numeric `json:"pnl"`
+	Position          int32          `json:"position"`
+	RoundsPlayed      int32          `json:"rounds_played"`
+	ProvisionalPayout pgtype.Numeric `json:"provisional_payout"`
+	TotalStakeLost    pgtype.Numeric `json:"total_stake_lost"`
+	IsEvicted         bool           `json:"is_evicted"`
+}
+
 type Server struct {
-	ID uuid.UUID `json:"id"`
-	// a partial unique index on name and is_archived is added in a subsequent db migration
+	ID                uuid.UUID      `json:"id"`
 	Name              string         `json:"name"`
 	OwnerID           uuid.UUID      `json:"owner_id"`
 	NumAdmins         int32          `json:"num_admins"`
@@ -25,16 +48,38 @@ type Server struct {
 	RoundDurationSecs int32          `json:"round_duration_secs"`
 	// number of word options presented to a player before they select one to draw
 	NumDrawingOptions int32              `json:"num_drawing_options"`
+	TotalGames        int32              `json:"total_games"`
+	TotalVolume       pgtype.Numeric     `json:"total_volume"`
+	TotalPlayers      int32              `json:"total_players"`
+	TrendingScore     float64            `json:"trending_score"`
 	IsArchived        bool               `json:"is_archived"`
 	ArchivedAt        pgtype.Timestamptz `json:"archived_at"`
-	// an index on created_at DESC and id DESC is added in a subsequent db migration
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt         time.Time          `json:"created_at"`
 }
 
 type ServerAdmin struct {
 	ServerID uuid.UUID `json:"server_id"`
 	UserID   uuid.UUID `json:"user_id"`
 	AddedAt  time.Time `json:"added_at"`
+}
+
+type ServerPlayerStat struct {
+	ServerID    uuid.UUID      `json:"server_id"`
+	UserID      uuid.UUID      `json:"user_id"`
+	TotalGames  int32          `json:"total_games"`
+	TotalScore  int32          `json:"total_score"`
+	TotalPnl    pgtype.Numeric `json:"total_pnl"`
+	TotalVolume pgtype.Numeric `json:"total_volume"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type UserStat struct {
+	UserID      uuid.UUID      `json:"user_id"`
+	TotalGames  int32          `json:"total_games"`
+	TotalScore  int32          `json:"total_score"`
+	TotalPnl    pgtype.Numeric `json:"total_pnl"`
+	TotalVolume pgtype.Numeric `json:"total_volume"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 type Word struct {

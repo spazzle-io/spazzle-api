@@ -50,6 +50,9 @@ func TestArchiveServer(t *testing.T) {
 							Int:   big.NewInt(10),
 							Valid: true,
 						},
+						TotalVolume: pgtype.Numeric{
+							Valid: true,
+						},
 					}, nil)
 
 				store.EXPECT().

@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"time"
 
-	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
-	"go.temporal.io/sdk/log"
-
 	"github.com/google/uuid"
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
+)
+
+const (
+	DefaultRoundNumber          = 1
+	DefaultMinNumPlayersToStart = 2
+
+	phaseCooldownDuration = time.Second * 1
 )
 
 func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput, error) {
@@ -18,17 +23,18 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 		StartToCloseTimeout: time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
-			MaximumInterval:    time.Minute,
+			MaximumInterval:    30 * time.Second,
 			BackoffCoefficient: 2,
 		},
 	}
+
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
 	logger := workflow.GetLogger(ctx)
-	logger.Info("started game workflow")
 
 	state := initializeGameState(ctx, input)
-	logger = log.With(logger, "GameID", state.GameID, "Round", state.CurrentRound)
+	state.baseLogger = logger
+	logger.Info("started game workflow")
 
 	err := registerWorkflowQueries(ctx, state)
 	if err != nil {
@@ -37,25 +43,24 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 
 	notifyCh := workflow.NewChannel(ctx)
 
-	registerGlobalSignalHandlers(ctx, state, notifyCh, logger)
+	registerGlobalSignalHandlers(ctx, state, notifyCh)
 
 	for {
 		switch state.Phase {
 		case types.PhaseWaiting:
-			handlePhaseWaiting(ctx, state, notifyCh, logger)
+			handlePhaseWaiting(ctx, state, notifyCh)
 
 		case types.PhasePrepareRound:
-			handlePhasePrepareRound(ctx, state, notifyCh, logger)
+			handlePhasePrepareRound(ctx, state, notifyCh)
 
 		case types.PhaseInRound:
-			handlePhaseInRound(ctx, state, notifyCh, logger)
+			handlePhaseInRound(ctx, state, notifyCh)
 
 		case types.PhaseEndRound:
-			handlePhaseEndRound(ctx, state, notifyCh, logger)
-			logger = log.With(logger, "Round", state.CurrentRound)
+			handlePhaseEndRound(ctx, state, notifyCh)
 
 		case types.PhaseEndGame:
-			handlePhaseEndGame(ctx, state, notifyCh, logger)
+			handlePhaseEndGame(ctx, state, notifyCh)
 			return types.GameOutput{}, nil
 		}
 	}

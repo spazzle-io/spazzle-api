@@ -48,6 +48,10 @@ func TestListUserServers(t *testing.T) {
 								Int:   big.NewInt(12),
 								Valid: true,
 							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(1000),
+								Valid: true,
+							},
 						},
 					}, nil)
 
@@ -97,6 +101,10 @@ func TestListUserServers(t *testing.T) {
 								Int:   big.NewInt(12),
 								Valid: true,
 							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(1000),
+								Valid: true,
+							},
 						},
 					}, nil)
 
@@ -127,6 +135,10 @@ func TestListUserServers(t *testing.T) {
 							CreatedAt: time.Now().UTC(),
 							StakePerGame: pgtype.Numeric{
 								Int:   big.NewInt(12),
+								Valid: true,
+							},
+							TotalVolume: pgtype.Numeric{
+								Int:   big.NewInt(1000),
 								Valid: true,
 							},
 						},

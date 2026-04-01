@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
@@ -25,6 +27,7 @@ import (
 type MockConfig struct {
 	Store     *mockdb.MockStore
 	Cache     *mockcache.MockCache
+	GameCache *gamecache.GameCache
 	Bus       *mockeventbus.MockEventBus
 	Session   *mockeventbus.MockSession
 	GfClient  *mockgameflowclient.MockClient
@@ -44,9 +47,12 @@ func createTestGameServer(t *testing.T) (*MockConfig, *GameServer) {
 		Environment: util.Development,
 	}
 
+	mockCache := mockcache.NewMockCache(ctrl)
+
 	mockConfig := &MockConfig{
 		Store:     mockdb.NewMockStore(ctrl),
-		Cache:     mockcache.NewMockCache(ctrl),
+		Cache:     mockCache,
+		GameCache: gamecache.New(env, mockCache),
 		Bus:       mockeventbus.NewMockEventBus(ctrl),
 		Session:   mockeventbus.NewMockSession(ctrl),
 		GfClient:  mockgameflowclient.NewMockClient(ctrl),
@@ -57,6 +63,7 @@ func createTestGameServer(t *testing.T) (*MockConfig, *GameServer) {
 		Env:       env,
 		Store:     mockConfig.Store,
 		Cache:     mockConfig.Cache,
+		GameCache: mockConfig.GameCache,
 		Bus:       mockConfig.Bus,
 		GfClient:  mockConfig.GfClient,
 		WordStore: mockConfig.WordStore,
@@ -257,10 +264,28 @@ func TestInitializeGame(t *testing.T) {
 					Times(1).
 					Return(nil)
 
+				config.Bus.EXPECT().
+					Session(gomock.Eq(eventbus.GameIdentifier{
+						GameID:       gameID,
+						GameServerID: gameServer.serverID,
+					})).
+					Times(1).
+					Return(config.Session, nil)
+
+				config.Session.EXPECT().
+					Subscribe(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(2).
+					Return(nil)
+
 				config.GfClient.EXPECT().
 					GetGameState(gomock.Eq(gameServer.serverID)).
 					Times(1).
 					Return(nil, errors.New("failed to get game state"))
+
+				config.Session.EXPECT().
+					Close().
+					Times(1).
+					Return()
 			},
 			shouldErr: true,
 		},
@@ -281,11 +306,6 @@ func TestInitializeGame(t *testing.T) {
 					HeartbeatGameServerInstance(gomock.Eq(gameServer.serverID), gomock.Eq(gameID), gomock.Eq(gameServer.instanceID)).
 					Times(1).
 					Return(nil)
-
-				config.GfClient.EXPECT().
-					GetGameState(gomock.Eq(gameServer.serverID)).
-					Times(1).
-					Return(gameState, nil)
 
 				config.Bus.EXPECT().
 					Session(gomock.Eq(eventbus.GameIdentifier{
@@ -315,11 +335,6 @@ func TestInitializeGame(t *testing.T) {
 					Times(1).
 					Return(nil)
 
-				config.GfClient.EXPECT().
-					GetGameState(gomock.Eq(gameServer.serverID)).
-					Times(1).
-					Return(gameState, nil)
-
 				config.Bus.EXPECT().
 					Session(gomock.Eq(eventbus.GameIdentifier{
 						GameID:       gameID,
@@ -332,6 +347,11 @@ func TestInitializeGame(t *testing.T) {
 					Subscribe(gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(errors.New("failed to subscribe to game events stream"))
+
+				config.Session.EXPECT().
+					Close().
+					Times(1).
+					Return()
 			},
 			shouldErr: true,
 		},
@@ -353,11 +373,6 @@ func TestInitializeGame(t *testing.T) {
 					Times(1).
 					Return(nil)
 
-				config.GfClient.EXPECT().
-					GetGameState(gomock.Eq(gameServer.serverID)).
-					Times(1).
-					Return(gameState, nil)
-
 				config.Bus.EXPECT().
 					Session(gomock.Eq(eventbus.GameIdentifier{
 						GameID:       gameID,
@@ -375,6 +390,11 @@ func TestInitializeGame(t *testing.T) {
 					Subscribe(gomock.Any(), gomock.Eq(eventbus.DrawingUpdatesStreamType), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(errors.New("failed to subscribe to drawing updates stream"))
+
+				config.Session.EXPECT().
+					Close().
+					Times(1).
+					Return()
 			},
 			shouldErr: true,
 		},
@@ -387,13 +407,15 @@ func TestInitializeGame(t *testing.T) {
 
 			tc.buildStubs(gameServer, mockConfig)
 
-			err := gameServer.initializeGame()
+			gameState, err := gameServer.InitializeGame()
 			if tc.shouldErr {
 				require.Error(t, err)
+				require.Empty(t, gameState)
 				return
 			}
 
 			require.NoError(t, err)
+			require.NotEmpty(t, gameState)
 			require.NotEmpty(t, gameServer.gameID)
 			require.NotEmpty(t, gameServer.currentRound)
 			require.NotEmpty(t, gameServer.currentArtist)
@@ -408,19 +430,14 @@ func TestInitializeGame(t *testing.T) {
 
 func TestInitializeGame_GameIsActive(t *testing.T) {
 	_, gameServer := createInitializedTestGameServer(t)
-	err := gameServer.initializeGame()
+	gameState, err := gameServer.InitializeGame()
 	require.NoError(t, err)
+	require.NotEmpty(t, gameState)
 }
 
 func TestAddClient(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	require.Len(t, gameServer.clients, 0)
 	require.Len(t, gameServer.clients[client.userID], 0)
@@ -450,12 +467,12 @@ func TestAddClient_IsSpectating(t *testing.T) {
 	_, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userID:       uuid.New(),
-		connID:       uuid.New(),
-		isSpectating: true,
-		gameServer:   gameServer,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+	client.role.Store(Spectator)
 
 	require.Len(t, gameServer.clients, 0)
 	require.Len(t, gameServer.clients[client.userID], 0)
@@ -472,13 +489,7 @@ func TestAddClient_IsSpectating(t *testing.T) {
 
 func TestRemoveClient(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -507,13 +518,7 @@ func TestRemoveClient(t *testing.T) {
 
 func TestRemoveClient_IsArtist(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -545,12 +550,12 @@ func TestRemoveClient_IsSpectating(t *testing.T) {
 	_, gameServer := createInitializedTestGameServer(t)
 
 	client := &Client{
-		userID:       uuid.New(),
-		connID:       uuid.New(),
-		isSpectating: true,
-		gameServer:   gameServer,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+		userID:     uuid.New(),
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+	client.role.Store(Spectator)
 
 	gameServer.addClient(client)
 
@@ -569,13 +574,7 @@ func TestRemoveClient_IsSpectating(t *testing.T) {
 
 func TestRemoveClient_UserIdNotRegistered(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -596,13 +595,7 @@ func TestRemoveClient_UserIdNotRegistered(t *testing.T) {
 
 func TestRemoveClient_UserConnNotRegistered(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -622,21 +615,15 @@ func TestRemoveClient_UserConnNotRegistered(t *testing.T) {
 
 func TestRemoveAllClients(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
+	client1 := newStubClient(t, gameServer, uuid.New(), Player)
 
-	client1 := &Client{
+	client2 := &Client{
 		userID:     uuid.New(),
 		connID:     uuid.New(),
 		gameServer: gameServer,
 		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
-
-	client2 := &Client{
-		userID:       uuid.New(),
-		connID:       uuid.New(),
-		isSpectating: true,
-		gameServer:   gameServer,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client2.role.Store(Spectator)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client1.userID})).
@@ -668,13 +655,7 @@ func TestRemoveAllClients(t *testing.T) {
 
 func TestDispatchMsg(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -704,13 +685,7 @@ func TestDispatchMsg(t *testing.T) {
 
 func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -741,13 +716,7 @@ func TestDispatchDirectMsg_RecipientUserIdNotFound(t *testing.T) {
 
 func TestDispatchDirectMsg_RecipientConnIdNotFound(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
@@ -782,20 +751,20 @@ func TestDispatchDirectMsg_AllUserConnections(t *testing.T) {
 	userId := uuid.New()
 
 	client1 := &Client{
-		userID:       userId,
-		connID:       uuid.New(),
-		gameServer:   gameServer,
-		isSpectating: true,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+		userID:     userId,
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+	client1.role.Store(Spectator)
 
 	client2 := &Client{
-		userID:       userId,
-		connID:       uuid.New(),
-		gameServer:   gameServer,
-		isSpectating: false,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
+		userID:     userId,
+		connID:     uuid.New(),
+		gameServer: gameServer,
+		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
 	}
+	client2.role.Store(Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client1.userID})).
@@ -841,27 +810,9 @@ func TestDispatchDirectMsg_SpecificUserConnections(t *testing.T) {
 
 	userId := uuid.New()
 
-	client1 := &Client{
-		userID:     userId,
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
-
-	client2 := &Client{
-		userID:       userId,
-		connID:       uuid.New(),
-		gameServer:   gameServer,
-		isSpectating: true,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
-
-	client3 := &Client{
-		userID:     userId,
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client1 := newStubClient(t, gameServer, userId, Player)
+	client2 := newStubClient(t, gameServer, userId, Spectator)
+	client3 := newStubClient(t, gameServer, userId, Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.AnyOf([]uuid.UUID{client1.userID}, []uuid.UUID{client3.userID})).
@@ -904,27 +855,9 @@ func TestDispatchDirectMsg_SpecificUserConnections_ExcludeSpectators(t *testing.
 
 	userId := uuid.New()
 
-	client1 := &Client{
-		userID:     userId,
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
-
-	client2 := &Client{
-		userID:       userId,
-		connID:       uuid.New(),
-		gameServer:   gameServer,
-		isSpectating: true,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
-
-	client3 := &Client{
-		userID:     userId,
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client1 := newStubClient(t, gameServer, userId, Player)
+	client2 := newStubClient(t, gameServer, userId, Spectator)
+	client3 := newStubClient(t, gameServer, userId, Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.AnyOf([]uuid.UUID{client1.userID}, []uuid.UUID{client3.userID})).
@@ -966,27 +899,9 @@ func TestDispatchDirectMsg_ExcludeSpectators(t *testing.T) {
 
 	userId := uuid.New()
 
-	client1 := &Client{
-		userID:     userId,
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
-
-	client2 := &Client{
-		userID:       userId,
-		connID:       uuid.New(),
-		gameServer:   gameServer,
-		isSpectating: true,
-		send:         make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
-
-	client3 := &Client{
-		userID:     userId,
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client1 := newStubClient(t, gameServer, userId, Player)
+	client2 := newStubClient(t, gameServer, userId, Spectator)
+	client3 := newStubClient(t, gameServer, userId, Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.AnyOf([]uuid.UUID{client1.userID}, []uuid.UUID{client3.userID})).
@@ -1036,13 +951,7 @@ func TestScheduleShutdown(t *testing.T) {
 
 func TestShutdown(t *testing.T) {
 	mockConfig, gameServer := createInitializedTestGameServer(t)
-
-	client := &Client{
-		userID:     uuid.New(),
-		connID:     uuid.New(),
-		gameServer: gameServer,
-		send:       make(chan *OutgoingMessage, ClientSendChanBufSize),
-	}
+	client := newStubClient(t, gameServer, uuid.New(), Player)
 
 	mockConfig.GfClient.EXPECT().
 		AddPlayers(gomock.Eq(gameServer.serverID), gomock.Eq(gameServer.gameID), gomock.Eq([]uuid.UUID{client.userID})).
