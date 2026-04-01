@@ -103,12 +103,10 @@ func TestGetGameLeaderboardPagination(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, firstPage, 2)
 
-	last := firstPage[len(firstPage)-1]
 	secondPage, err := testStore.GetGameLeaderboard(context.Background(), GetGameLeaderboardParams{
-		GameID:        game.ID,
-		AfterPosition: pgtype.Int4{Int32: last.Position, Valid: true},
-		AfterID:       pgtype.UUID{Bytes: last.UserID, Valid: true},
-		PageSize:      2,
+		GameID:     game.ID,
+		PageSize:   2,
+		PageOffset: 2,
 	})
 	require.NoError(t, err)
 	require.Len(t, secondPage, 1)

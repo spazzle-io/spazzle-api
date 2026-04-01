@@ -89,14 +89,7 @@
             "type": "string"
           },
           {
-            "name": "pageSize",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "pageOffset",
+            "name": "page",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -144,14 +137,7 @@
             "default": "TIME_WINDOW_UNSPECIFIED"
           },
           {
-            "name": "pageSize",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "pageOffset",
+            "name": "page",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -185,13 +171,6 @@
         },
         "parameters": [
           {
-            "name": "afterCreatedAt",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "date-time"
-          },
-          {
             "name": "afterId",
             "in": "query",
             "required": false,
@@ -199,6 +178,40 @@
           },
           {
             "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SERVER_SORT_BY_UNSPECIFIED",
+              "SERVER_SORT_BY_NEW",
+              "SERVER_SORT_BY_TRENDING",
+              "SERVER_SORT_BY_POPULAR"
+            ],
+            "default": "SERVER_SORT_BY_UNSPECIFIED"
+          },
+          {
+            "name": "afterCreatedAt",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "afterTrendingScore",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "afterTotalGames",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -633,7 +646,8 @@
             "name": "afterEndedAt",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           {
             "name": "afterId",
@@ -827,14 +841,7 @@
             "default": "TIME_WINDOW_UNSPECIFIED"
           },
           {
-            "name": "pageSize",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "pageOffset",
+            "name": "page",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1147,12 +1154,46 @@
             "name": "afterEndedAt",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           {
             "name": "afterId",
             "in": "query",
             "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GameService"
+        ],
+        "security": []
+      }
+    },
+    "/users/{userId}/stats": {
+      "get": {
+        "summary": "Get user stats",
+        "description": "Get a user's all-time game statistics",
+        "operationId": "GameService_GetUserStats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserStatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -1343,7 +1384,7 @@
         },
         "currentRound": {
           "type": "integer",
-          "format": "int32"
+          "format": "int64"
         },
         "numRounds": {
           "type": "integer",
@@ -1360,9 +1401,12 @@
           "type": "string",
           "format": "date-time"
         },
-        "timeRemainingMs": {
+        "drawingDurationMs": {
           "type": "string",
           "format": "int64"
+        },
+        "stakePerGame": {
+          "type": "string"
         }
       }
     },
@@ -1478,6 +1522,10 @@
         "totalCount": {
           "type": "string",
           "format": "int64"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1502,6 +1550,13 @@
         "totalCount": {
           "type": "string",
           "format": "int64"
+        },
+        "timeWindow": {
+          "$ref": "#/definitions/v1TimeWindow"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1538,6 +1593,13 @@
         "totalCount": {
           "type": "string",
           "format": "int64"
+        },
+        "timeWindow": {
+          "$ref": "#/definitions/v1TimeWindow"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1560,6 +1622,32 @@
         },
         "hasElevatedPermissions": {
           "type": "boolean"
+        }
+      }
+    },
+    "v1GetUserStatsResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalScore": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalPnl": {
+          "type": "string"
+        },
+        "totalVolume": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -1676,14 +1764,22 @@
     "v1ListServersCursor": {
       "type": "object",
       "properties": {
-        "afterCreatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
         "afterId": {
           "type": "string"
         },
         "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "afterCreatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "afterTrendingScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "afterTotalGames": {
           "type": "integer",
           "format": "int32"
         }
@@ -1702,6 +1798,9 @@
         "totalCount": {
           "type": "string",
           "format": "int64"
+        },
+        "sortBy": {
+          "$ref": "#/definitions/v1ServerSortBy"
         },
         "cursor": {
           "$ref": "#/definitions/v1ListServersCursor"
@@ -1903,6 +2002,21 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalVolume": {
+          "type": "string"
+        },
+        "totalPlayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "trendingScore": {
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -1920,6 +2034,16 @@
           "format": "date-time"
         }
       }
+    },
+    "v1ServerSortBy": {
+      "type": "string",
+      "enum": [
+        "SERVER_SORT_BY_UNSPECIFIED",
+        "SERVER_SORT_BY_NEW",
+        "SERVER_SORT_BY_TRENDING",
+        "SERVER_SORT_BY_POPULAR"
+      ],
+      "default": "SERVER_SORT_BY_UNSPECIFIED"
     },
     "v1StreamType": {
       "type": "string",
@@ -1960,6 +2084,12 @@
           "format": "int32"
         },
         "pnl": {
+          "type": "string"
+        },
+        "provisionalPayout": {
+          "type": "string"
+        },
+        "stakeLost": {
           "type": "string"
         },
         "position": {
@@ -2032,6 +2162,21 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "totalGames": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "totalVolume": {
+          "type": "string"
+        },
+        "totalPlayers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "trendingScore": {
+          "type": "number",
+          "format": "double"
         }
       }
     },

@@ -4,6 +4,7 @@ package gameplay.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
@@ -26,20 +27,20 @@ message GetGameResponse {
 
 message GetGameLeaderboardRequest {
   string game_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  int32 page_size = 2;
-  int32 page_offset = 3;
+  int32 page = 2;
 }
 
 message GetGameLeaderboardResponse {
   repeated GamePlayerEntry players = 1;
   int64 total_count = 2;
+  int32 page = 3;
 }
 
 message ListServerGamesRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
-  int32 page_size = 2;
-  string after_ended_at = 3;
-  string after_id = 4;
+  google.protobuf.Int32Value page_size = 2;
+  google.protobuf.Timestamp after_ended_at = 3;
+  google.protobuf.StringValue after_id = 4;
 }
 
 message ListServerGamesResponse {
@@ -51,20 +52,21 @@ message ListServerGamesResponse {
 message GetServerLeaderboardRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
   TimeWindow time_window = 2;
-  int32 page_size = 3;
-  int32 page_offset = 4;
+  int32 page = 3;
 }
 
 message GetServerLeaderboardResponse {
   repeated LeaderboardEntry players = 1;
   int64 total_count = 2;
+  TimeWindow time_window = 3;
+  int32 page = 4;
 }
 
 message ListUserGamesRequest {
-  string user_id = 1 [(buf.validate.field).required = true];
-  int32 page_size = 2;
-  string after_ended_at = 3;
-  string after_id = 4;
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+  google.protobuf.Int32Value page_size = 2;
+  google.protobuf.Timestamp after_ended_at = 3;
+  google.protobuf.StringValue after_id = 4;
 }
 
 message ListUserGamesResponse {
@@ -75,13 +77,27 @@ message ListUserGamesResponse {
 
 message GetGlobalLeaderboardRequest {
   TimeWindow time_window = 1;
-  int32 page_size = 2;
-  int32 page_offset = 3;
+  int32 page = 2;
 }
 
 message GetGlobalLeaderboardResponse {
   repeated LeaderboardEntry players = 1;
   int64 total_count = 2;
+  TimeWindow time_window = 3;
+  int32 page = 4;
+}
+
+message GetUserStatsRequest {
+  string user_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetUserStatsResponse {
+  string user_id = 1;
+  int32 total_games = 2;
+  int32 total_score = 3;
+  string total_pnl = 4;
+  string total_volume = 5;
+  google.protobuf.Timestamp updated_at = 6;
 }
 
 message ReplayGameRequest {
@@ -154,12 +170,13 @@ message CurrentGameInfo {
   string id = 1;
   string phase = 2;
   string sub_phase = 3;
-  int32 current_round = 4;
+  uint32 current_round = 4;
   int32 num_rounds = 5;
   string current_artist = 6;
   int32 num_players = 7;
   google.protobuf.Timestamp started_at = 8;
-  int64 time_remaining_ms = 9;
+  int64 drawing_duration_ms = 9;
+  string stake_per_game = 10;
 }
 
 message GamePlayerEntry {
@@ -185,9 +202,11 @@ message UserGameEntry {
   GameInfo game = 1;
   int32 score = 2;
   string pnl = 3;
-  int32 position = 4;
-  int32 rounds_played = 5;
-  bool is_evicted = 6;
+  string provisional_payout = 4;
+  string stake_lost = 5;
+  int32 position = 6;
+  int32 rounds_played = 7;
+  bool is_evicted = 8;
 }
 
 message ReplayMessage {

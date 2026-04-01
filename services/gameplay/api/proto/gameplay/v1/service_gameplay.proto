@@ -367,6 +367,18 @@ service GameService {
     };
   }
 
+  rpc GetUserStats(GetUserStatsRequest) returns (GetUserStatsResponse) {
+    option (google.api.http) = {
+      get: "/users/{user_id}/stats"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get user stats";
+      description: "Get a user's all-time game statistics";
+      security: {};
+    };
+  }
+
   rpc JoinGame(JoinGameRequest) returns (JoinGameResponse) {
     option (google.api.http) = {
       post: "/servers/{server_id}/games:join"

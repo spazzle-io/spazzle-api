@@ -26,11 +26,6 @@ SELECT
     is_evicted
 FROM game_players
 WHERE game_id = sqlc.arg(game_id)
-AND (
-    sqlc.narg(after_position)::int IS NULL
-    OR position > sqlc.narg(after_position)
-    OR (position = sqlc.narg(after_position) AND user_id < sqlc.narg(after_id))
-)
 ORDER BY position ASC, score DESC, user_id DESC
 LIMIT sqlc.arg(page_size)
 OFFSET sqlc.arg(page_offset);

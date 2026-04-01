@@ -15,7 +15,7 @@ import (
 )
 
 func (h *Handler) ListServers(ctx context.Context, req *pb.ListServersRequest) (*pb.ListServersResponse, error) {
-	afterId, err := uuid.Parse(req.GetAfterId().GetValue())
+	afterID, err := uuid.Parse(req.GetAfterId().GetValue())
 	if err != nil && req.GetAfterId() != nil {
 		log.Error().Err(err).Msg("invalid after id")
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidAfterIdError)
@@ -26,19 +26,24 @@ func (h *Handler) ListServers(ctx context.Context, req *pb.ListServersRequest) (
 		pageSize = handler.DefaultPageSize
 	}
 
-	params := db.ListServersParams{
-		PageSize: pageSize,
-		AfterID: pgtype.UUID{
-			Bytes: afterId,
-			Valid: req.GetAfterId() != nil,
-		},
-		AfterCreatedAt: pgtype.Timestamptz{
-			Time:  req.GetAfterCreatedAt().AsTime(),
-			Valid: req.GetAfterCreatedAt().IsValid(),
-		},
+	pgAfterID := pgtype.UUID{
+		Bytes: afterID,
+		Valid: req.GetAfterId() != nil,
 	}
 
-	servers, err := h.store.ListServers(ctx, params)
+	var servers []db.Server
+
+	switch req.GetSortBy() {
+	case pb.ServerSortBy_SERVER_SORT_BY_NEW:
+		servers, err = h.fetchNewServers(ctx, pgAfterID, req, pageSize)
+	case pb.ServerSortBy_SERVER_SORT_BY_TRENDING:
+		servers, err = h.fetchTrendingServers(ctx, pgAfterID, req, pageSize)
+	case pb.ServerSortBy_SERVER_SORT_BY_POPULAR:
+		servers, err = h.fetchPopularServers(ctx, pgAfterID, req, pageSize)
+	default:
+		servers, err = h.fetchNewServers(ctx, pgAfterID, req, pageSize)
+	}
+
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch servers")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -61,17 +66,60 @@ func (h *Handler) ListServers(ctx context.Context, req *pb.ListServersRequest) (
 	}
 	if n := len(servers); n > 0 {
 		last := servers[n-1]
+
 		cursor.AfterId = last.ID.String()
 		cursor.AfterCreatedAt = timestamppb.New(last.CreatedAt)
+		cursor.AfterTrendingScore = last.TrendingScore
+		cursor.AfterTotalGames = last.TotalGames
 	}
 
 	response := &pb.ListServersResponse{
 		Servers:    pbServers,
 		TotalCount: totalCount,
+		SortBy:     req.GetSortBy(),
 		Cursor:     cursor,
 	}
 
 	log.Info().Msg("fetched servers successfully")
 
 	return response, nil
+}
+
+func (h *Handler) fetchNewServers(ctx context.Context, afterID pgtype.UUID, req *pb.ListServersRequest, pageSize int32) ([]db.Server, error) {
+	params := db.ListServersParams{
+		PageSize: pageSize,
+		AfterID:  afterID,
+		AfterCreatedAt: pgtype.Timestamptz{
+			Time:  req.GetAfterCreatedAt().AsTime(),
+			Valid: req.GetAfterCreatedAt().IsValid(),
+		},
+	}
+
+	return h.store.ListServers(ctx, params)
+}
+
+func (h *Handler) fetchTrendingServers(ctx context.Context, afterID pgtype.UUID, req *pb.ListServersRequest, pageSize int32) ([]db.Server, error) {
+	params := db.ListServersByTrendingParams{
+		PageSize: pageSize,
+		AfterID:  afterID,
+		AfterTrendingScore: pgtype.Float8{
+			Float64: req.GetAfterTrendingScore().GetValue(),
+			Valid:   req.GetAfterTrendingScore() != nil,
+		},
+	}
+
+	return h.store.ListServersByTrending(ctx, params)
+}
+
+func (h *Handler) fetchPopularServers(ctx context.Context, afterID pgtype.UUID, req *pb.ListServersRequest, pageSize int32) ([]db.Server, error) {
+	params := db.ListServersByPopularParams{
+		PageSize: pageSize,
+		AfterID:  afterID,
+		AfterTotalGames: pgtype.Int4{
+			Int32: req.GetAfterTotalGames().GetValue(),
+			Valid: req.GetAfterTotalGames() != nil,
+		},
+	}
+
+	return h.store.ListServersByPopular(ctx, params)
 }

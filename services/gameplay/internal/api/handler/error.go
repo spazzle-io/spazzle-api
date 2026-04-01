@@ -28,6 +28,8 @@ const (
 	InvalidStakePerGameError string = "Invalid stake per game"
 	InvalidStreamTypeError   string = "Invalid stream type"
 	InvalidGameRoleError     string = "Invalid game role"
+	GameNotFoundError        string = "Game not found"
+	UserStatsNotFoundError   string = "No game history found for this user"
 )
 
 func ProtovalidateViolation(protovalidateErr error) []*errdetails.BadRequest_FieldViolation {

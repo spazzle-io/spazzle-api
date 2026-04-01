@@ -39,6 +39,10 @@ func TestGetServerByName(t *testing.T) {
 							Int:   big.NewInt(1),
 							Valid: true,
 						},
+						TotalVolume: pgtype.Numeric{
+							Int:   big.NewInt(1),
+							Valid: true,
+						},
 					}, nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.GetServerByNameResponse, err error) {

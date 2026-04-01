@@ -75,6 +75,9 @@ func TestCreateServer(t *testing.T) {
 							Int:   big.NewInt(12),
 							Valid: true,
 						},
+						TotalVolume: pgtype.Numeric{
+							Valid: true,
+						},
 					}, nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateServerResponse, err error) {

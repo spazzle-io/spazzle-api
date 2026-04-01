@@ -37,14 +37,17 @@ func registerGetGameStateQuery(ctx workflow.Context, state *GameState) error {
 		return &types.GameStateView{
 			GameID:            state.GameID,
 			StartedAt:         state.StartedAt,
+			DrawingDuration:   state.DrawingDuration,
 			EndedAt:           state.EndedAt,
 			Phase:             state.Phase,
 			SubPhase:          state.SubPhase,
 			CurrentRound:      state.CurrentRound,
+			NumRounds:         state.NumRounds,
 			CurrentArtist:     state.CurrentArtist,
 			CurrentWord:       state.CurrentWord,
 			Players:           activePlayers,
 			NumCorrectGuesses: numCorrectGuesses,
+			StakePerGame:      state.StakePerGame,
 		}, nil
 	})
 }

@@ -26,29 +26,19 @@ SELECT
     is_evicted
 FROM game_players
 WHERE game_id = $1
-AND (
-    $2::int IS NULL
-    OR position > $2
-    OR (position = $2 AND user_id < $3)
-)
-ORDER BY position ASC, user_id DESC
-LIMIT $4
+ORDER BY position ASC, score DESC, user_id DESC
+LIMIT $3
+OFFSET $2
 `
 
 type GetGameLeaderboardParams struct {
-	GameID        uuid.UUID   `json:"game_id"`
-	AfterPosition pgtype.Int4 `json:"after_position"`
-	AfterID       pgtype.UUID `json:"after_id"`
-	PageSize      int32       `json:"page_size"`
+	GameID     uuid.UUID `json:"game_id"`
+	PageOffset int32     `json:"page_offset"`
+	PageSize   int32     `json:"page_size"`
 }
 
 func (q *Queries) GetGameLeaderboard(ctx context.Context, arg GetGameLeaderboardParams) ([]GamePlayer, error) {
-	rows, err := q.db.Query(ctx, getGameLeaderboard,
-		arg.GameID,
-		arg.AfterPosition,
-		arg.AfterID,
-		arg.PageSize,
-	)
+	rows, err := q.db.Query(ctx, getGameLeaderboard, arg.GameID, arg.PageOffset, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}

@@ -389,12 +389,15 @@ func (x *GetServerByNameResponse) GetServer() *Server {
 }
 
 type ListServersRequest struct {
-	state          protoimpl.MessageState  `protogen:"open.v1"`
-	AfterCreatedAt *timestamppb.Timestamp  `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       *wrapperspb.Int32Value  `protobuf:"bytes,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state              protoimpl.MessageState  `protogen:"open.v1"`
+	AfterId            *wrapperspb.StringValue `protobuf:"bytes,1,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize           *wrapperspb.Int32Value  `protobuf:"bytes,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	SortBy             ServerSortBy            `protobuf:"varint,3,opt,name=sort_by,json=sortBy,proto3,enum=gameplay.v1.ServerSortBy" json:"sort_by,omitempty"`
+	AfterCreatedAt     *timestamppb.Timestamp  `protobuf:"bytes,4,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
+	AfterTrendingScore *wrapperspb.DoubleValue `protobuf:"bytes,5,opt,name=after_trending_score,json=afterTrendingScore,proto3" json:"after_trending_score,omitempty"`
+	AfterTotalGames    *wrapperspb.Int32Value  `protobuf:"bytes,6,opt,name=after_total_games,json=afterTotalGames,proto3" json:"after_total_games,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ListServersRequest) Reset() {
@@ -427,13 +430,6 @@ func (*ListServersRequest) Descriptor() ([]byte, []int) {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ListServersRequest) GetAfterCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.AfterCreatedAt
-	}
-	return nil
-}
-
 func (x *ListServersRequest) GetAfterId() *wrapperspb.StringValue {
 	if x != nil {
 		return x.AfterId
@@ -448,11 +444,40 @@ func (x *ListServersRequest) GetPageSize() *wrapperspb.Int32Value {
 	return nil
 }
 
+func (x *ListServersRequest) GetSortBy() ServerSortBy {
+	if x != nil {
+		return x.SortBy
+	}
+	return ServerSortBy_SERVER_SORT_BY_UNSPECIFIED
+}
+
+func (x *ListServersRequest) GetAfterCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AfterCreatedAt
+	}
+	return nil
+}
+
+func (x *ListServersRequest) GetAfterTrendingScore() *wrapperspb.DoubleValue {
+	if x != nil {
+		return x.AfterTrendingScore
+	}
+	return nil
+}
+
+func (x *ListServersRequest) GetAfterTotalGames() *wrapperspb.Int32Value {
+	if x != nil {
+		return x.AfterTotalGames
+	}
+	return nil
+}
+
 type ListServersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Servers       []*Server              `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`
 	TotalCount    int64                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
-	Cursor        *ListServersCursor     `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	SortBy        ServerSortBy           `protobuf:"varint,3,opt,name=sort_by,json=sortBy,proto3,enum=gameplay.v1.ServerSortBy" json:"sort_by,omitempty"`
+	Cursor        *ListServersCursor     `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -499,6 +524,13 @@ func (x *ListServersResponse) GetTotalCount() int64 {
 		return x.TotalCount
 	}
 	return 0
+}
+
+func (x *ListServersResponse) GetSortBy() ServerSortBy {
+	if x != nil {
+		return x.SortBy
+	}
+	return ServerSortBy_SERVER_SORT_BY_UNSPECIFIED
 }
 
 func (x *ListServersResponse) GetCursor() *ListServersCursor {
@@ -996,6 +1028,10 @@ type Server struct {
 	IsArchived        bool                   `protobuf:"varint,12,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
 	ArchivedAt        *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	TotalGames        int32                  `protobuf:"varint,15,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
+	TotalVolume       string                 `protobuf:"bytes,16,opt,name=total_volume,json=totalVolume,proto3" json:"total_volume,omitempty"`
+	TotalPlayers      int32                  `protobuf:"varint,17,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
+	TrendingScore     float64                `protobuf:"fixed64,18,opt,name=trending_score,json=trendingScore,proto3" json:"trending_score,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1128,6 +1164,34 @@ func (x *Server) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Server) GetTotalGames() int32 {
+	if x != nil {
+		return x.TotalGames
+	}
+	return 0
+}
+
+func (x *Server) GetTotalVolume() string {
+	if x != nil {
+		return x.TotalVolume
+	}
+	return ""
+}
+
+func (x *Server) GetTotalPlayers() int32 {
+	if x != nil {
+		return x.TotalPlayers
+	}
+	return 0
+}
+
+func (x *Server) GetTrendingScore() float64 {
+	if x != nil {
+		return x.TrendingScore
+	}
+	return 0
+}
+
 type UserServer struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1146,6 +1210,10 @@ type UserServer struct {
 	IsAdmin           bool                   `protobuf:"varint,14,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
 	ArchivedAt        *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	TotalGames        int32                  `protobuf:"varint,17,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
+	TotalVolume       string                 `protobuf:"bytes,18,opt,name=total_volume,json=totalVolume,proto3" json:"total_volume,omitempty"`
+	TotalPlayers      int32                  `protobuf:"varint,19,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
+	TrendingScore     float64                `protobuf:"fixed64,20,opt,name=trending_score,json=trendingScore,proto3" json:"trending_score,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1292,13 +1360,43 @@ func (x *UserServer) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *UserServer) GetTotalGames() int32 {
+	if x != nil {
+		return x.TotalGames
+	}
+	return 0
+}
+
+func (x *UserServer) GetTotalVolume() string {
+	if x != nil {
+		return x.TotalVolume
+	}
+	return ""
+}
+
+func (x *UserServer) GetTotalPlayers() int32 {
+	if x != nil {
+		return x.TotalPlayers
+	}
+	return 0
+}
+
+func (x *UserServer) GetTrendingScore() float64 {
+	if x != nil {
+		return x.TrendingScore
+	}
+	return 0
+}
+
 type ListServersCursor struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	AfterCreatedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
-	AfterId        string                 `protobuf:"bytes,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
-	PageSize       int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	AfterId            string                 `protobuf:"bytes,1,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize           int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	AfterCreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=after_created_at,json=afterCreatedAt,proto3" json:"after_created_at,omitempty"`
+	AfterTrendingScore float64                `protobuf:"fixed64,4,opt,name=after_trending_score,json=afterTrendingScore,proto3" json:"after_trending_score,omitempty"`
+	AfterTotalGames    int32                  `protobuf:"varint,5,opt,name=after_total_games,json=afterTotalGames,proto3" json:"after_total_games,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ListServersCursor) Reset() {
@@ -1331,13 +1429,6 @@ func (*ListServersCursor) Descriptor() ([]byte, []int) {
 	return file_gameplay_v1_rpc_server_service_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *ListServersCursor) GetAfterCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.AfterCreatedAt
-	}
-	return nil
-}
-
 func (x *ListServersCursor) GetAfterId() string {
 	if x != nil {
 		return x.AfterId
@@ -1348,6 +1439,27 @@ func (x *ListServersCursor) GetAfterId() string {
 func (x *ListServersCursor) GetPageSize() int32 {
 	if x != nil {
 		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListServersCursor) GetAfterCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AfterCreatedAt
+	}
+	return nil
+}
+
+func (x *ListServersCursor) GetAfterTrendingScore() float64 {
+	if x != nil {
+		return x.AfterTrendingScore
+	}
+	return 0
+}
+
+func (x *ListServersCursor) GetAfterTotalGames() int32 {
+	if x != nil {
+		return x.AfterTotalGames
 	}
 	return 0
 }
@@ -1374,16 +1486,20 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\x16GetServerByNameRequest\x12\x1a\n" +
 	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"F\n" +
 	"\x17GetServerByNameResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\xcd\x01\n" +
-	"\x12ListServersRequest\x12D\n" +
-	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x127\n" +
-	"\bafter_id\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\aafterId\x128\n" +
-	"\tpage_size\x18\x03 \x01(\v2\x1b.google.protobuf.Int32ValueR\bpageSize\"\x9d\x01\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\x9a\x03\n" +
+	"\x12ListServersRequest\x127\n" +
+	"\bafter_id\x18\x01 \x01(\v2\x1c.google.protobuf.StringValueR\aafterId\x128\n" +
+	"\tpage_size\x18\x02 \x01(\v2\x1b.google.protobuf.Int32ValueR\bpageSize\x122\n" +
+	"\asort_by\x18\x03 \x01(\x0e2\x19.gameplay.v1.ServerSortByR\x06sortBy\x12D\n" +
+	"\x10after_created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12N\n" +
+	"\x14after_trending_score\x18\x05 \x01(\v2\x1c.google.protobuf.DoubleValueR\x12afterTrendingScore\x12G\n" +
+	"\x11after_total_games\x18\x06 \x01(\v2\x1b.google.protobuf.Int32ValueR\x0fafterTotalGames\"\xd1\x01\n" +
 	"\x13ListServersResponse\x12-\n" +
 	"\aservers\x18\x01 \x03(\v2\x13.gameplay.v1.ServerR\aservers\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x03R\n" +
-	"totalCount\x126\n" +
-	"\x06cursor\x18\x03 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"\xf7\x01\n" +
+	"totalCount\x122\n" +
+	"\asort_by\x18\x03 \x01(\x0e2\x19.gameplay.v1.ServerSortByR\x06sortBy\x126\n" +
+	"\x06cursor\x18\x04 \x01(\v2\x1e.gameplay.v1.ListServersCursorR\x06cursor\"\xf7\x01\n" +
 	"\x16ListUserServersRequest\x12$\n" +
 	"\auser_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06userId\x12D\n" +
 	"\x10after_created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x127\n" +
@@ -1415,7 +1531,7 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\x14ArchiveServerRequest\x12(\n" +
 	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"D\n" +
 	"\x15ArchiveServerResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\xb5\x04\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\xc5\x05\n" +
 	"\x06Server\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
@@ -1435,7 +1551,12 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\varchived_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"archivedAt\x129\n" +
 	"\n" +
-	"created_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xef\x04\n" +
+	"created_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1f\n" +
+	"\vtotal_games\x18\x0f \x01(\x05R\n" +
+	"totalGames\x12!\n" +
+	"\ftotal_volume\x18\x10 \x01(\tR\vtotalVolume\x12#\n" +
+	"\rtotal_players\x18\x11 \x01(\x05R\ftotalPlayers\x12%\n" +
+	"\x0etrending_score\x18\x12 \x01(\x01R\rtrendingScore\"\xff\x05\n" +
 	"\n" +
 	"UserServer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -1458,11 +1579,18 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\varchived_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"archivedAt\x129\n" +
 	"\n" +
-	"created_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x91\x01\n" +
-	"\x11ListServersCursor\x12D\n" +
-	"\x10after_created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x12\x19\n" +
-	"\bafter_id\x18\x02 \x01(\tR\aafterId\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize*\x7f\n" +
+	"created_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1f\n" +
+	"\vtotal_games\x18\x11 \x01(\x05R\n" +
+	"totalGames\x12!\n" +
+	"\ftotal_volume\x18\x12 \x01(\tR\vtotalVolume\x12#\n" +
+	"\rtotal_players\x18\x13 \x01(\x05R\ftotalPlayers\x12%\n" +
+	"\x0etrending_score\x18\x14 \x01(\x01R\rtrendingScore\"\xef\x01\n" +
+	"\x11ListServersCursor\x12\x19\n" +
+	"\bafter_id\x18\x01 \x01(\tR\aafterId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12D\n" +
+	"\x10after_created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x0eafterCreatedAt\x120\n" +
+	"\x14after_trending_score\x18\x04 \x01(\x01R\x12afterTrendingScore\x12*\n" +
+	"\x11after_total_games\x18\x05 \x01(\x05R\x0fafterTotalGames*\x7f\n" +
 	"\fServerSortBy\x12\x1e\n" +
 	"\x1aSERVER_SORT_BY_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12SERVER_SORT_BY_NEW\x10\x01\x12\x1b\n" +
@@ -1505,43 +1633,48 @@ var file_gameplay_v1_rpc_server_service_proto_goTypes = []any{
 	(*Server)(nil),                           // 17: gameplay.v1.Server
 	(*UserServer)(nil),                       // 18: gameplay.v1.UserServer
 	(*ListServersCursor)(nil),                // 19: gameplay.v1.ListServersCursor
-	(*timestamppb.Timestamp)(nil),            // 20: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),           // 21: google.protobuf.StringValue
-	(*wrapperspb.Int32Value)(nil),            // 22: google.protobuf.Int32Value
-	(*wrapperspb.BoolValue)(nil),             // 23: google.protobuf.BoolValue
+	(*wrapperspb.StringValue)(nil),           // 20: google.protobuf.StringValue
+	(*wrapperspb.Int32Value)(nil),            // 21: google.protobuf.Int32Value
+	(*timestamppb.Timestamp)(nil),            // 22: google.protobuf.Timestamp
+	(*wrapperspb.DoubleValue)(nil),           // 23: google.protobuf.DoubleValue
+	(*wrapperspb.BoolValue)(nil),             // 24: google.protobuf.BoolValue
 }
 var file_gameplay_v1_rpc_server_service_proto_depIdxs = []int32{
 	17, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
 	17, // 1: gameplay.v1.GetServerResponse.server:type_name -> gameplay.v1.Server
 	17, // 2: gameplay.v1.GetServerByNameResponse.server:type_name -> gameplay.v1.Server
-	20, // 3: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	21, // 4: gameplay.v1.ListServersRequest.after_id:type_name -> google.protobuf.StringValue
-	22, // 5: gameplay.v1.ListServersRequest.page_size:type_name -> google.protobuf.Int32Value
-	17, // 6: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
-	19, // 7: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	20, // 8: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
-	21, // 9: gameplay.v1.ListUserServersRequest.after_id:type_name -> google.protobuf.StringValue
-	22, // 10: gameplay.v1.ListUserServersRequest.page_size:type_name -> google.protobuf.Int32Value
-	18, // 11: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
-	19, // 12: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
-	21, // 13: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
-	23, // 14: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
-	21, // 15: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
-	22, // 16: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
-	22, // 17: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
-	22, // 18: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
-	17, // 19: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
-	17, // 20: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
-	20, // 21: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
-	20, // 22: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
-	20, // 23: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
-	20, // 24: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
-	20, // 25: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	20, // 3: gameplay.v1.ListServersRequest.after_id:type_name -> google.protobuf.StringValue
+	21, // 4: gameplay.v1.ListServersRequest.page_size:type_name -> google.protobuf.Int32Value
+	0,  // 5: gameplay.v1.ListServersRequest.sort_by:type_name -> gameplay.v1.ServerSortBy
+	22, // 6: gameplay.v1.ListServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	23, // 7: gameplay.v1.ListServersRequest.after_trending_score:type_name -> google.protobuf.DoubleValue
+	21, // 8: gameplay.v1.ListServersRequest.after_total_games:type_name -> google.protobuf.Int32Value
+	17, // 9: gameplay.v1.ListServersResponse.servers:type_name -> gameplay.v1.Server
+	0,  // 10: gameplay.v1.ListServersResponse.sort_by:type_name -> gameplay.v1.ServerSortBy
+	19, // 11: gameplay.v1.ListServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	22, // 12: gameplay.v1.ListUserServersRequest.after_created_at:type_name -> google.protobuf.Timestamp
+	20, // 13: gameplay.v1.ListUserServersRequest.after_id:type_name -> google.protobuf.StringValue
+	21, // 14: gameplay.v1.ListUserServersRequest.page_size:type_name -> google.protobuf.Int32Value
+	18, // 15: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
+	19, // 16: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
+	20, // 17: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
+	24, // 18: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
+	20, // 19: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
+	21, // 20: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
+	21, // 21: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
+	21, // 22: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
+	17, // 23: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
+	17, // 24: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
+	22, // 25: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
+	22, // 26: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
+	22, // 27: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
+	22, // 28: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
+	22, // 29: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_gameplay_v1_rpc_server_service_proto_init() }

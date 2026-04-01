@@ -826,6 +826,7 @@ const (
 	GameService_GetServerLeaderboard_FullMethodName = "/gameplay.v1.GameService/GetServerLeaderboard"
 	GameService_ListUserGames_FullMethodName        = "/gameplay.v1.GameService/ListUserGames"
 	GameService_GetGlobalLeaderboard_FullMethodName = "/gameplay.v1.GameService/GetGlobalLeaderboard"
+	GameService_GetUserStats_FullMethodName         = "/gameplay.v1.GameService/GetUserStats"
 	GameService_JoinGame_FullMethodName             = "/gameplay.v1.GameService/JoinGame"
 	GameService_ReplayGame_FullMethodName           = "/gameplay.v1.GameService/ReplayGame"
 )
@@ -841,6 +842,7 @@ type GameServiceClient interface {
 	GetServerLeaderboard(ctx context.Context, in *GetServerLeaderboardRequest, opts ...grpc.CallOption) (*GetServerLeaderboardResponse, error)
 	ListUserGames(ctx context.Context, in *ListUserGamesRequest, opts ...grpc.CallOption) (*ListUserGamesResponse, error)
 	GetGlobalLeaderboard(ctx context.Context, in *GetGlobalLeaderboardRequest, opts ...grpc.CallOption) (*GetGlobalLeaderboardResponse, error)
+	GetUserStats(ctx context.Context, in *GetUserStatsRequest, opts ...grpc.CallOption) (*GetUserStatsResponse, error)
 	JoinGame(ctx context.Context, in *JoinGameRequest, opts ...grpc.CallOption) (*JoinGameResponse, error)
 	ReplayGame(ctx context.Context, in *ReplayGameRequest, opts ...grpc.CallOption) (*ReplayGameResponse, error)
 }
@@ -923,6 +925,16 @@ func (c *gameServiceClient) GetGlobalLeaderboard(ctx context.Context, in *GetGlo
 	return out, nil
 }
 
+func (c *gameServiceClient) GetUserStats(ctx context.Context, in *GetUserStatsRequest, opts ...grpc.CallOption) (*GetUserStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserStatsResponse)
+	err := c.cc.Invoke(ctx, GameService_GetUserStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gameServiceClient) JoinGame(ctx context.Context, in *JoinGameRequest, opts ...grpc.CallOption) (*JoinGameResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(JoinGameResponse)
@@ -954,6 +966,7 @@ type GameServiceServer interface {
 	GetServerLeaderboard(context.Context, *GetServerLeaderboardRequest) (*GetServerLeaderboardResponse, error)
 	ListUserGames(context.Context, *ListUserGamesRequest) (*ListUserGamesResponse, error)
 	GetGlobalLeaderboard(context.Context, *GetGlobalLeaderboardRequest) (*GetGlobalLeaderboardResponse, error)
+	GetUserStats(context.Context, *GetUserStatsRequest) (*GetUserStatsResponse, error)
 	JoinGame(context.Context, *JoinGameRequest) (*JoinGameResponse, error)
 	ReplayGame(context.Context, *ReplayGameRequest) (*ReplayGameResponse, error)
 	mustEmbedUnimplementedGameServiceServer()
@@ -986,6 +999,9 @@ func (UnimplementedGameServiceServer) ListUserGames(context.Context, *ListUserGa
 }
 func (UnimplementedGameServiceServer) GetGlobalLeaderboard(context.Context, *GetGlobalLeaderboardRequest) (*GetGlobalLeaderboardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGlobalLeaderboard not implemented")
+}
+func (UnimplementedGameServiceServer) GetUserStats(context.Context, *GetUserStatsRequest) (*GetUserStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserStats not implemented")
 }
 func (UnimplementedGameServiceServer) JoinGame(context.Context, *JoinGameRequest) (*JoinGameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JoinGame not implemented")
@@ -1140,6 +1156,24 @@ func _GameService_GetGlobalLeaderboard_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GameService_GetUserStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameServiceServer).GetUserStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GameService_GetUserStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameServiceServer).GetUserStats(ctx, req.(*GetUserStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GameService_JoinGame_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(JoinGameRequest)
 	if err := dec(in); err != nil {
@@ -1210,6 +1244,10 @@ var GameService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetGlobalLeaderboard",
 			Handler:    _GameService_GetGlobalLeaderboard_Handler,
+		},
+		{
+			MethodName: "GetUserStats",
+			Handler:    _GameService_GetUserStats_Handler,
 		},
 		{
 			MethodName: "JoinGame",
