@@ -69,16 +69,16 @@ tidy:
 postgres:
 	docker run --name postgres$(POSTGRES_VERSION) -p $(POSTGRES_PORT):$(POSTGRES_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASS) -d postgres:$(POSTGRES_VERSION)
 
-create_db:
+create-db:
 	docker exec -it postgres$(POSTGRES_VERSION) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(POSTGRES_DB_NAME)
 
-drop_db:
+drop-db:
 	docker exec -it postgres$(POSTGRES_VERSION) dropdb $(POSTGRES_DB_NAME)
 
-migrate_create:
+migrate-create:
 	migrate create -ext sql -dir ./$(module)/internal/db/migration -seq $(name)
 
-migrate_up:
+migrate-up:
 ifdef module
 	@echo "Running migrate_up for module: $(module)"
 	@if [ -n "$(n)" ]; then \
@@ -105,7 +105,7 @@ else
 	done
 endif
 
-migrate_down:
+migrate-down:
 ifdef module
 	@echo "Running migrate_down for module: $(module)"
 	@if [ -n "$(n)" ]; then \
@@ -141,7 +141,7 @@ sqlc:
 server:
 	cd ./$(module) && go run ./cmd/$(notdir $(module))
 
-buf_update:
+buf-update:
 	@cd ./$(module)/api && buf dep update && buf lint && buf build && buf breaking --against "https://github.com/spazzle-io/spazzle-api.git#branch=main,subdir=$(module)/api/proto"
 
 proto:
@@ -170,4 +170,4 @@ minio-down:
 minio-logs:
 	docker compose -f docker/minio/docker-compose.minio.yml logs -f
 
-.PHONY: run-module-target test merge-coverage tidy postgres create_db drop_db migrate_create migrate_up migrate_down redis mock sqlc buf_update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs
+.PHONY: run-module-target test merge-coverage tidy postgres create-db drop-db migrate-create migrate-up migrate-down redis mock sqlc buf-update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs
