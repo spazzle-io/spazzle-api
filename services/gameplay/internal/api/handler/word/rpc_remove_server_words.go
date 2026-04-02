@@ -24,7 +24,7 @@ func (h *Handler) RemoveWords(ctx context.Context, req *pb.RemoveWordsRequest) (
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (h *Handler) RemoveWords(ctx context.Context, req *pb.RemoveWordsRequest) (
 		ServerId: serverUserCtx.ServerId,
 		Words:    req.GetWords(),
 	}
-	txResult, err := h.store.RemoveServerWordsTx(ctx, params)
+	txResult, err := h.Store.RemoveServerWordsTx(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to remove server words")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

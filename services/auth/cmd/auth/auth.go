@@ -32,10 +32,12 @@ import (
 var interruptSignals = []os.Signal{
 	os.Interrupt,
 	syscall.SIGTERM,
-	syscall.SIGINT,
 }
 
 func main() {
+	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
+	waitGroup, ctx := errgroup.WithContext(ctx)
+
 	config, err := commonConfig.LoadConfig[util.Config](".", ".development")
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not load config")
@@ -44,8 +46,6 @@ func main() {
 	commonConfig.SetupLogger(config.ServiceName, config.IsDevelopmentEnvironment())
 
 	commonConfig.RunDBMigration(config.DBMigrationURL, config.DBSource)
-
-	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
 
 	connPool, err := pgxpool.New(ctx, config.DBSource)
 	if err != nil {
@@ -58,14 +58,17 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
 
-	waitGroup, ctx := errgroup.WithContext(ctx)
+	apiServer, err := server.New(config, store, redisCache)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create API server")
+	}
 
-	runGRPCServer(ctx, waitGroup, config, store, redisCache)
-	runGatewayServer(ctx, waitGroup, config, store, redisCache)
+	runGRPCServer(ctx, waitGroup, config, redisCache, apiServer)
+	runGatewayServer(ctx, waitGroup, config, redisCache, apiServer)
 
 	err = waitGroup.Wait()
 	if err != nil {
-		log.Fatal().Err(err).Msg("could not wait for server shutdown")
+		log.Fatal().Err(err).Msg("service terminating due to component failure")
 	}
 
 	stopInterruptCtx()
@@ -80,14 +83,9 @@ func runGRPCServer(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
 	config util.Config,
-	store db.Store,
 	cache commonCache.Cache,
+	apiServer *server.Server,
 ) {
-	s, err := server.New(config, store, cache)
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not create server")
-	}
-
 	commonServer.RunGRPCServer(
 		ctx,
 		waitGroup,
@@ -102,7 +100,7 @@ func runGRPCServer(
 		},
 		[]commonServer.GrpcServiceRegistrar{
 			func(grpcServer *grpc.Server) {
-				pb.RegisterAuthServiceServer(grpcServer, s)
+				pb.RegisterAuthServiceServer(grpcServer, apiServer)
 			},
 		},
 	)
@@ -112,14 +110,9 @@ func runGatewayServer(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
 	config util.Config,
-	store db.Store,
 	cache commonCache.Cache,
+	apiServer *server.Server,
 ) {
-	s, err := server.New(config, store, cache)
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not create server")
-	}
-
 	commonServer.RunGatewayServer(
 		ctx,
 		waitGroup,
@@ -128,7 +121,7 @@ func runGatewayServer(
 		config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterAuthServiceHandlerServer(ctx, mux, s)
+				return pb.RegisterAuthServiceHandlerServer(ctx, mux, apiServer)
 			},
 		},
 		[]commonServer.HttpRouteRegistrar{},

@@ -24,7 +24,7 @@ func (h *Handler) AddWords(ctx context.Context, req *pb.AddWordsRequest) (*pb.Ad
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (h *Handler) AddWords(ctx context.Context, req *pb.AddWordsRequest) (*pb.Ad
 		ServerId: serverUserCtx.ServerId,
 		Words:    req.GetWords(),
 	}
-	txResult, err := h.store.AddServerWordsTx(ctx, params)
+	txResult, err := h.Store.AddServerWordsTx(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to add server words")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

@@ -53,13 +53,13 @@ func (h *Handler) ListServerAdmins(ctx context.Context, req *pb.ListServerAdmins
 		},
 	}
 
-	server, err := h.store.GetServerById(ctx, serverId)
+	server, err := h.Store.GetServerById(ctx, serverId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get server")
 		return nil, handler.HandleServerDBError(err)
 	}
 
-	serverAdmins, err := h.store.ListServerAdmins(ctx, params)
+	serverAdmins, err := h.Store.ListServerAdmins(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list server admins")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

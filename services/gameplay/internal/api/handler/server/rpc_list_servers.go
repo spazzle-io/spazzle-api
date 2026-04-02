@@ -49,7 +49,7 @@ func (h *Handler) ListServers(ctx context.Context, req *pb.ListServersRequest) (
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetTotalServerCount(ctx)
+	totalCount, err := h.Store.GetTotalServerCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch total server count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -95,7 +95,7 @@ func (h *Handler) fetchNewServers(ctx context.Context, afterID pgtype.UUID, req 
 		},
 	}
 
-	return h.store.ListServers(ctx, params)
+	return h.Store.ListServers(ctx, params)
 }
 
 func (h *Handler) fetchTrendingServers(ctx context.Context, afterID pgtype.UUID, req *pb.ListServersRequest, pageSize int32) ([]db.Server, error) {
@@ -108,7 +108,7 @@ func (h *Handler) fetchTrendingServers(ctx context.Context, afterID pgtype.UUID,
 		},
 	}
 
-	return h.store.ListServersByTrending(ctx, params)
+	return h.Store.ListServersByTrending(ctx, params)
 }
 
 func (h *Handler) fetchPopularServers(ctx context.Context, afterID pgtype.UUID, req *pb.ListServersRequest, pageSize int32) ([]db.Server, error) {
@@ -121,5 +121,5 @@ func (h *Handler) fetchPopularServers(ctx context.Context, afterID pgtype.UUID, 
 		},
 	}
 
-	return h.store.ListServersByPopular(ctx, params)
+	return h.Store.ListServersByPopular(ctx, params)
 }

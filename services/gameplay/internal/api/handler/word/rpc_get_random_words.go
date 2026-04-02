@@ -37,7 +37,7 @@ func (h *Handler) GetRandomWords(ctx context.Context, req *pb.GetRandomWordsRequ
 		limit = defaultRandomWordsLimit
 	}
 
-	randomWords, err := h.wordStore.GetRandomWords(ctx, h.store, serverId, int(limit))
+	randomWords, err := h.WordStore.GetRandomWords(ctx, h.Store, serverId, int(limit))
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get random words")
 

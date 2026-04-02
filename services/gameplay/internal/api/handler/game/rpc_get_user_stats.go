@@ -31,7 +31,7 @@ func (h *Handler) GetUserStats(ctx context.Context, req *pb.GetUserStatsRequest)
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidUserIdError)
 	}
 
-	userStats, err := h.store.GetUserStats(ctx, userID)
+	userStats, err := h.Store.GetUserStats(ctx, userID)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch user stats")
 

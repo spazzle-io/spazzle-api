@@ -23,7 +23,7 @@ func (h *Handler) RemoveAllWords(ctx context.Context, req *pb.RemoveAllWordsRequ
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (h *Handler) RemoveAllWords(ctx context.Context, req *pb.RemoveAllWordsRequ
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	txResult, err := h.store.RemoveAllServerWordsTx(ctx, serverUserCtx.ServerId)
+	txResult, err := h.Store.RemoveAllServerWordsTx(ctx, serverUserCtx.ServerId)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to remove all server words")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

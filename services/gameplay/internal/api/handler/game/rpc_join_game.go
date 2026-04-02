@@ -39,7 +39,7 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
 	}
 
-	server, err := h.store.GetServerById(ctx, serverId)
+	server, err := h.Store.GetServerById(ctx, serverId)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get server")
 		return nil, handler.HandleServerDBError(err)
@@ -61,7 +61,7 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 	}
 	if gameRole != gameserver.Spectator {
 		serverUserCtx, err = middleware.ResolveServerUserContext(
-			ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+			ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 		)
 		if err != nil {
 			return nil, err
@@ -107,7 +107,7 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 		Role:     string(gameRole),
 	}
 
-	joinCode, expiresAt, err := h.gameCache.SetJoinCode(ctx, joinCodeEntry)
+	joinCode, expiresAt, err := h.GameCache.SetJoinCode(ctx, joinCodeEntry)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not set join code")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -128,16 +128,16 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 
 func (h *Handler) getOrCreateGameServer(serverID uuid.UUID) (*gameserver.GameServer, error) {
 	gameServerConfig := &gameserver.Config{
-		Env:       h.config,
-		Store:     h.store,
-		Cache:     h.cache,
-		GameCache: h.gameCache,
-		Bus:       h.bus,
-		GfClient:  h.gfClient,
-		WordStore: h.wordStore,
+		Env:       h.Config,
+		Store:     h.Store,
+		Cache:     h.Cache,
+		GameCache: h.GameCache,
+		Bus:       h.Bus,
+		GfClient:  h.GfClient,
+		WordStore: h.WordStore,
 	}
 
-	gameServer, err := h.gsManager.GetOrCreateGameServer(serverID, gameServerConfig)
+	gameServer, err := h.GsManager.GetOrCreateGameServer(serverID, gameServerConfig)
 	if err != nil {
 		return nil, err
 	}

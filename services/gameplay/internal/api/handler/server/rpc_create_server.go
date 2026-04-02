@@ -25,7 +25,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config.ServiceName, &authPb.VerifyAccessTokenRequest{})
 	if err != nil {
 		log.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
@@ -58,7 +58,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		RoundDurationSecs: req.GetRoundDurationSecs(),
 		NumDrawingOptions: req.GetNumDrawingOptions(),
 	}
-	server, err := h.store.CreateServer(ctx, params)
+	server, err := h.Store.CreateServer(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to create server")
 		return nil, handler.HandleServerDBError(err)

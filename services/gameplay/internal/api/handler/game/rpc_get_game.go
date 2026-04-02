@@ -30,7 +30,7 @@ func (h *Handler) GetGame(ctx context.Context, req *pb.GetGameRequest) (*pb.GetG
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidGameIdError)
 	}
 
-	game, err := h.store.GetGameById(ctx, gameID)
+	game, err := h.Store.GetGameById(ctx, gameID)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch game")
 

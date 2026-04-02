@@ -7,22 +7,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
-
-	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
-
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
-
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 )
 
 const WsServerJoinEndpoint = "/ws/servers/join"
@@ -34,14 +25,7 @@ var (
 )
 
 type WsHandler struct {
-	Config    util.Config
-	Store     db.Store
-	Cache     commonCache.Cache
-	GfClient  gameflow.Client
-	Bus       eventbus.EventBus
-	GsManager *gameserver.Manager
-	WordStore wordstore.Store
-	GameCache *gamecache.GameCache
+	*deps.APIServerDeps
 }
 
 func (h *WsHandler) ServeWs(

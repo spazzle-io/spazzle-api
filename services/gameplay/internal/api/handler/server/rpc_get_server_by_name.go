@@ -21,7 +21,7 @@ func (h *Handler) GetServerByName(ctx context.Context, req *pb.GetServerByNameRe
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	server, err := h.store.GetServerByName(ctx, req.GetName())
+	server, err := h.Store.GetServerByName(ctx, req.GetName())
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get server")
 		return nil, handler.HandleServerDBError(err)

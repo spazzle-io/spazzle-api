@@ -28,7 +28,7 @@ func (h *Handler) GetServerLeaderboard(ctx context.Context, req *pb.GetServerLea
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
 	}
 
-	_, err = h.store.GetServerById(ctx, serverID)
+	_, err = h.Store.GetServerById(ctx, serverID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch server")
 		return nil, handler.HandleServerDBError(err)
@@ -49,7 +49,7 @@ func (h *Handler) GetServerLeaderboard(ctx context.Context, req *pb.GetServerLea
 }
 
 func (h *Handler) getServerLeaderboardAllTime(ctx context.Context, serverID uuid.UUID, window TimeWindow, page int32, offset int32) (*pb.GetServerLeaderboardResponse, error) {
-	entries, err := h.store.GetServerLeaderboard(ctx, db.GetServerLeaderboardParams{
+	entries, err := h.Store.GetServerLeaderboard(ctx, db.GetServerLeaderboardParams{
 		ServerID:   serverID,
 		PageOffset: offset,
 		PageSize:   leaderboardPageSize,
@@ -59,7 +59,7 @@ func (h *Handler) getServerLeaderboardAllTime(ctx context.Context, serverID uuid
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetTotalServerPlayerStatsCount(ctx, serverID)
+	totalCount, err := h.Store.GetTotalServerPlayerStatsCount(ctx, serverID)
 	if err != nil {
 		log.Error().Err(err).Msg("could not fetch server leaderboard count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -83,13 +83,13 @@ func (h *Handler) getServerLeaderboardByWindow(ctx context.Context, serverID uui
 	cacheWindow := mapTimeWindowToCacheWindow(window)
 
 	var cached pb.GetServerLeaderboardResponse
-	err := h.gameCache.GetLeaderboard(ctx, gamecache.LeaderboardScopeServer, serverID, cacheWindow, page, &cached)
+	err := h.GameCache.GetLeaderboard(ctx, gamecache.LeaderboardScopeServer, serverID, cacheWindow, page, &cached)
 	if err == nil {
 		return &cached, nil
 	}
 
 	dbInterval := mapTimeWindowToDBInterval(window)
-	entries, err := h.store.GetServerLeaderboardByWindow(ctx, db.GetServerLeaderboardByWindowParams{
+	entries, err := h.Store.GetServerLeaderboardByWindow(ctx, db.GetServerLeaderboardByWindowParams{
 		ServerID:   serverID,
 		TimeWindow: dbInterval,
 		PageOffset: offset,
@@ -100,7 +100,7 @@ func (h *Handler) getServerLeaderboardByWindow(ctx context.Context, serverID uui
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetServerLeaderboardByWindowCount(ctx, db.GetServerLeaderboardByWindowCountParams{
+	totalCount, err := h.Store.GetServerLeaderboardByWindowCount(ctx, db.GetServerLeaderboardByWindowCountParams{
 		ServerID:   serverID,
 		TimeWindow: dbInterval,
 	})
@@ -122,7 +122,7 @@ func (h *Handler) getServerLeaderboardByWindow(ctx context.Context, serverID uui
 		Page:       page,
 	}
 
-	if err := h.gameCache.SetLeaderboard(ctx, gamecache.LeaderboardScopeServer, serverID, cacheWindow, page, response); err != nil {
+	if err := h.GameCache.SetLeaderboard(ctx, gamecache.LeaderboardScopeServer, serverID, cacheWindow, page, response); err != nil {
 		log.Warn().Err(err).Msg("could not cache windowed server leaderboard")
 	}
 

@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/spazzle-io/spazzle-api/services/users/internal/services"
 
@@ -11,14 +10,11 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/users/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/users/internal/util"
-	"github.com/ulule/limiter/v3"
 )
 
 type Server struct {
 	handler.Handler
 }
-
-var once sync.Once
 
 func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
 	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
@@ -30,7 +26,7 @@ func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, 
 
 	err = setupRateLimiter(config.ServiceName, config.RedisConnURL, h.RateLimits())
 	if err != nil {
-		return nil, fmt.Errorf("cannot setup rate limiter: %w", err)
+		return nil, fmt.Errorf("could not setup rate limiter: %w", err)
 	}
 
 	server := &Server{
@@ -41,22 +37,14 @@ func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, 
 }
 
 func setupRateLimiter(serviceName string, redisConnURL string, rateLimits map[string]commonMiddleware.Rate) error {
-	var store limiter.Store
-	var createLimiterRedisStoreErr, initializeLimitersErr error
-
-	once.Do(func() {
-		store, createLimiterRedisStoreErr = commonMiddleware.CreateLimiterRedisStore(serviceName, redisConnURL)
-		if createLimiterRedisStoreErr == nil {
-			initializeLimitersErr = commonMiddleware.InitializeLimiters(store, rateLimits)
-		}
-	})
-
-	if createLimiterRedisStoreErr != nil {
-		return fmt.Errorf("could not create limiter redis client: %w", createLimiterRedisStoreErr)
+	store, err := commonMiddleware.CreateLimiterRedisStore(serviceName, redisConnURL)
+	if err != nil {
+		return fmt.Errorf("could not create rate limiter store: %w", err)
 	}
 
-	if initializeLimitersErr != nil {
-		return fmt.Errorf("could not initialize rate limiters: %w", initializeLimitersErr)
+	err = commonMiddleware.InitializeLimiters(store, rateLimits)
+	if err != nil {
+		return fmt.Errorf("could not initialize rate limiters: %w", err)
 	}
 
 	return nil

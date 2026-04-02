@@ -36,7 +36,7 @@ func (h *Handler) GetGameLeaderboard(ctx context.Context, req *pb.GetGameLeaderb
 
 	offset := leaderboardOffset(page)
 
-	entries, err := h.store.GetGameLeaderboard(ctx, db.GetGameLeaderboardParams{
+	entries, err := h.Store.GetGameLeaderboard(ctx, db.GetGameLeaderboardParams{
 		GameID:     gameID,
 		PageOffset: offset,
 		PageSize:   leaderboardPageSize,
@@ -46,7 +46,7 @@ func (h *Handler) GetGameLeaderboard(ctx context.Context, req *pb.GetGameLeaderb
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetTotalGamePlayersCount(ctx, gameID)
+	totalCount, err := h.Store.GetTotalGamePlayersCount(ctx, gameID)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not fetch game leaderboard count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

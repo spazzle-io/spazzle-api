@@ -27,7 +27,7 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (h *Handler) ArchiveServer(ctx context.Context, req *pb.ArchiveServerReques
 		},
 	}
 
-	server, err := h.store.UpdateServer(ctx, params)
+	server, err := h.Store.UpdateServer(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to update server")
 		return nil, handler.HandleServerDBError(err)

@@ -1,6 +1,9 @@
 package gameflow
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
@@ -15,8 +18,6 @@ import (
 )
 
 type Worker struct {
-	worker temporalworker.Worker
-
 	Config          util.Config
 	Store           db.Store
 	Bus             eventbus.EventBus
@@ -24,14 +25,11 @@ type Worker struct {
 	TaskDistributor worker.TaskDistributor
 }
 
-func (w *Worker) Start() {
-	log.Info().Str("task_queue", types.GameWorkflowTaskQueue).Msg("starting gameFlow worker")
-
+func (w *Worker) Run(ctx context.Context) error {
 	opts := getTemporalClientOpts(w.Config)
 	c, err := temporalclient.Dial(opts)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to connect to temporal")
-		return
+		return fmt.Errorf("failed to connect to temporal: %w", err)
 	}
 
 	wk := temporalworker.New(c, types.GameWorkflowTaskQueue, temporalworker.Options{})
@@ -44,15 +42,16 @@ func (w *Worker) Start() {
 		TaskDistributor: w.TaskDistributor,
 	})
 
+	interruptCh := make(chan interface{})
 	go func() {
-		if err := wk.Run(nil); err != nil {
-			log.Fatal().Err(err).Msg("gameFlow worker fatal error")
-		}
+		<-ctx.Done()
+		close(interruptCh)
+		log.Info().Msg("gameFlow worker stopped")
 	}()
 
-	w.worker = wk
-}
+	log.Info().
+		Str("task_queue", types.GameWorkflowTaskQueue).
+		Msg("gameFlow worker started")
 
-func (w *Worker) Stop() {
-	w.worker.Stop()
+	return wk.Run(interruptCh)
 }

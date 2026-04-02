@@ -31,12 +31,12 @@ func (h *Handler) GetCurrentGame(ctx context.Context, req *pb.GetCurrentGameRequ
 	}
 
 	var cached pb.GetCurrentGameResponse
-	err = h.gameCache.GetCurrentGame(ctx, serverID, &cached)
+	err = h.GameCache.GetCurrentGame(ctx, serverID, &cached)
 	if err == nil {
 		return &cached, nil
 	}
 
-	currentGame, err := h.gfClient.GetGameState(serverID)
+	currentGame, err := h.GfClient.GetGameState(serverID)
 	if err != nil {
 		logger.Warn().Err(err).Msg("failed to get game state")
 		var notFound *serviceerror.NotFound
@@ -57,7 +57,7 @@ func (h *Handler) GetCurrentGame(ctx context.Context, req *pb.GetCurrentGameRequ
 		Game: &currentGamePb,
 	}
 
-	if err := h.gameCache.SetCurrentGame(ctx, serverID, response); err != nil {
+	if err := h.GameCache.SetCurrentGame(ctx, serverID, response); err != nil {
 		logger.Warn().Err(err).Msg("could not cache current game")
 	}
 
