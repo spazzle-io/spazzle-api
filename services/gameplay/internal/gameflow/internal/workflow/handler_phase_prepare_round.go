@@ -19,7 +19,7 @@ func handlePhasePrepareRound(ctx workflow.Context, state *GameState, notifyCh wo
 			state.Logger().Warn("failed to prepare round", "error", err)
 
 			if state.CurrentRound > DefaultRoundNumber {
-				state.Logger().Info("ending game due to prepare round failure")
+				state.Logger().Info("skipping round due to prepare round failure")
 				state.Phase = types.PhaseEndRound
 				return
 			}
