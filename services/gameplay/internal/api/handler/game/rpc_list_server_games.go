@@ -55,13 +55,13 @@ func (h *Handler) ListServerGames(ctx context.Context, req *pb.ListServerGamesRe
 		},
 	}
 
-	serverGames, err := h.store.ListServerGames(ctx, params)
+	serverGames, err := h.Store.ListServerGames(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch server games")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetTotalServerGamesCount(ctx, serverID)
+	totalCount, err := h.Store.GetTotalServerGamesCount(ctx, serverID)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch server games count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

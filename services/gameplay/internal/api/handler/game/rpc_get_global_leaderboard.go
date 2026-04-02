@@ -29,7 +29,7 @@ func (h *Handler) GetGlobalLeaderboard(ctx context.Context, req *pb.GetGlobalLea
 }
 
 func (h *Handler) getGlobalLeaderboardAllTime(ctx context.Context, window TimeWindow, page int32, offset int32) (*pb.GetGlobalLeaderboardResponse, error) {
-	entries, err := h.store.GetGlobalLeaderboard(ctx, db.GetGlobalLeaderboardParams{
+	entries, err := h.Store.GetGlobalLeaderboard(ctx, db.GetGlobalLeaderboardParams{
 		PageOffset: offset,
 		PageSize:   leaderboardPageSize,
 	})
@@ -38,7 +38,7 @@ func (h *Handler) getGlobalLeaderboardAllTime(ctx context.Context, window TimeWi
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetTotalUserStatsCount(ctx)
+	totalCount, err := h.Store.GetTotalUserStatsCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("could not fetch global leaderboard count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -62,13 +62,13 @@ func (h *Handler) getGlobalLeaderboardByWindow(ctx context.Context, window TimeW
 	cacheWindow := mapTimeWindowToCacheWindow(window)
 
 	var cached pb.GetGlobalLeaderboardResponse
-	err := h.gameCache.GetLeaderboard(ctx, gamecache.LeaderboardScopeGlobal, uuid.Nil, cacheWindow, page, &cached)
+	err := h.GameCache.GetLeaderboard(ctx, gamecache.LeaderboardScopeGlobal, uuid.Nil, cacheWindow, page, &cached)
 	if err == nil {
 		return &cached, nil
 	}
 
 	dbInterval := mapTimeWindowToDBInterval(window)
-	entries, err := h.store.GetGlobalLeaderboardByWindow(ctx, db.GetGlobalLeaderboardByWindowParams{
+	entries, err := h.Store.GetGlobalLeaderboardByWindow(ctx, db.GetGlobalLeaderboardByWindowParams{
 		TimeWindow: dbInterval,
 		PageOffset: offset,
 		PageSize:   leaderboardPageSize,
@@ -78,7 +78,7 @@ func (h *Handler) getGlobalLeaderboardByWindow(ctx context.Context, window TimeW
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetGlobalLeaderboardByWindowCount(ctx, dbInterval)
+	totalCount, err := h.Store.GetGlobalLeaderboardByWindowCount(ctx, dbInterval)
 	if err != nil {
 		log.Error().Err(err).Msg("could not fetch windowed global leaderboard count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -97,7 +97,7 @@ func (h *Handler) getGlobalLeaderboardByWindow(ctx context.Context, window TimeW
 		Page:       page,
 	}
 
-	if err := h.gameCache.SetLeaderboard(ctx, gamecache.LeaderboardScopeGlobal, uuid.Nil, cacheWindow, page, response); err != nil {
+	if err := h.GameCache.SetLeaderboard(ctx, gamecache.LeaderboardScopeGlobal, uuid.Nil, cacheWindow, page, response); err != nil {
 		log.Warn().Err(err).Msg("could not cache windowed global leaderboard")
 	}
 

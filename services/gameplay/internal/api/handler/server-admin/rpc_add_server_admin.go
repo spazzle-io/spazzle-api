@@ -28,7 +28,7 @@ func (h *Handler) AddServerAdmin(ctx context.Context, req *pb.AddServerAdminRequ
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (h *Handler) AddServerAdmin(ctx context.Context, req *pb.AddServerAdminRequ
 		UserId:   userToAdd,
 		ServerId: serverUserCtx.ServerId,
 	}
-	txResult, err := h.store.AddServerAdminTx(ctx, params)
+	txResult, err := h.Store.AddServerAdminTx(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to add server admin")
 		return nil, handleAddServerAdminTxError(err)

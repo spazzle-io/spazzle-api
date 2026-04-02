@@ -27,7 +27,7 @@ func (h *Handler) ListWords(ctx context.Context, req *pb.ListWordsRequest) (*pb.
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -64,13 +64,13 @@ func (h *Handler) ListWords(ctx context.Context, req *pb.ListWordsRequest) (*pb.
 		},
 	}
 
-	server, err := h.store.GetServerById(ctx, serverUserCtx.ServerId)
+	server, err := h.Store.GetServerById(ctx, serverUserCtx.ServerId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get server")
 		return nil, handler.HandleServerDBError(err)
 	}
 
-	words, err := h.store.ListWords(ctx, params)
+	words, err := h.Store.ListWords(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to list words")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

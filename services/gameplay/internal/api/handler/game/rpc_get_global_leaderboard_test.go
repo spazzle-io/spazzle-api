@@ -11,12 +11,7 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	mockeventbus "github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
-	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
-	mockservices "github.com/spazzle-io/spazzle-api/services/gameplay/internal/services/mock"
-	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -314,23 +309,13 @@ func TestGetGlobalLeaderboard(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			bus := mockeventbus.NewMockEventBus(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
-			gameCache := gamecache.New(getTestConfig(), cache)
-			store := mockdb.NewMockStore(ctrl)
-			gfClient := mockgameflowclient.NewMockClient(ctrl)
-			wordStore := mockwordstore.NewMockStore(ctrl)
-			gsManager := gameserver.NewManager()
-			authService := mockservices.NewMockAuthGrpcService(ctrl)
+			tc.buildStubs(deps.store, deps.cache)
 
-			tc.buildStubs(store, cache)
+			h := newTestHandler(deps)
 
-			gameHandler := newTestHandler(cache, gameCache, store, bus, gfClient, wordStore, gsManager, authService)
-
-			res, err := gameHandler.GetGlobalLeaderboard(context.Background(), tc.req)
+			res, err := h.GetGlobalLeaderboard(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

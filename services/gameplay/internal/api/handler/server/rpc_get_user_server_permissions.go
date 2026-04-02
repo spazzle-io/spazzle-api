@@ -39,7 +39,7 @@ func (h *Handler) GetUserServerPermissions(ctx context.Context, req *pb.GetUserS
 		ServerID: serverId,
 	}
 
-	permissions, err := h.store.GetServerUserPermissions(ctx, params)
+	permissions, err := h.Store.GetServerUserPermissions(ctx, params)
 	if err != nil && !errors.Is(err, db.RecordNotFoundError) {
 		log.Error().Err(err).Msg("failed to get server user permissions")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

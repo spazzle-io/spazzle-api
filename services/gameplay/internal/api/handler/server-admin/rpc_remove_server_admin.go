@@ -27,7 +27,7 @@ func (h *Handler) RemoveServerAdmin(ctx context.Context, req *pb.RemoveServerAdm
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.config.ServiceName, h.store, h.authService,
+		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (h *Handler) RemoveServerAdmin(ctx context.Context, req *pb.RemoveServerAdm
 		UserId:   userToRemove,
 		ServerId: serverUserCtx.ServerId,
 	}
-	err = h.store.RemoveServerAdminTx(ctx, params)
+	err = h.Store.RemoveServerAdminTx(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to remove server admin")
 		return nil, handleRemoveServerAdminTxError(err)

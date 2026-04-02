@@ -3,36 +3,21 @@ package server_admin
 import (
 	"time"
 
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
-	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/services"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 )
-
-type HandlerConfig struct {
-	Config      util.Config
-	Store       db.Store
-	Cache       commonCache.Cache
-	AuthService services.AuthGrpcService
-}
 
 type Handler struct {
 	pb.UnimplementedServerAdminServiceServer
 
-	config      util.Config
-	store       db.Store
-	cache       commonCache.Cache
-	authService services.AuthGrpcService
+	*deps.APIServerDeps
 }
 
-func New(cfg *HandlerConfig) *Handler {
+func New(deps *deps.APIServerDeps) *Handler {
 	return &Handler{
-		config:      cfg.Config,
-		store:       cfg.Store,
-		cache:       cfg.Cache,
-		authService: cfg.AuthService,
+		APIServerDeps: deps,
 	}
 }
 

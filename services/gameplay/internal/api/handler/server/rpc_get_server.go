@@ -28,7 +28,7 @@ func (h *Handler) GetServer(ctx context.Context, req *pb.GetServerRequest) (*pb.
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
 	}
 
-	server, err := h.store.GetServerById(ctx, serverId)
+	server, err := h.Store.GetServerById(ctx, serverId)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get server")
 		return nil, handler.HandleServerDBError(err)

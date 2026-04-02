@@ -36,7 +36,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		Logger()
 
 	userID := uuid.Nil
-	tkPayload, err := h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config.ServiceName, &authPb.VerifyAccessTokenRequest{})
 	if err == nil {
 		userID, err = uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 		if err != nil {
@@ -70,7 +70,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 
 	after := strings.TrimSpace(req.GetAfter())
 	if after == "" || after == "0" {
-		markerID, err := h.bus.MarkerID(ctx, game, streamType, eventbus.MarkerRoundEnded)
+		markerID, err := h.Bus.MarkerID(ctx, game, streamType, eventbus.MarkerRoundEnded)
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to get marker round ended")
 			return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -91,7 +91,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		replayVisibility = eventbus.ReplayVisibilityForClient
 	}
 
-	result, err := h.bus.Replay(ctx, userID, game, streamType, replayVisibility, after, int(limit))
+	result, err := h.Bus.Replay(ctx, userID, game, streamType, replayVisibility, after, int(limit))
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to replay game")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

@@ -1,11 +1,24 @@
 package word
 
 import (
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
-	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/services"
+	"testing"
+
+	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
+	mockservices "github.com/spazzle-io/spazzle-api/services/gameplay/internal/services/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
+	"go.uber.org/mock/gomock"
 )
+
+type testDeps struct {
+	ctrl        *gomock.Controller
+	store       *mockdb.MockStore
+	cache       *mockcache.MockCache
+	authService *mockservices.MockAuthGrpcService
+	wordStore   *mockwordstore.MockStore
+}
 
 func getTestConfig() util.Config {
 	return util.Config{
@@ -14,16 +27,26 @@ func getTestConfig() util.Config {
 	}
 }
 
-func newTestHandler(store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
-	// TODO: Get rid of newTestHandler func and have tests inject their own HandlerConfig into New
-	config := getTestConfig()
+func newTestDeps(t *testing.T) *testDeps {
+	t.Helper()
 
-	handlerCfg := &HandlerConfig{
-		Config:      config,
-		Store:       store,
-		Cache:       cache,
-		AuthService: authService,
+	ctrl := gomock.NewController(t)
+
+	return &testDeps{
+		ctrl:        ctrl,
+		store:       mockdb.NewMockStore(ctrl),
+		cache:       mockcache.NewMockCache(ctrl),
+		authService: mockservices.NewMockAuthGrpcService(ctrl),
+		wordStore:   mockwordstore.NewMockStore(ctrl),
 	}
+}
 
-	return New(handlerCfg)
+func newTestHandler(d *testDeps) *Handler {
+	return New(&deps.APIServerDeps{
+		Config:      getTestConfig(),
+		Store:       d.store,
+		Cache:       d.cache,
+		AuthService: d.authService,
+		WordStore:   d.wordStore,
+	})
 }

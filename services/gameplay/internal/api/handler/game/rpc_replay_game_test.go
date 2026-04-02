@@ -6,12 +6,6 @@ import (
 	"testing"
 	"time"
 
-	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
-	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
-	mockgameflowclient "github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/mock"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
-	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 
 	"github.com/google/uuid"
@@ -186,23 +180,13 @@ func TestReplayGame(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			bus := mockeventbus.NewMockEventBus(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
-			gameCache := gamecache.New(getTestConfig(), cache)
-			store := mockdb.NewMockStore(ctrl)
-			gfClient := mockgameflowclient.NewMockClient(ctrl)
-			wordStore := mockwordstore.NewMockStore(ctrl)
-			gsManager := gameserver.NewManager()
-			authService := mockservices.NewMockAuthGrpcService(ctrl)
+			tc.buildStubs(deps.bus, deps.authService)
 
-			tc.buildStubs(bus, authService)
+			h := newTestHandler(deps)
 
-			gameHandler := newTestHandler(cache, gameCache, store, bus, gfClient, wordStore, gsManager, authService)
-
-			res, err := gameHandler.ReplayGame(context.Background(), tc.req)
+			res, err := h.ReplayGame(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

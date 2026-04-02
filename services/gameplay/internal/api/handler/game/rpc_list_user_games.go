@@ -55,13 +55,13 @@ func (h *Handler) ListUserGames(ctx context.Context, req *pb.ListUserGamesReques
 		},
 	}
 
-	userGames, err := h.store.ListUserGames(ctx, params)
+	userGames, err := h.Store.ListUserGames(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch user games")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalCount, err := h.store.GetTotalUserGamesCount(ctx, userID)
+	totalCount, err := h.Store.GetTotalUserGamesCount(ctx, userID)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to fetch user games count")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)

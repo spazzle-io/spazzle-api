@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
 
 	"github.com/hibiken/asynq"
@@ -45,10 +47,12 @@ import (
 var interruptSignals = []os.Signal{
 	os.Interrupt,
 	syscall.SIGTERM,
-	syscall.SIGINT,
 }
 
 func main() {
+	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
+	waitGroup, ctx := errgroup.WithContext(ctx)
+
 	config, err := commonConfig.LoadConfig[util.Config](".", ".development")
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not load config")
@@ -57,8 +61,6 @@ func main() {
 	commonConfig.SetupLogger(config.ServiceName, config.IsDevelopmentEnvironment())
 
 	commonConfig.RunDBMigration(config.DBMigrationURL, config.DBSource)
-
-	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
 
 	connPool, err := pgxpool.New(ctx, config.DBSource)
 	if err != nil {
@@ -79,32 +81,28 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create redis cache")
 	}
 
-	gameCache := gamecache.New(config, redisCache)
+	bus, err := eventbus.New(ctx, config)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create event bus")
+	}
 
 	redisOpt, err := asynq.ParseRedisURI(config.RedisConnURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse redis URI for asynq")
 	}
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
-
-	bus, err := eventbus.New(ctx, config)
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not create event bus")
-	}
-
-	wordStore, err := wordstore.NewDefaultStore()
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not initialize word store")
-	}
+	taskProcessor := runTaskProcessor(redisOpt, store, bus, objectStore)
 
 	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create auth service client")
 	}
 
-	waitGroup, ctx := errgroup.WithContext(ctx)
+	gfClient, gsManager, gameCache, wordStore := startGameServices(
+		ctx, waitGroup, config, store, redisCache, bus, taskDistributor,
+	)
 
-	serverCfg := &server.APIServerConfig{
+	serverDeps := &deps.APIServerDeps{
 		Config:          config,
 		Store:           store,
 		Cache:           redisCache,
@@ -114,17 +112,20 @@ func main() {
 		ObjectStore:     objectStore,
 		TaskDistributor: taskDistributor,
 		AuthService:     authService,
+		GfClient:        gfClient,
+		GsManager:       gsManager,
 	}
 
-	serverCfg.GfClient, serverCfg.GsManager = startGameServices(ctx, waitGroup, serverCfg)
+	apiServer, err := server.NewAPIServer(serverDeps)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create API server")
+	}
 
-	taskProcessor := runTaskProcessor(redisOpt, serverCfg)
-
-	runGRPCServer(ctx, waitGroup, serverCfg)
-	runGatewayServer(ctx, waitGroup, serverCfg)
+	runGRPCServer(ctx, waitGroup, apiServer, serverDeps)
+	runGatewayServer(ctx, waitGroup, apiServer, serverDeps)
 
 	if err = waitGroup.Wait(); err != nil {
-		log.Fatal().Err(err).Msg("could not wait for server shutdown")
+		log.Fatal().Err(err).Msg("service terminating due to component failure")
 	}
 
 	stopInterruptCtx()
@@ -147,83 +148,65 @@ func main() {
 	}
 }
 
-func runGRPCServer(ctx context.Context, wg *errgroup.Group, serverCfg *server.APIServerConfig) {
-	s, err := server.NewAPIServer(serverCfg)
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not create server")
-	}
-
+func runGRPCServer(ctx context.Context, wg *errgroup.Group, apiServer *server.APIServer, deps *deps.APIServerDeps) {
 	commonServer.RunGRPCServer(
 		ctx,
 		wg,
-		serverCfg.Config.GRPCServerAddress,
+		deps.Config.GRPCServerAddress,
 		[]commonServer.GrpcMiddlewareProvider{
 			func() grpc.UnaryServerInterceptor {
 				config := &commonMiddleware.AuthenticateServiceConfig{
-					Cache: serverCfg.Cache,
+					Cache: deps.Cache,
 				}
 				return config.AuthenticateServiceGrpc
 			},
 		},
 		[]commonServer.GrpcServiceRegistrar{
 			func(grpcServer *grpc.Server) {
-				pb.RegisterServerServiceServer(grpcServer, &s.ServerHandler)
+				pb.RegisterServerServiceServer(grpcServer, apiServer.ServerHandler)
 			},
 			func(grpcServer *grpc.Server) {
-				pb.RegisterServerAdminServiceServer(grpcServer, &s.ServerAdminHandler)
+				pb.RegisterServerAdminServiceServer(grpcServer, apiServer.ServerAdminHandler)
 			},
 			func(grpcServer *grpc.Server) {
-				pb.RegisterWordServiceServer(grpcServer, &s.WordHandler)
+				pb.RegisterWordServiceServer(grpcServer, apiServer.WordHandler)
 			},
 			func(grpcServer *grpc.Server) {
-				pb.RegisterGameServiceServer(grpcServer, &s.GameHandler)
+				pb.RegisterGameServiceServer(grpcServer, apiServer.GameHandler)
 			},
 		},
 	)
 }
 
-func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server.APIServerConfig) {
-	s, err := server.NewAPIServer(serverCfg)
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not create server")
-	}
-
+func runGatewayServer(ctx context.Context, wg *errgroup.Group, apiServer *server.APIServer, deps *deps.APIServerDeps) {
 	wsHandler := websocketserver.WsHandler{
-		Config:    serverCfg.Config,
-		Store:     serverCfg.Store,
-		Cache:     serverCfg.Cache,
-		GameCache: serverCfg.GameCache,
-		GfClient:  serverCfg.GfClient,
-		Bus:       serverCfg.Bus,
-		GsManager: serverCfg.GsManager,
-		WordStore: serverCfg.WordStore,
+		APIServerDeps: deps,
 	}
 
 	commonServer.RunGatewayServer(
 		ctx,
 		wg,
-		serverCfg.Config.HTTPServerAddress,
-		serverCfg.Config.IsDevelopmentEnvironment(),
-		serverCfg.Config.AllowedOrigins,
+		deps.Config.HTTPServerAddress,
+		deps.Config.IsDevelopmentEnvironment(),
+		deps.Config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterServerServiceHandlerServer(ctx, mux, &s.ServerHandler)
+				return pb.RegisterServerServiceHandlerServer(ctx, mux, apiServer.ServerHandler)
 			},
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterServerAdminServiceHandlerServer(ctx, mux, &s.ServerAdminHandler)
+				return pb.RegisterServerAdminServiceHandlerServer(ctx, mux, apiServer.ServerAdminHandler)
 			},
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterWordServiceHandlerServer(ctx, mux, &s.WordHandler)
+				return pb.RegisterWordServiceHandlerServer(ctx, mux, apiServer.WordHandler)
 			},
 			func(ctx context.Context, mux *runtime.ServeMux) error {
-				return pb.RegisterGameServiceHandlerServer(ctx, mux, &s.GameHandler)
+				return pb.RegisterGameServiceHandlerServer(ctx, mux, apiServer.GameHandler)
 			},
 		},
 		[]commonServer.HttpRouteRegistrar{
 			func(mux *http.ServeMux) {
 				mux.HandleFunc(websocketserver.WsServerJoinEndpoint, func(w http.ResponseWriter, r *http.Request) {
-					_, err = wsHandler.ServeWs(ctx, w, r)
-					if err != nil {
+					if _, err := wsHandler.ServeWs(ctx, w, r); err != nil {
 						log.Error().Err(err).Msg("could not serve server join ws")
 					}
 				})
@@ -231,7 +214,7 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server
 		},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{
-				Cache: serverCfg.Cache,
+				Cache: deps.Cache,
 			}
 			return commonMiddleware.AuthenticateServiceHTTP(handler, config)
 		},
@@ -241,22 +224,34 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, serverCfg *server
 func startGameServices(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
-	cfg *server.APIServerConfig,
-) (gameflow.Client, *gameserver.Manager) {
-	gfClient, err := gameflow.NewClient(cfg.Config)
+	config util.Config,
+	store db.Store,
+	cache commonCache.Cache,
+	bus eventbus.EventBus,
+	taskDistributor worker.TaskDistributor,
+) (gameflow.Client, *gameserver.Manager, *gamecache.GameCache, wordstore.Store) {
+	gameCache := gamecache.New(config, cache)
+
+	wordStore, err := wordstore.NewDefaultStore()
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not initialize word store")
+	}
+
+	gfClient, err := gameflow.NewClient(config)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create gameFlow client")
-		return nil, nil
 	}
 
 	wk := gameflow.Worker{
-		Config:          cfg.Config,
-		Store:           cfg.Store,
-		Bus:             cfg.Bus,
-		WordStore:       cfg.WordStore,
-		TaskDistributor: cfg.TaskDistributor,
+		Config:          config,
+		Store:           store,
+		Bus:             bus,
+		WordStore:       wordStore,
+		TaskDistributor: taskDistributor,
 	}
-	wk.Start()
+	waitGroup.Go(func() error {
+		return wk.Run(ctx)
+	})
 
 	gsManager := gameserver.NewManager()
 
@@ -269,17 +264,19 @@ func startGameServices(
 		gfClient.Close()
 		log.Info().Msg("gameFlow client closed")
 
-		wk.Stop()
-		log.Info().Msg("gameFlow worker stopped")
-
 		return nil
 	})
 
-	return gfClient, gsManager
+	return gfClient, gsManager, gameCache, wordStore
 }
 
-func runTaskProcessor(redisOpt asynq.RedisConnOpt, serverCfg *server.APIServerConfig) worker.TaskProcessor {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, serverCfg.Bus, serverCfg.Store, serverCfg.ObjectStore)
+func runTaskProcessor(
+	redisOpt asynq.RedisConnOpt,
+	store db.Store,
+	bus eventbus.EventBus,
+	objectStore commonStorage.ObjectStore,
+) worker.TaskProcessor {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, bus, store, objectStore)
 
 	err := taskProcessor.Start()
 	if err != nil {

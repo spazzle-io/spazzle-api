@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"github.com/stretchr/testify/require"
@@ -132,7 +134,9 @@ func TestCheckOrigin(t *testing.T) {
 			}
 
 			wsHandler := &WsHandler{
-				Config: cfg,
+				APIServerDeps: &deps.APIServerDeps{
+					Config: cfg,
+				},
 			}
 			checkFn := wsHandler.checkOrigin(userId)
 			valid := checkFn(req)

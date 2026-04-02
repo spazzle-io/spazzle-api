@@ -8,10 +8,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
-	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
-	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
-	mockservices "github.com/spazzle-io/spazzle-api/services/gameplay/internal/services/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 	mockwordstore "github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore/mock"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
@@ -111,20 +108,13 @@ func TestGetRandomWords(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
-			authService := mockservices.NewMockAuthGrpcService(ctrl)
-			mockWordStore := mockwordstore.NewMockStore(ctrl)
+			tc.buildStubs(deps.wordStore)
 
-			tc.buildStubs(mockWordStore)
+			h := newTestHandler(deps)
 
-			serverHandler := newTestHandler(store, cache, authService)
-			serverHandler.wordStore = mockWordStore
-
-			res, err := serverHandler.GetRandomWords(context.Background(), tc.req)
+			res, err := h.GetRandomWords(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}
