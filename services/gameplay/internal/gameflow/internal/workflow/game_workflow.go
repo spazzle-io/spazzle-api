@@ -94,7 +94,7 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) (*GameStat
 		NumRounds:     input.NumRounds,
 		CurrentRound:  DefaultRoundNumber,
 		StartedAt:     workflow.Now(ctx).UTC(),
-		GamePot:       "0",
+		GamePot:       commonUtil.ZeroWei().String(),
 		StakePerGame:  input.StakePerGame,
 		StakePerRound: stakePerRound.String(),
 
