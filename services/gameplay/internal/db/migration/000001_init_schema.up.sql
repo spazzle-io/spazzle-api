@@ -6,12 +6,12 @@ CREATE TABLE "servers" (
   "num_custom_words" int NOT NULL DEFAULT 0,
   "is_publicly_visible" boolean NOT NULL DEFAULT true,
   "server_address" text NOT NULL,
-  "stake_per_game" numeric NOT NULL,
+  "stake_per_game" numeric(78,0) NOT NULL CHECK (stake_per_game >= 0),
   "num_rounds_per_game" int NOT NULL,
   "round_duration_secs" int NOT NULL,
   "num_drawing_options" int NOT NULL,
   "total_games" int NOT NULL DEFAULT 0,
-  "total_volume" numeric NOT NULL DEFAULT 0,
+  "total_volume" numeric(78,0) NOT NULL DEFAULT 0 CHECK (total_volume >= 0),
   "total_players" int NOT NULL DEFAULT 0,
   "trending_score" float8 NOT NULL DEFAULT 0,
   "is_archived" boolean NOT NULL DEFAULT false,
@@ -24,8 +24,8 @@ CREATE TABLE "games" (
   "server_id" UUID NOT NULL,
   "num_rounds" int NOT NULL DEFAULT 0,
   "num_players" int NOT NULL DEFAULT 0,
-  "total_pot" numeric NOT NULL DEFAULT 0,
-  "game_stake" numeric NOT NULL DEFAULT 0,
+  "total_pot" numeric(78,0) NOT NULL DEFAULT 0 CHECK (total_pot >= 0),
+  "game_stake" numeric(78,0) NOT NULL DEFAULT 0 CHECK (game_stake >= 0),
   "started_at" timestamptz NOT NULL,
   "ended_at" timestamptz NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())
@@ -35,11 +35,11 @@ CREATE TABLE "game_players" (
   "game_id" UUID NOT NULL,
   "user_id" UUID NOT NULL,
   "score" int NOT NULL DEFAULT 0,
-  "pnl" numeric NOT NULL DEFAULT 0,
-  "position" int NOT NULL,
+  "pnl" numeric(78,0) NOT NULL DEFAULT 0,
+  "position" int NOT NULL CHECK (position > 0),
   "rounds_played" int NOT NULL DEFAULT 0,
-  "provisional_payout" numeric NOT NULL DEFAULT 0,
-  "total_stake_lost" numeric NOT NULL DEFAULT 0,
+  "provisional_payout" numeric(78,0) NOT NULL DEFAULT 0 CHECK (provisional_payout >= 0),
+  "total_stake_lost" numeric(78,0) NOT NULL DEFAULT 0 CHECK (total_stake_lost >= 0),
   "is_evicted" boolean NOT NULL DEFAULT false,
   PRIMARY KEY ("game_id", "user_id")
 );
@@ -48,8 +48,8 @@ CREATE TABLE "user_stats" (
   "user_id" UUID PRIMARY KEY,
   "total_games" int NOT NULL DEFAULT 0,
   "total_score" int NOT NULL DEFAULT 0,
-  "total_pnl" numeric NOT NULL DEFAULT 0,
-  "total_volume" numeric NOT NULL DEFAULT 0,
+  "total_pnl" numeric(78,0) NOT NULL DEFAULT 0,
+  "total_volume" numeric(78,0) NOT NULL DEFAULT 0 CHECK (total_volume >= 0),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
@@ -58,8 +58,8 @@ CREATE TABLE "server_player_stats" (
   "user_id" UUID NOT NULL,
   "total_games" int NOT NULL DEFAULT 0,
   "total_score" int NOT NULL DEFAULT 0,
-  "total_pnl" numeric NOT NULL DEFAULT 0,
-  "total_volume" numeric NOT NULL DEFAULT 0,
+  "total_pnl" numeric(78,0) NOT NULL DEFAULT 0,
+  "total_volume" numeric(78,0) NOT NULL DEFAULT 0 CHECK (total_volume >= 0),
   "updated_at" timestamptz NOT NULL DEFAULT (now()),
   PRIMARY KEY ("server_id", "user_id")
 );

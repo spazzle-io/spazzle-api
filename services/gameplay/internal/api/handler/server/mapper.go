@@ -12,12 +12,12 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		archivedAt = timestamppb.New(server.ArchivedAt.Time)
 	}
 
-	stakePerGameStr, err := db.ParseDBNumericWeiToStr(server.StakePerGame)
+	stakePerGame, err := db.ParseDBNumericToWei(server.StakePerGame)
 	if err != nil {
 		return nil, err
 	}
 
-	totalVolume, err := db.ParseDBNumericWeiToStr(server.TotalVolume)
+	totalVolume, err := db.ParseDBNumericToWei(server.TotalVolume)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		NumCustomWords:    server.NumCustomWords,
 		IsPubliclyVisible: server.IsPubliclyVisible,
 		ServerAddress:     server.ServerAddress,
-		StakePerGame:      stakePerGameStr,
+		StakePerGame:      stakePerGame.String(),
 		NumRoundsPerGame:  server.NumRoundsPerGame,
 		RoundDurationSecs: server.RoundDurationSecs,
 		NumDrawingOptions: server.NumDrawingOptions,
@@ -38,7 +38,7 @@ func mapDBServerToPb(server *db.Server) (*pb.Server, error) {
 		ArchivedAt:        archivedAt,
 		CreatedAt:         timestamppb.New(server.CreatedAt),
 		TotalGames:        server.TotalGames,
-		TotalVolume:       totalVolume,
+		TotalVolume:       totalVolume.String(),
 		TotalPlayers:      server.TotalPlayers,
 		TrendingScore:     server.TrendingScore,
 	}, nil
@@ -63,12 +63,12 @@ func mapDBUserServerToPb(userServer *db.ListUserServersRow) (*pb.UserServer, err
 		archivedAt = timestamppb.New(userServer.ArchivedAt.Time)
 	}
 
-	stakePerGameStr, err := db.ParseDBNumericWeiToStr(userServer.StakePerGame)
+	stakePerGame, err := db.ParseDBNumericToWei(userServer.StakePerGame)
 	if err != nil {
 		return nil, err
 	}
 
-	totalVolume, err := db.ParseDBNumericWeiToStr(userServer.TotalVolume)
+	totalVolume, err := db.ParseDBNumericToWei(userServer.TotalVolume)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func mapDBUserServerToPb(userServer *db.ListUserServersRow) (*pb.UserServer, err
 		NumCustomWords:    userServer.NumCustomWords,
 		IsPubliclyVisible: userServer.IsPubliclyVisible,
 		ServerAddress:     userServer.ServerAddress,
-		StakePerGame:      stakePerGameStr,
+		StakePerGame:      stakePerGame.String(),
 		NumRoundsPerGame:  userServer.NumRoundsPerGame,
 		RoundDurationSecs: userServer.RoundDurationSecs,
 		NumDrawingOptions: userServer.NumDrawingOptions,
@@ -91,7 +91,7 @@ func mapDBUserServerToPb(userServer *db.ListUserServersRow) (*pb.UserServer, err
 		ArchivedAt:        archivedAt,
 		CreatedAt:         timestamppb.New(userServer.CreatedAt),
 		TotalGames:        userServer.TotalGames,
-		TotalVolume:       totalVolume,
+		TotalVolume:       totalVolume.String(),
 		TotalPlayers:      userServer.TotalPlayers,
 		TrendingScore:     userServer.TrendingScore,
 	}, nil

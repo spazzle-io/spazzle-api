@@ -2,9 +2,11 @@ package db
 
 import (
 	"context"
-	"math/big"
+	"fmt"
 	"testing"
 	"time"
+
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -25,37 +27,37 @@ func TestArchiveGameTx(t *testing.T) {
 		GameID:    uuid.New(),
 		ServerID:  server.ID,
 		NumRounds: 10,
-		TotalPot:  big.NewInt(6000000000000000),
-		GameStake: big.NewInt(200000000000000),
+		TotalPot:  commonUtil.MustNewWei("6000000000000000"),
+		GameStake: commonUtil.MustNewWei("200000000000000"),
 		PlayerResults: []GamePlayerResult{
 			{
 				UserID:            player1,
 				Score:             200,
-				Pnl:               big.NewInt(-500000000000000),
+				Pnl:               commonUtil.MustNewWei("-500000000000000"),
 				Position:          2,
 				RoundsPlayed:      10,
-				ProvisionalPayout: big.NewInt(1500000000000000),
-				TotalStakeLost:    big.NewInt(2000000000000000),
+				ProvisionalPayout: commonUtil.MustNewWei("1500000000000000"),
+				TotalStakeLost:    commonUtil.MustNewWei("2000000000000000"),
 				IsEvicted:         false,
 			},
 			{
 				UserID:            player2,
 				Score:             300,
-				Pnl:               big.NewInt(1000000000000000),
+				Pnl:               commonUtil.MustNewWei("1000000000000000"),
 				Position:          1,
 				RoundsPlayed:      10,
-				ProvisionalPayout: big.NewInt(3000000000000000),
-				TotalStakeLost:    big.NewInt(2000000000000000),
+				ProvisionalPayout: commonUtil.MustNewWei("3000000000000000"),
+				TotalStakeLost:    commonUtil.MustNewWei("2000000000000000"),
 				IsEvicted:         false,
 			},
 			{
 				UserID:            player3,
 				Score:             0,
-				Pnl:               big.NewInt(-2000000000000000),
+				Pnl:               commonUtil.MustNewWei("-2000000000000000"),
 				Position:          3,
 				RoundsPlayed:      5,
-				ProvisionalPayout: big.NewInt(0),
-				TotalStakeLost:    big.NewInt(2000000000000000),
+				ProvisionalPayout: commonUtil.ZeroWei(),
+				TotalStakeLost:    commonUtil.MustNewWei("2000000000000000"),
 				IsEvicted:         true,
 			},
 		},
@@ -122,17 +124,17 @@ func TestArchiveGameTxIdempotent(t *testing.T) {
 		GameID:    uuid.New(),
 		ServerID:  server.ID,
 		NumRounds: 5,
-		TotalPot:  big.NewInt(2000000000000000),
-		GameStake: big.NewInt(200000000000000),
+		TotalPot:  commonUtil.MustNewWei("2000000000000000"),
+		GameStake: commonUtil.MustNewWei("200000000000000"),
 		PlayerResults: []GamePlayerResult{
 			{
 				UserID:            uuid.New(),
 				Score:             100,
-				Pnl:               big.NewInt(500000000000000),
+				Pnl:               commonUtil.MustNewWei("500000000000000"),
 				Position:          1,
 				RoundsPlayed:      5,
-				ProvisionalPayout: big.NewInt(1500000000000000),
-				TotalStakeLost:    big.NewInt(1000000000000000),
+				ProvisionalPayout: commonUtil.MustNewWei("1500000000000000"),
+				TotalStakeLost:    commonUtil.MustNewWei("1000000000000000"),
 				IsEvicted:         false,
 			},
 		},
@@ -168,17 +170,17 @@ func TestArchiveGameTxMultipleGames(t *testing.T) {
 			GameID:    uuid.New(),
 			ServerID:  server.ID,
 			NumRounds: 5,
-			TotalPot:  big.NewInt(2000000000000000),
-			GameStake: big.NewInt(200000000000000),
+			TotalPot:  commonUtil.MustNewWei("2000000000000000"),
+			GameStake: commonUtil.MustNewWei("200000000000000"),
 			PlayerResults: []GamePlayerResult{
 				{
 					UserID:            playerID,
 					Score:             int32((i + 1) * 100),
-					Pnl:               big.NewInt(int64((i + 1) * 100000000000000)),
+					Pnl:               commonUtil.MustNewWei(fmt.Sprintf("%d", (i+1)*100000000000000)),
 					Position:          1,
 					RoundsPlayed:      5,
-					ProvisionalPayout: big.NewInt(int64((i + 1) * 300000000000000)),
-					TotalStakeLost:    big.NewInt(int64((i + 1) * 200000000000000)),
+					ProvisionalPayout: commonUtil.MustNewWei(fmt.Sprintf("%d", (i+1)*300000000000000)),
+					TotalStakeLost:    commonUtil.MustNewWei(fmt.Sprintf("%d", (i+1)*200000000000000)),
 					IsEvicted:         false,
 				},
 			},

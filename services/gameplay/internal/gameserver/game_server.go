@@ -215,7 +215,7 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 		return &types.GameStateView{}, fmt.Errorf("failed to get server by id: %w", err)
 	}
 
-	stakePerGame, err := db.ParseDBNumericWeiToStr(server.StakePerGame)
+	stakePerGame, err := db.ParseDBNumericToWei(server.StakePerGame)
 	if err != nil {
 		return &types.GameStateView{}, fmt.Errorf("failed to parse stake per game: %w", err)
 	}
@@ -224,7 +224,7 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 		GameID:          uuid.New(),
 		NumRounds:       server.NumRoundsPerGame,
 		DrawingDuration: time.Duration(server.RoundDurationSecs) * time.Second,
-		StakePerGame:    stakePerGame,
+		StakePerGame:    stakePerGame.String(),
 	})
 	if err != nil {
 		return &types.GameStateView{}, fmt.Errorf("failed to get or create game: %w", err)

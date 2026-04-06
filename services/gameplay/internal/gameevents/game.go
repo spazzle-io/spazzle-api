@@ -2,6 +2,7 @@ package gameevents
 
 import (
 	"github.com/google/uuid"
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 )
 
 const (
@@ -22,8 +23,8 @@ func (r *PlayerFinalResult) GetPoints() int64 {
 	return r.TotalPoints
 }
 
-func (r *PlayerFinalResult) SetProvisionalPayout(payout string) {
-	r.ProvisionalPayout = payout
+func (r *PlayerFinalResult) SetProvisionalPayout(payout commonUtil.Wei) {
+	r.ProvisionalPayout = payout.String()
 }
 
 type GameEndedPayload struct {

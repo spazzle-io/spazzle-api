@@ -94,45 +94,6 @@ func RandomIndices(n int, k int) ([]int, error) {
 	return indices[:k], nil
 }
 
-// ParseBigIntOrZero parses a base-10 integer string and returns 0 if parsing fails.
-func ParseBigIntOrZero(s string) *big.Int {
-	b, ok := new(big.Int).SetString(s, 10)
-	if !ok {
-		return big.NewInt(0)
-	}
-
-	return b
-}
-
-// BigIntString returns the base-10 string representation of b, or "0" if b is nil.
-func BigIntString(b *big.Int) string {
-	if b == nil {
-		return "0"
-	}
-
-	return b.String()
-}
-
-// AddBigIntStrings adds two base-10 integer strings and returns the sum as a string.
-// If parsing of either strings fails, it is set to 0.
-func AddBigIntStrings(a string, b string) string {
-	parsedA := ParseBigIntOrZero(a)
-	parsedB := ParseBigIntOrZero(b)
-
-	return BigIntString(new(big.Int).Add(parsedA, parsedB))
-}
-
-// DivBigIntString divides a base-10 integer string by a divisor and returns the result as a string.
-// Returns 0 if divisor <= 0.
-func DivBigIntString(s string, divisor int64) string {
-	if divisor <= 0 {
-		return "0"
-	}
-
-	parsedS := ParseBigIntOrZero(s)
-	return new(big.Int).Div(parsedS, big.NewInt(divisor)).String()
-}
-
 // GraphemeLen returns the number of visible Unicode characters in a string.
 func GraphemeLen(str string) int {
 	count := 0

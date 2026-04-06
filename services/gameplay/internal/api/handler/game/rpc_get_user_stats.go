@@ -41,13 +41,13 @@ func (h *Handler) GetUserStats(ctx context.Context, req *pb.GetUserStatsRequest)
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalPnl, err := db.ParseDBNumericWeiToStr(userStats.TotalPnl)
+	totalPnl, err := db.ParseDBNumericToWei(userStats.TotalPnl)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to parse total pnl")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	totalVolume, err := db.ParseDBNumericWeiToStr(userStats.TotalVolume)
+	totalVolume, err := db.ParseDBNumericToWei(userStats.TotalVolume)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to parse total volume")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -57,8 +57,8 @@ func (h *Handler) GetUserStats(ctx context.Context, req *pb.GetUserStatsRequest)
 		UserId:      userID.String(),
 		TotalGames:  userStats.TotalGames,
 		TotalScore:  userStats.TotalScore,
-		TotalPnl:    totalPnl,
-		TotalVolume: totalVolume,
+		TotalPnl:    totalPnl.String(),
+		TotalVolume: totalVolume.String(),
 		UpdatedAt:   timestamppb.New(userStats.UpdatedAt),
 	}
 

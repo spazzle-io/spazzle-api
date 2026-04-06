@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
 
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
@@ -16,11 +15,11 @@ import (
 type GamePlayerResult struct {
 	UserID            uuid.UUID
 	Score             int32
-	Pnl               *big.Int
+	Pnl               commonUtil.Wei
 	Position          int32
 	RoundsPlayed      int32
-	ProvisionalPayout *big.Int
-	TotalStakeLost    *big.Int
+	ProvisionalPayout commonUtil.Wei
+	TotalStakeLost    commonUtil.Wei
 	IsEvicted         bool
 }
 
@@ -28,8 +27,8 @@ type ArchiveGameTxParams struct {
 	GameID        uuid.UUID
 	ServerID      uuid.UUID
 	NumRounds     int32
-	TotalPot      *big.Int
-	GameStake     *big.Int
+	TotalPot      commonUtil.Wei
+	GameStake     commonUtil.Wei
 	PlayerResults []GamePlayerResult
 	StartedAt     time.Time
 	EndedAt       time.Time
@@ -54,11 +53,11 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 			NumRounds:  params.NumRounds,
 			NumPlayers: numPlayers,
 			TotalPot: pgtype.Numeric{
-				Int:   params.TotalPot,
+				Int:   params.TotalPot.BigInt(),
 				Valid: true,
 			},
 			GameStake: pgtype.Numeric{
-				Int:   params.GameStake,
+				Int:   params.GameStake.BigInt(),
 				Valid: true,
 			},
 			StartedAt: params.StartedAt,
@@ -84,17 +83,17 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 				UserID: r.UserID,
 				Score:  r.Score,
 				Pnl: pgtype.Numeric{
-					Int:   r.Pnl,
+					Int:   r.Pnl.BigInt(),
 					Valid: true,
 				},
 				Position:     r.Position,
 				RoundsPlayed: r.RoundsPlayed,
 				ProvisionalPayout: pgtype.Numeric{
-					Int:   r.ProvisionalPayout,
+					Int:   r.ProvisionalPayout.BigInt(),
 					Valid: true,
 				},
 				TotalStakeLost: pgtype.Numeric{
-					Int:   r.TotalStakeLost,
+					Int:   r.TotalStakeLost.BigInt(),
 					Valid: true,
 				},
 				IsEvicted: r.IsEvicted,
@@ -112,11 +111,11 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 				UserID: r.UserID,
 				Score:  r.Score,
 				Pnl: pgtype.Numeric{
-					Int:   r.Pnl,
+					Int:   r.Pnl.BigInt(),
 					Valid: true,
 				},
 				Volume: pgtype.Numeric{
-					Int:   params.GameStake,
+					Int:   params.GameStake.BigInt(),
 					Valid: true,
 				},
 			})
@@ -130,11 +129,11 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 				UserID:   r.UserID,
 				Score:    r.Score,
 				Pnl: pgtype.Numeric{
-					Int:   r.Pnl,
+					Int:   r.Pnl.BigInt(),
 					Valid: true,
 				},
 				Volume: pgtype.Numeric{
-					Int:   params.GameStake,
+					Int:   params.GameStake.BigInt(),
 					Valid: true,
 				},
 			})
@@ -147,7 +146,7 @@ func (store *SQLStore) ArchiveGameTx(ctx context.Context, params ArchiveGameTxPa
 		err = queries.UpdateServerGameStats(ctx, UpdateServerGameStatsParams{
 			ServerID: params.ServerID,
 			Volume: pgtype.Numeric{
-				Int:   params.TotalPot,
+				Int:   params.TotalPot.BigInt(),
 				Valid: true,
 			},
 			NumPlayers: numPlayers,

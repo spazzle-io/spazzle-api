@@ -184,7 +184,8 @@ func TestGetFinalPlayerResults(t *testing.T) {
 		},
 	}
 
-	finalResults := getFinalPlayerResults(state)
+	finalResults, err := getFinalPlayerResults(state)
+	require.NoError(t, err)
 
 	expectedFinalResults := []*gameevents.PlayerFinalResult{
 		{

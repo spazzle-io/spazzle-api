@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"math/big"
 	"testing"
 	"time"
+
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
@@ -109,27 +110,27 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 						GameID:    payload.GameID,
 						ServerID:  payload.ServerID,
 						NumRounds: int32(10),
-						TotalPot:  big.NewInt(int64(4000000000000000)),
-						GameStake: big.NewInt(int64(2000000000000000)),
+						TotalPot:  commonUtil.MustNewWei("4000000000000000"),
+						GameStake: commonUtil.MustNewWei("2000000000000000"),
 						PlayerResults: []db.GamePlayerResult{
 							{
 								UserID:            uuid.MustParse("3b6c6a83-5995-4cfd-b59b-750893456d1d"),
 								Score:             int32(20),
-								Pnl:               big.NewInt(int64(2000000000000000)),
+								Pnl:               commonUtil.MustNewWei("2000000000000000"),
 								Position:          int32(1),
 								RoundsPlayed:      int32(10),
-								ProvisionalPayout: big.NewInt(int64(3000000000000000)),
-								TotalStakeLost:    big.NewInt(int64(1000000000000000)),
+								ProvisionalPayout: commonUtil.MustNewWei("3000000000000000"),
+								TotalStakeLost:    commonUtil.MustNewWei("1000000000000000"),
 								IsEvicted:         false,
 							},
 							{
 								UserID:            uuid.MustParse("f3a2d264-7d0f-4014-81f4-129166668fc2"),
 								Score:             int32(0),
-								Pnl:               big.NewInt(int64(-2000000000000000)),
+								Pnl:               commonUtil.MustNewWei("-2000000000000000"),
 								Position:          int32(2),
 								RoundsPlayed:      int32(8),
-								ProvisionalPayout: big.NewInt(int64(0)),
-								TotalStakeLost:    big.NewInt(int64(2000000000000000)),
+								ProvisionalPayout: commonUtil.ZeroWei(),
+								TotalStakeLost:    commonUtil.MustNewWei("2000000000000000"),
 								IsEvicted:         true,
 							},
 						},

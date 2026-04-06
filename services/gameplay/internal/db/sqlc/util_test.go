@@ -2,73 +2,20 @@ package db
 
 import (
 	"math/big"
+	"strings"
 	"testing"
+
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseWeiStrToBigInt(t *testing.T) {
-	testCases := []struct {
-		name        string
-		weiStr      string
-		checkResult func(res *big.Int, err error)
-	}{
-		{
-			name:   "success",
-			weiStr: "1",
-			checkResult: func(res *big.Int, err error) {
-				require.NoError(t, err)
-				require.Equal(t, big.NewInt(1), res)
-			},
-		},
-		{
-			name:   "success - large wei value",
-			weiStr: "100000000000000000000",
-			checkResult: func(res *big.Int, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "100000000000000000000", res.String())
-			},
-		},
-		{
-			name:   "empty wei string",
-			weiStr: "",
-			checkResult: func(res *big.Int, err error) {
-				require.Nil(t, res)
-				require.Error(t, err)
-			},
-		},
-		{
-			name:   "invalid wei string",
-			weiStr: "abc",
-			checkResult: func(res *big.Int, err error) {
-				require.Nil(t, res)
-				require.Error(t, err)
-			},
-		},
-		{
-			name:   "negative wei string",
-			weiStr: "-100",
-			checkResult: func(res *big.Int, err error) {
-				require.Nil(t, res)
-				require.Error(t, err)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res, err := ParseWeiStrToBigInt(tc.weiStr)
-			tc.checkResult(res, err)
-		})
-	}
-}
-
-func TestParseDBNumericWeiToStr(t *testing.T) {
+func TestParseDBNumericToWei(t *testing.T) {
 	testCases := []struct {
 		name        string
 		numeric     pgtype.Numeric
-		checkResult func(res string, err error)
+		checkResult func(res commonUtil.Wei, err error)
 	}{
 		{
 			name: "success",
@@ -77,9 +24,9 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Exp:   17,
 				Valid: true,
 			},
-			checkResult: func(res string, err error) {
+			checkResult: func(res commonUtil.Wei, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1200000000000000000", res)
+				require.Equal(t, "1200000000000000000", res.String())
 			},
 		},
 		{
@@ -89,7 +36,7 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Exp:   17,
 				Valid: false,
 			},
-			checkResult: func(res string, err error) {
+			checkResult: func(res commonUtil.Wei, err error) {
 				require.Error(t, err)
 				require.Empty(t, res)
 			},
@@ -102,7 +49,7 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Valid: true,
 				NaN:   true,
 			},
-			checkResult: func(res string, err error) {
+			checkResult: func(res commonUtil.Wei, err error) {
 				require.Error(t, err)
 				require.Empty(t, res)
 			},
@@ -113,7 +60,7 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Valid:            true,
 				InfinityModifier: pgtype.Infinity,
 			},
-			checkResult: func(res string, err error) {
+			checkResult: func(res commonUtil.Wei, err error) {
 				require.Error(t, err)
 				require.Empty(t, res)
 			},
@@ -124,9 +71,9 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Int:   nil,
 				Valid: true,
 			},
-			checkResult: func(res string, err error) {
+			checkResult: func(res commonUtil.Wei, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "0", res)
+				require.Equal(t, "0", res.String())
 			},
 		},
 		{
@@ -136,9 +83,9 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Exp:   17,
 				Valid: true,
 			},
-			checkResult: func(res string, err error) {
-				require.Error(t, err)
-				require.Empty(t, res)
+			checkResult: func(res commonUtil.Wei, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "-1200000000000000000", res.String())
 			},
 		},
 		{
@@ -148,16 +95,64 @@ func TestParseDBNumericWeiToStr(t *testing.T) {
 				Exp:   0,
 				Valid: true,
 			},
-			checkResult: func(res string, err error) {
+			checkResult: func(res commonUtil.Wei, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "12", res)
+				require.Equal(t, "12", res.String())
+			},
+		},
+		{
+			name: "fractional numeric",
+			numeric: pgtype.Numeric{
+				Int:   big.NewInt(123),
+				Exp:   -2,
+				Valid: true,
+			},
+			checkResult: func(res commonUtil.Wei, err error) {
+				require.Error(t, err)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name: "exceeds max wei magnitude",
+			numeric: pgtype.Numeric{
+				Int:   big.NewInt(1),
+				Exp:   79,
+				Valid: true,
+			},
+			checkResult: func(res commonUtil.Wei, err error) {
+				require.Error(t, err)
+				require.Empty(t, res)
+			},
+		},
+		{
+			name: "zero value explicit",
+			numeric: pgtype.Numeric{
+				Int:   big.NewInt(0),
+				Exp:   0,
+				Valid: true,
+			},
+			checkResult: func(res commonUtil.Wei, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "0", res.String())
+			},
+		},
+		{
+			name: "large valid numeric",
+			numeric: pgtype.Numeric{
+				Int:   big.NewInt(1),
+				Exp:   77,
+				Valid: true,
+			},
+			checkResult: func(res commonUtil.Wei, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1"+strings.Repeat("0", 77), res.String())
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := ParseDBNumericWeiToStr(tc.numeric)
+			res, err := ParseDBNumericToWei(tc.numeric)
 			tc.checkResult(res, err)
 		})
 	}

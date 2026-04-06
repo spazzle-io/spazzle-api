@@ -3,6 +3,8 @@ package gameevents
 import (
 	"time"
 
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+
 	"github.com/google/uuid"
 )
 
@@ -106,7 +108,7 @@ type PlayerRoundResult struct {
 	WasArtist         bool      `json:"was_artist"`
 	GuessTimeMs       int64     `json:"guess_time_ms"`
 	Tier              string    `json:"tier"`
-	RoundPosition     int32     `json:"round_position"`
+	RoundPosition     int       `json:"round_position"`
 	RoundPoints       int64     `json:"round_points"`
 	RoundStakeLost    string    `json:"round_stake_lost"`
 	TotalPoints       int64     `json:"total_points"`
@@ -118,8 +120,8 @@ func (r *PlayerRoundResult) GetPoints() int64 {
 	return r.TotalPoints
 }
 
-func (r *PlayerRoundResult) SetProvisionalPayout(payout string) {
-	r.ProvisionalPayout = payout
+func (r *PlayerRoundResult) SetProvisionalPayout(payout commonUtil.Wei) {
+	r.ProvisionalPayout = payout.String()
 }
 
 type RoundEndedPayload struct {

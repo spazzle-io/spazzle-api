@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+
 	"buf.build/go/protovalidate"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -39,7 +41,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	stakePerGame, err := db.ParseWeiStrToBigInt(req.GetStakePerGame())
+	stakePerGame, err := commonUtil.NewNonNegativeWei(req.GetStakePerGame())
 	if err != nil {
 		logger.Error().Err(err).Msg("invalid stake per game")
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidStakePerGameError)
@@ -51,7 +53,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		ServerAddress:     req.GetServerAddress(),
 		IsPubliclyVisible: req.GetIsPubliclyVisible(),
 		StakePerGame: pgtype.Numeric{
-			Int:   stakePerGame,
+			Int:   stakePerGame.BigInt(),
 			Valid: true,
 		},
 		NumRoundsPerGame:  req.GetNumRoundsPerGame(),

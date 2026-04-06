@@ -1,8 +1,6 @@
 package workflow
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"go.temporal.io/sdk/workflow"
@@ -12,7 +10,7 @@ const QueryGetGameState = "get-game-state"
 
 func registerWorkflowQueries(ctx workflow.Context, state *GameState) error {
 	if err := registerGetGameStateQuery(ctx, state); err != nil {
-		return fmt.Errorf("failed to register get game state query: %w", err)
+		return nonRetryableErr(ErrTypeInvalidState, "failed to register get game state query", err)
 	}
 
 	return nil

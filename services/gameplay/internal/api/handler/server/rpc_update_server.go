@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/middleware"
 
 	"buf.build/go/protovalidate"
@@ -39,12 +41,6 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)
 	}
 
-	stakePerGame, err := db.ParseWeiStrToBigInt(req.GetStakePerGame().GetValue())
-	if err != nil && req.GetStakePerGame() != nil {
-		logger.Error().Err(err).Msg("invalid stake per game")
-		return nil, status.Error(codes.InvalidArgument, handler.InvalidStakePerGameError)
-	}
-
 	params := db.UpdateServerParams{
 		ServerID: serverUserCtx.ServerId,
 		Name: pgtype.Text{
@@ -54,10 +50,6 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 		IsPubliclyVisible: pgtype.Bool{
 			Bool:  req.GetIsPubliclyVisible().GetValue(),
 			Valid: req.GetIsPubliclyVisible() != nil,
-		},
-		StakePerGame: pgtype.Numeric{
-			Int:   stakePerGame,
-			Valid: req.GetStakePerGame() != nil,
 		},
 		NumRoundsPerGame: pgtype.Int4{
 			Int32: req.GetNumRoundsPerGame().GetValue(),
@@ -71,6 +63,19 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 			Int32: req.GetNumDrawingOptions().GetValue(),
 			Valid: req.GetNumDrawingOptions() != nil,
 		},
+	}
+
+	if req.GetStakePerGame() != nil {
+		stakePerGame, err := commonUtil.NewNonNegativeWei(req.GetStakePerGame().GetValue())
+		if err != nil {
+			logger.Error().Err(err).Msg("invalid stake per game")
+			return nil, status.Error(codes.InvalidArgument, handler.InvalidStakePerGameError)
+		}
+
+		params.StakePerGame = pgtype.Numeric{
+			Int:   stakePerGame.BigInt(),
+			Valid: true,
+		}
 	}
 
 	server, err := h.Store.UpdateServer(ctx, params)
