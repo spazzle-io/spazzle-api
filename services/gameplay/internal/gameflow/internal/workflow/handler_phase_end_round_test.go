@@ -305,7 +305,8 @@ func TestProcessCorrectGuessers(t *testing.T) {
 		DrawingDuration:  time.Minute,
 	}
 
-	roundResults, lastPos := processCorrectGuessers(state, 5, guesses)
+	roundResults, lastPos, err := processCorrectGuessers(state, 5, guesses)
+	require.NoError(t, err)
 
 	expectedResults := []*gameevents.PlayerRoundResult{
 		{
@@ -365,7 +366,7 @@ func TestProcessCorrectGuessers(t *testing.T) {
 		},
 	}
 
-	require.Equal(t, int32(5), lastPos)
+	require.Equal(t, 5, lastPos)
 	require.Len(t, roundResults, 5)
 	require.Equal(t, expectedResults, roundResults)
 }
@@ -431,7 +432,8 @@ func TestProcessNonGuessers(t *testing.T) {
 		StakePerRound:   "200000000000000",
 	}
 
-	roundResults := processNonGuessers(state, 5)
+	roundResults, err := processNonGuessers(state, 5)
+	require.NoError(t, err)
 
 	expectedResults := []*gameevents.PlayerRoundResult{
 		{
@@ -478,7 +480,8 @@ func TestProcessArtist_EjectedArtist(t *testing.T) {
 		CurrentArtist: artist.PlayerID,
 	}
 
-	result := processArtist(state, 10, 2)
+	result, err := processArtist(state, 10, 2)
+	require.NoError(t, err)
 	require.Nil(t, result)
 }
 
@@ -496,7 +499,8 @@ func TestProcessArtist_ArtistDoesNotExist(t *testing.T) {
 		CurrentArtist: artist.PlayerID,
 	}
 
-	result := processArtist(state, 10, 2)
+	result, err := processArtist(state, 10, 2)
+	require.NoError(t, err)
 	require.Nil(t, result)
 }
 
@@ -516,7 +520,8 @@ func TestProcessArtist_CorrectGuessesMade(t *testing.T) {
 		CurrentArtist: artist.PlayerID,
 	}
 
-	result := processArtist(state, 100, 2)
+	result, err := processArtist(state, 100, 2)
+	require.NoError(t, err)
 
 	expectedResult := &gameevents.PlayerRoundResult{
 		PlayerID:       artist.PlayerID,
@@ -550,7 +555,8 @@ func TestProcessArtist_NoCorrectGuessesMade(t *testing.T) {
 		StakePerRound: "200000000000000",
 	}
 
-	result := processArtist(state, 0, 0)
+	result, err := processArtist(state, 0, 0)
+	require.NoError(t, err)
 
 	expectedResult := &gameevents.PlayerRoundResult{
 		PlayerID:       artist.PlayerID,
@@ -618,7 +624,8 @@ func TestUpdatePlayerStates(t *testing.T) {
 		GamePot: "100000000000000",
 	}
 
-	updatePlayerStates(state, results)
+	err := updatePlayerStates(state, results)
+	require.NoError(t, err)
 
 	expectedUpdatedPlayer := &PlayerGameState{
 		PlayerID:     playerID,

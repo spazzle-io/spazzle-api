@@ -28,7 +28,10 @@ func handlePhaseEndGame(ctx workflow.Context, state *GameState, notifyCh workflo
 }
 
 func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) error {
-	results := getFinalPlayerResults(state)
+	results, err := getFinalPlayerResults(state)
+	if err != nil {
+		return fmt.Errorf("failed to get final player results: %w", err)
+	}
 
 	state.EndedAt = workflow.Now(ctx).UTC()
 
@@ -44,7 +47,7 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) 
 		TotalPot:    state.GamePot,
 		Results:     results,
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult, nil)
+	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult, nil)
 	if err != nil {
 		return fmt.Errorf("failed to send game ended event: %w", err)
 	}
@@ -65,7 +68,7 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) 
 	return nil
 }
 
-func getFinalPlayerResults(state *GameState) []*gameevents.PlayerFinalResult {
+func getFinalPlayerResults(state *GameState) ([]*gameevents.PlayerFinalResult, error) {
 	finalResults := make([]*gameevents.PlayerFinalResult, 0, len(state.Players))
 	for _, playerID := range sortedUUIDs(state.Players) {
 		player := state.Players[playerID]
@@ -91,7 +94,10 @@ func getFinalPlayerResults(state *GameState) []*gameevents.PlayerFinalResult {
 		finalResults[i].Position = currentPosition
 	}
 
-	finalResults = CalculateProvisionalPayouts(state, finalResults)
+	finalResults, err := CalculateProvisionalPayouts(state, finalResults)
+	if err != nil {
+		return nil, err
+	}
 
-	return finalResults
+	return finalResults, nil
 }

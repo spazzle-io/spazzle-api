@@ -24,7 +24,7 @@ func createTestServer(t *testing.T, userId uuid.UUID) Server {
 	require.NotEmpty(t, randStr)
 
 	stakePerGameWeiStr := "2000000000000000"
-	stakePerGame, err := ParseWeiStrToBigInt(stakePerGameWeiStr)
+	stakePerGame, err := commonUtil.NewNonNegativeWei(stakePerGameWeiStr)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakePerGame)
 
@@ -33,7 +33,7 @@ func createTestServer(t *testing.T, userId uuid.UUID) Server {
 		OwnerID:       userId,
 		ServerAddress: serverWallet.Address,
 		StakePerGame: pgtype.Numeric{
-			Int:   stakePerGame,
+			Int:   stakePerGame.BigInt(),
 			Valid: true,
 		},
 		NumRoundsPerGame:  10,
@@ -60,10 +60,10 @@ func createTestServer(t *testing.T, userId uuid.UUID) Server {
 	require.NotEmpty(t, server.ServerAddress)
 	require.Equal(t, params.ServerAddress, server.ServerAddress)
 
-	gotStakePerGameStr, err := ParseDBNumericWeiToStr(server.StakePerGame)
+	gotStakePerGame, err := ParseDBNumericToWei(server.StakePerGame)
 	require.NoError(t, err)
-	require.NotEmpty(t, gotStakePerGameStr)
-	require.Equal(t, stakePerGameWeiStr, gotStakePerGameStr)
+	require.NotEmpty(t, gotStakePerGame)
+	require.Equal(t, stakePerGameWeiStr, gotStakePerGame.String())
 
 	require.NotEmpty(t, server.NumRoundsPerGame)
 	require.Equal(t, params.NumRoundsPerGame, server.NumRoundsPerGame)
@@ -469,7 +469,7 @@ func TestUpdateServer(t *testing.T) {
 	require.NotEmpty(t, updatedServerWallet)
 
 	expectedUpdatedStakePerGameStr := "80000000000000000"
-	expectedUpdatedStakePerGame, err := ParseWeiStrToBigInt(expectedUpdatedStakePerGameStr)
+	expectedUpdatedStakePerGame, err := commonUtil.NewNonNegativeWei(expectedUpdatedStakePerGameStr)
 	require.NoError(t, err)
 	require.NotEmpty(t, expectedUpdatedStakePerGame)
 
@@ -510,7 +510,7 @@ func TestUpdateServer(t *testing.T) {
 			Valid:  true,
 		},
 		StakePerGame: pgtype.Numeric{
-			Int:   expectedUpdatedStakePerGame,
+			Int:   expectedUpdatedStakePerGame.BigInt(),
 			Valid: true,
 		},
 		NumRoundsPerGame: pgtype.Int4{
@@ -542,10 +542,10 @@ func TestUpdateServer(t *testing.T) {
 	require.Equal(t, server.ID, updatedServer.ID)
 	require.WithinDuration(t, server.CreatedAt, updatedServer.CreatedAt, time.Second)
 
-	updatedStakePerGameStr, err := ParseDBNumericWeiToStr(updatedServer.StakePerGame)
+	updatedStakePerGame, err := ParseDBNumericToWei(updatedServer.StakePerGame)
 	require.NoError(t, err)
-	require.NotEmpty(t, updatedStakePerGameStr)
-	require.Equal(t, expectedUpdatedStakePerGameStr, updatedStakePerGameStr)
+	require.NotEmpty(t, updatedStakePerGame)
+	require.Equal(t, expectedUpdatedStakePerGameStr, updatedStakePerGame.String())
 
 	require.Equal(t, expectedUpdatedName, updatedServer.Name)
 	require.Equal(t, expectedUpdatedOwnerId, updatedServer.OwnerID)

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -174,12 +173,22 @@ func (processor *RedisTaskProcessor) archiveGameToDB(
 		return fmt.Errorf("failed to map player results: %w", err)
 	}
 
+	totalPot, err := commonUtil.NewNonNegativeWei(gameEndedPayload.TotalPot)
+	if err != nil {
+		return fmt.Errorf("failed to parse total pot: %v: %w", err, asynq.SkipRetry)
+	}
+
+	gameStake, err := commonUtil.NewNonNegativeWei(payload.GameStake)
+	if err != nil {
+		return fmt.Errorf("failed to parse game stake: %v: %w", err, asynq.SkipRetry)
+	}
+
 	txParams := db.ArchiveGameTxParams{
 		GameID:        payload.GameID,
 		ServerID:      payload.ServerID,
 		NumRounds:     int32(gameEndedPayload.TotalRounds),
-		TotalPot:      commonUtil.ParseBigIntOrZero(gameEndedPayload.TotalPot),
-		GameStake:     commonUtil.ParseBigIntOrZero(payload.GameStake),
+		TotalPot:      totalPot,
+		GameStake:     gameStake,
 		PlayerResults: playerResults,
 		StartedAt:     payload.GameStartedAt,
 		EndedAt:       payload.GameEndedAt,
@@ -244,9 +253,17 @@ func mapPlayerResults(results []*gameevents.PlayerFinalResult) ([]db.GamePlayerR
 	playerResults := make([]db.GamePlayerResult, 0, len(results))
 
 	for _, r := range results {
-		payout := commonUtil.ParseBigIntOrZero(r.ProvisionalPayout)
-		stakeLost := commonUtil.ParseBigIntOrZero(r.TotalStakeLost)
-		pnl := new(big.Int).Sub(payout, stakeLost)
+		payout, err := commonUtil.NewNonNegativeWei(r.ProvisionalPayout)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse provisional payout: %v: %w", err, asynq.SkipRetry)
+		}
+
+		stakeLost, err := commonUtil.NewNonNegativeWei(r.TotalStakeLost)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse stake lost: %v: %w", err, asynq.SkipRetry)
+		}
+
+		pnl := payout.Sub(stakeLost)
 
 		score, err := commonUtil.Int64ToInt32(r.TotalPoints)
 		if err != nil {

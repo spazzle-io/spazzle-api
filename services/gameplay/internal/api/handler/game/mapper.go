@@ -118,36 +118,36 @@ func mapUserGamesToPb(userGames []db.ListUserGamesRow) ([]*pb.UserGameEntry, err
 	pbUserGames := make([]*pb.UserGameEntry, 0, len(userGames))
 
 	for _, game := range userGames {
-		pnl, err := db.ParseDBNumericWeiToStr(game.Pnl)
+		pnl, err := db.ParseDBNumericToWei(game.Pnl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse pnl: %w", err)
 		}
 
-		totalPot, err := db.ParseDBNumericWeiToStr(game.TotalPot)
+		totalPot, err := db.ParseDBNumericToWei(game.TotalPot)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total pot: %w", err)
 		}
 
-		stakePerGame, err := db.ParseDBNumericWeiToStr(game.GameStake)
+		stakePerGame, err := db.ParseDBNumericToWei(game.GameStake)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse stake per game: %w", err)
 		}
 
-		provisionalPayout, err := db.ParseDBNumericWeiToStr(game.ProvisionalPayout)
+		provisionalPayout, err := db.ParseDBNumericToWei(game.ProvisionalPayout)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse provisional payout: %w", err)
 		}
 
-		stakeLost, err := db.ParseDBNumericWeiToStr(game.TotalStakeLost)
+		stakeLost, err := db.ParseDBNumericToWei(game.TotalStakeLost)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse stake lost: %w", err)
 		}
 
 		pbUserGames = append(pbUserGames, &pb.UserGameEntry{
 			Score:             game.Score,
-			Pnl:               pnl,
-			ProvisionalPayout: provisionalPayout,
-			StakeLost:         stakeLost,
+			Pnl:               pnl.String(),
+			ProvisionalPayout: provisionalPayout.String(),
+			StakeLost:         stakeLost.String(),
 			Position:          game.Position,
 			RoundsPlayed:      game.RoundsPlayed,
 			IsEvicted:         game.IsEvicted,
@@ -156,8 +156,8 @@ func mapUserGamesToPb(userGames []db.ListUserGamesRow) ([]*pb.UserGameEntry, err
 				ServerId:     game.ServerID.String(),
 				NumRounds:    game.NumRounds,
 				NumPlayers:   game.NumPlayers,
-				TotalPot:     totalPot,
-				StakePerGame: stakePerGame,
+				TotalPot:     totalPot.String(),
+				StakePerGame: stakePerGame.String(),
 				StartedAt:    timestamppb.New(game.StartedAt),
 				EndedAt:      timestamppb.New(game.EndedAt),
 			},
@@ -168,12 +168,12 @@ func mapUserGamesToPb(userGames []db.ListUserGamesRow) ([]*pb.UserGameEntry, err
 }
 
 func mapGameToPb(game db.Game) (*pb.GameInfo, error) {
-	totalPot, err := db.ParseDBNumericWeiToStr(game.TotalPot)
+	totalPot, err := db.ParseDBNumericToWei(game.TotalPot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse total pot: %w", err)
 	}
 
-	stakePerGame, err := db.ParseDBNumericWeiToStr(game.GameStake)
+	stakePerGame, err := db.ParseDBNumericToWei(game.GameStake)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse stake per game: %w", err)
 	}
@@ -183,8 +183,8 @@ func mapGameToPb(game db.Game) (*pb.GameInfo, error) {
 		ServerId:     game.ServerID.String(),
 		NumRounds:    game.NumRounds,
 		NumPlayers:   game.NumPlayers,
-		TotalPot:     totalPot,
-		StakePerGame: stakePerGame,
+		TotalPot:     totalPot.String(),
+		StakePerGame: stakePerGame.String(),
 		StartedAt:    timestamppb.New(game.StartedAt),
 		EndedAt:      timestamppb.New(game.EndedAt),
 	}, nil

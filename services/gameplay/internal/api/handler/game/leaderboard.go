@@ -104,12 +104,12 @@ func mapGlobalLeaderboardEntriesToPb(entries []db.UserStat) ([]*pb.LeaderboardEn
 	result := make([]*pb.LeaderboardEntry, 0, len(entries))
 
 	for _, entry := range entries {
-		pnl, err := db.ParseDBNumericWeiToStr(entry.TotalPnl)
+		pnl, err := db.ParseDBNumericToWei(entry.TotalPnl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total pnl: %w", err)
 		}
 
-		volume, err := db.ParseDBNumericWeiToStr(entry.TotalVolume)
+		volume, err := db.ParseDBNumericToWei(entry.TotalVolume)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total volume: %w", err)
 		}
@@ -118,8 +118,8 @@ func mapGlobalLeaderboardEntriesToPb(entries []db.UserStat) ([]*pb.LeaderboardEn
 			UserId:      entry.UserID.String(),
 			TotalGames:  entry.TotalGames,
 			TotalScore:  entry.TotalScore,
-			TotalPnl:    pnl,
-			TotalVolume: volume,
+			TotalPnl:    pnl.String(),
+			TotalVolume: volume.String(),
 		})
 	}
 
@@ -130,12 +130,12 @@ func mapServerLeaderboardEntriesToPb(entries []db.ServerPlayerStat) ([]*pb.Leade
 	result := make([]*pb.LeaderboardEntry, 0, len(entries))
 
 	for _, entry := range entries {
-		pnl, err := db.ParseDBNumericWeiToStr(entry.TotalPnl)
+		pnl, err := db.ParseDBNumericToWei(entry.TotalPnl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total pnl: %w", err)
 		}
 
-		volume, err := db.ParseDBNumericWeiToStr(entry.TotalVolume)
+		volume, err := db.ParseDBNumericToWei(entry.TotalVolume)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total volume: %w", err)
 		}
@@ -144,8 +144,8 @@ func mapServerLeaderboardEntriesToPb(entries []db.ServerPlayerStat) ([]*pb.Leade
 			UserId:      entry.UserID.String(),
 			TotalGames:  entry.TotalGames,
 			TotalScore:  entry.TotalScore,
-			TotalPnl:    pnl,
-			TotalVolume: volume,
+			TotalPnl:    pnl.String(),
+			TotalVolume: volume.String(),
 		})
 	}
 
@@ -156,12 +156,12 @@ func mapWindowedGlobalLeaderboardEntriesToPb(entries []db.GetGlobalLeaderboardBy
 	result := make([]*pb.LeaderboardEntry, 0, len(entries))
 
 	for _, entry := range entries {
-		pnl, err := db.ParseDBNumericWeiToStr(entry.TotalPnl)
+		pnl, err := db.ParseDBNumericToWei(entry.TotalPnl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total pnl: %w", err)
 		}
 
-		volume, err := db.ParseDBNumericWeiToStr(entry.TotalVolume)
+		volume, err := db.ParseDBNumericToWei(entry.TotalVolume)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total volume: %w", err)
 		}
@@ -170,8 +170,8 @@ func mapWindowedGlobalLeaderboardEntriesToPb(entries []db.GetGlobalLeaderboardBy
 			UserId:      entry.UserID.String(),
 			TotalGames:  entry.TotalGames,
 			TotalScore:  entry.TotalScore,
-			TotalPnl:    pnl,
-			TotalVolume: volume,
+			TotalPnl:    pnl.String(),
+			TotalVolume: volume.String(),
 		})
 	}
 
@@ -182,12 +182,12 @@ func mapWindowedServerLeaderboardEntriesToPb(entries []db.GetServerLeaderboardBy
 	result := make([]*pb.LeaderboardEntry, 0, len(entries))
 
 	for _, entry := range entries {
-		pnl, err := db.ParseDBNumericWeiToStr(entry.TotalPnl)
+		pnl, err := db.ParseDBNumericToWei(entry.TotalPnl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total pnl: %w", err)
 		}
 
-		volume, err := db.ParseDBNumericWeiToStr(entry.TotalVolume)
+		volume, err := db.ParseDBNumericToWei(entry.TotalVolume)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total volume: %w", err)
 		}
@@ -196,8 +196,8 @@ func mapWindowedServerLeaderboardEntriesToPb(entries []db.GetServerLeaderboardBy
 			UserId:      entry.UserID.String(),
 			TotalGames:  entry.TotalGames,
 			TotalScore:  entry.TotalScore,
-			TotalPnl:    pnl,
-			TotalVolume: volume,
+			TotalPnl:    pnl.String(),
+			TotalVolume: volume.String(),
 		})
 	}
 
@@ -208,17 +208,17 @@ func mapGameLeaderboardEntriesToPb(entries []db.GamePlayer) ([]*pb.GamePlayerEnt
 	result := make([]*pb.GamePlayerEntry, 0, len(entries))
 
 	for _, entry := range entries {
-		pnl, err := db.ParseDBNumericWeiToStr(entry.Pnl)
+		pnl, err := db.ParseDBNumericToWei(entry.Pnl)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse pnl: %w", err)
 		}
 
-		payout, err := db.ParseDBNumericWeiToStr(entry.ProvisionalPayout)
+		payout, err := db.ParseDBNumericToWei(entry.ProvisionalPayout)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse provisional payout: %w", err)
 		}
 
-		stakeLost, err := db.ParseDBNumericWeiToStr(entry.TotalStakeLost)
+		stakeLost, err := db.ParseDBNumericToWei(entry.TotalStakeLost)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse total stake lost: %w", err)
 		}
@@ -226,11 +226,11 @@ func mapGameLeaderboardEntriesToPb(entries []db.GamePlayer) ([]*pb.GamePlayerEnt
 		result = append(result, &pb.GamePlayerEntry{
 			UserId:            entry.UserID.String(),
 			Score:             entry.Score,
-			Pnl:               pnl,
+			Pnl:               pnl.String(),
 			Position:          entry.Position,
 			RoundsPlayed:      entry.RoundsPlayed,
-			ProvisionalPayout: payout,
-			TotalStakeLost:    stakeLost,
+			ProvisionalPayout: payout.String(),
+			TotalStakeLost:    stakeLost.String(),
 			IsEvicted:         entry.IsEvicted,
 		})
 	}

@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"github.com/google/uuid"
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"go.temporal.io/sdk/workflow"
@@ -68,27 +69,27 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 			}
 		} else {
 			for _, playerID := range sig.PlayerIDs {
-				isPlayerEjected := state.EjectedPlayers[playerID]
-
-				if !isPlayerEjected {
-					if _, exists := state.Players[playerID]; !exists {
-						state.Players[playerID] = &PlayerGameState{
-							PlayerID:    playerID,
-							StakeLost:   "0",
-							IsConnected: true,
-							JoinedAt:    workflow.Now(ctx).UTC(),
-						}
-					}
-
-					payload.AddedPlayers = append(payload.AddedPlayers, playerID)
-				}
-
-				if isPlayerEjected {
+				if state.EjectedPlayers[playerID] {
 					payload.RejectedPlayers = append(payload.RejectedPlayers, gameevents.RejectedPlayer{
 						PlayerID: playerID,
 						Reason:   gameevents.RejectionReasonEjectedPlayer,
 					})
+					continue
 				}
+
+				if player, exists := state.Players[playerID]; exists {
+					player.IsConnected = true
+					player.JoinedAt = workflow.Now(ctx).UTC()
+				} else {
+					state.Players[playerID] = &PlayerGameState{
+						PlayerID:    playerID,
+						StakeLost:   commonUtil.ZeroWei().String(),
+						IsConnected: true,
+						JoinedAt:    workflow.Now(ctx).UTC(),
+					}
+				}
+
+				payload.AddedPlayers = append(payload.AddedPlayers, playerID)
 			}
 		}
 

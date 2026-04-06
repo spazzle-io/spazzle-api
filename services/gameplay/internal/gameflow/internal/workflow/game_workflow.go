@@ -20,7 +20,8 @@ const (
 
 func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput, error) {
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Minute,
+		StartToCloseTimeout:    time.Minute,
+		ScheduleToCloseTimeout: 10 * time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			MaximumInterval:    30 * time.Second,
@@ -32,11 +33,15 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 
 	logger := workflow.GetLogger(ctx)
 
-	state := initializeGameState(ctx, input)
+	state, err := initializeGameState(ctx, input)
+	if err != nil {
+		return types.GameOutput{}, fmt.Errorf("failed to initialize game state: %w", err)
+	}
+
 	state.baseLogger = logger
 	logger.Info("started game workflow")
 
-	err := registerWorkflowQueries(ctx, state)
+	err = registerWorkflowQueries(ctx, state)
 	if err != nil {
 		return types.GameOutput{}, fmt.Errorf("failed to register workflow queries: %w", err)
 	}
@@ -66,7 +71,21 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 	}
 }
 
-func initializeGameState(ctx workflow.Context, input types.GameInput) *GameState {
+func initializeGameState(ctx workflow.Context, input types.GameInput) (*GameState, error) {
+	if input.NumRounds < 1 {
+		return nil, nonRetryableErr(ErrTypeInvalidInput, "invalid number of rounds", nil)
+	}
+
+	stakePerGame, err := commonUtil.NewNonNegativeWei(input.StakePerGame)
+	if err != nil {
+		return nil, nonRetryableErr(ErrTypeInvalidInput, "invalid stake per game", err)
+	}
+
+	stakePerRound, err := stakePerGame.Div(int64(input.NumRounds))
+	if err != nil {
+		return nil, nonRetryableErr(ErrTypeInvalidState, "failed to determine stake per round", err)
+	}
+
 	return &GameState{
 		GameID: input.GameID,
 
@@ -75,9 +94,9 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) *GameState
 		NumRounds:     input.NumRounds,
 		CurrentRound:  DefaultRoundNumber,
 		StartedAt:     workflow.Now(ctx).UTC(),
-		GamePot:       "0",
+		GamePot:       commonUtil.ZeroWei().String(),
 		StakePerGame:  input.StakePerGame,
-		StakePerRound: commonUtil.DivBigIntString(input.StakePerGame, int64(input.NumRounds)),
+		StakePerRound: stakePerRound.String(),
 
 		Players:              make(map[uuid.UUID]*PlayerGameState),
 		MinNumPlayersToStart: DefaultMinNumPlayersToStart,
@@ -94,5 +113,5 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) *GameState
 
 		PlayerReports:  make(map[uuid.UUID]map[uuid.UUID]bool),
 		EjectedPlayers: make(map[uuid.UUID]bool),
-	}
+	}, nil
 }
