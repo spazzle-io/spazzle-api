@@ -39,7 +39,7 @@ func TestAuthenticateService(t *testing.T) {
 	currentTimeUTCMillis := time.Now().UTC().UnixNano() / int64(time.Millisecond)
 
 	appCfg := newTestAppConfig(t, map[string]string{
-		"SERVICE":                    "uSerS",
+		"SERVICE":                    "users",
 		"SERVICE_USERS_PRIVATE_KEYS": testServicePrivateKeyPEM,
 	})
 

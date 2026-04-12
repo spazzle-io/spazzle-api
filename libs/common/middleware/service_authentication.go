@@ -45,6 +45,8 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	}
 
 	serviceName := splitServiceAuthenticationVal[0]
+	serviceName = strings.ToLower(strings.TrimSpace(serviceName))
+
 	reqTimestampStr := splitServiceAuthenticationVal[1]
 	nonce := splitServiceAuthenticationVal[2]
 	signature := splitServiceAuthenticationVal[3]
@@ -60,7 +62,7 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	reqTimestamp := time.Unix(0, reqTimestampInt*int64(time.Millisecond))
 
 	// verify the service name
-	if strings.TrimSpace(serviceName) == "" {
+	if serviceName == "" {
 		logger.Warn().Msg("service name must be provided")
 		return ctx
 	}
@@ -133,7 +135,7 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	}
 
 	// add authenticated service name to request context
-	ctx = context.WithValue(ctx, AuthenticatedService, strings.ToLower(strings.TrimSpace(serviceName)))
+	ctx = context.WithValue(ctx, AuthenticatedService, serviceName)
 
 	return ctx
 }
