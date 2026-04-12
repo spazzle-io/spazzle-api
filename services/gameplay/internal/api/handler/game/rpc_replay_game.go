@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
-
 	"buf.build/go/protovalidate"
 
 	"github.com/google/uuid"
@@ -36,7 +34,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		Logger()
 
 	userID := uuid.Nil
-	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config, &authPb.VerifyAccessTokenRequest{})
+	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config)
 	if err == nil {
 		userID, err = uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 		if err != nil {

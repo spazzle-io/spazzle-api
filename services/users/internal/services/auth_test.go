@@ -178,15 +178,13 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 	md := metadata.MD{}
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 
-	payload := &pb.VerifyAccessTokenRequest{}
-
 	cfg := &util.Config{
 		AppConfig: commonConfig.AppConfig{
 			ServiceName: "test",
 		},
 	}
 
-	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, cfg, payload)
+	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, cfg)
 	require.NoError(t, err)
 
 	require.True(t, dummyClient.IsVerifyAccessTokenCalled)

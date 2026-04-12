@@ -38,7 +38,7 @@ func ResolveServerUserContext(
 		return serverUserContext, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
 	}
 
-	verifyAccessTokenResp, err := authService.VerifyAccessToken(ctx, config, &authPb.VerifyAccessTokenRequest{})
+	verifyAccessTokenResp, err := authService.VerifyAccessToken(ctx, config)
 	if err != nil {
 		logger.Error().Err(err).Msg("access token verification failed")
 		return serverUserContext, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)

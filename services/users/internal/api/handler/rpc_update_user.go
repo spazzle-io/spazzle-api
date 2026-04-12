@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
 	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -31,7 +30,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
 	}
 
-	_, err = h.authService.VerifyAccessToken(ctx, h.config, &authPb.VerifyAccessTokenRequest{})
+	_, err = h.authService.VerifyAccessToken(ctx, h.config)
 	if err != nil {
 		logger.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)

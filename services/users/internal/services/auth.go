@@ -19,7 +19,7 @@ import (
 
 type AuthGrpcService interface {
 	Close() error
-	VerifyAccessToken(context.Context, *util.Config, *pb.VerifyAccessTokenRequest) (*pb.VerifyAccessTokenResponse, error)
+	VerifyAccessToken(context.Context, *util.Config) (*pb.VerifyAccessTokenResponse, error)
 	Authenticate(context.Context, *util.Config, *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error)
 }
 
@@ -98,7 +98,6 @@ func (c *AuthServiceGrpcClient) withMetadata(
 func (c *AuthServiceGrpcClient) VerifyAccessToken(
 	ctx context.Context,
 	config *util.Config,
-	payload *pb.VerifyAccessTokenRequest,
 ) (*pb.VerifyAccessTokenResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -108,7 +107,7 @@ func (c *AuthServiceGrpcClient) VerifyAccessToken(
 		return nil, fmt.Errorf("could not add metadata to verify access token request: %w", err)
 	}
 
-	return c.client.VerifyAccessToken(ctx, payload)
+	return c.client.VerifyAccessToken(ctx, &pb.VerifyAccessTokenRequest{})
 }
 
 func (c *AuthServiceGrpcClient) Authenticate(
