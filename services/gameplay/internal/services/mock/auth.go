@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	util "github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -56,16 +57,16 @@ func (mr *MockAuthGrpcServiceMockRecorder) Close() *gomock.Call {
 }
 
 // VerifyAccessToken mocks base method.
-func (m *MockAuthGrpcService) VerifyAccessToken(arg0 context.Context, arg1 string, arg2 *pb.VerifyAccessTokenRequest) (*pb.VerifyAccessTokenResponse, error) {
+func (m *MockAuthGrpcService) VerifyAccessToken(arg0 context.Context, arg1 *util.Config) (*pb.VerifyAccessTokenResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VerifyAccessToken", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "VerifyAccessToken", arg0, arg1)
 	ret0, _ := ret[0].(*pb.VerifyAccessTokenResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // VerifyAccessToken indicates an expected call of VerifyAccessToken.
-func (mr *MockAuthGrpcServiceMockRecorder) VerifyAccessToken(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockAuthGrpcServiceMockRecorder) VerifyAccessToken(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAccessToken", reflect.TypeOf((*MockAuthGrpcService)(nil).VerifyAccessToken), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAccessToken", reflect.TypeOf((*MockAuthGrpcService)(nil).VerifyAccessToken), arg0, arg1)
 }

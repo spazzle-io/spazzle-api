@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 
@@ -20,12 +22,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getTestConfig() util.Config {
-	return util.Config{
-		ServiceName:       "test",
-		Environment:       "development",
+func getTestConfig() *util.Config {
+	return &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName:    "test",
+			Environment:    "development",
+			AllowedOrigins: []string{"http://localhost:3000"},
+			Chains: commonConfig.NewTestChainRegistry(commonConfig.Chain{
+				ID:   11155111,
+				Name: "Sepolia",
+				Slug: "sepolia",
+			}),
+		},
 		TokenSymmetricKey: gofakeit.LetterN(32),
-		AllowedOrigins:    []string{"http://localhost:3000"},
 	}
 }
 

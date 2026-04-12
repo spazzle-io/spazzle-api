@@ -18,7 +18,7 @@ import (
 )
 
 type Worker struct {
-	Config          util.Config
+	Config          *util.Config
 	Store           db.Store
 	Bus             eventbus.EventBus
 	WordStore       wordstore.Store

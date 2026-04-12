@@ -53,12 +53,12 @@ func main() {
 	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
-	config, err := commonConfig.LoadConfig[util.Config](".", ".development")
+	config, err := commonConfig.Load[*util.Config](".", ".development")
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not load config")
 	}
 
-	commonConfig.SetupLogger(config.ServiceName, config.IsDevelopmentEnvironment())
+	commonConfig.SetupLogger(config.ServiceName, config.Is(commonConfig.Development))
 
 	commonConfig.RunDBMigration(config.DBMigrationURL, config.DBSource)
 
@@ -156,7 +156,8 @@ func runGRPCServer(ctx context.Context, wg *errgroup.Group, apiServer *server.AP
 		[]commonServer.GrpcMiddlewareProvider{
 			func() grpc.UnaryServerInterceptor {
 				config := &commonMiddleware.AuthenticateServiceConfig{
-					Cache: deps.Cache,
+					Cache:  deps.Cache,
+					Config: &deps.Config.AppConfig,
 				}
 				return config.AuthenticateServiceGrpc
 			},
@@ -187,7 +188,7 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, apiServer *server
 		ctx,
 		wg,
 		deps.Config.HTTPServerAddress,
-		deps.Config.IsDevelopmentEnvironment(),
+		deps.Config.Is(commonConfig.Development),
 		deps.Config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {
@@ -214,7 +215,8 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, apiServer *server
 		},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{
-				Cache: deps.Cache,
+				Cache:  deps.Cache,
+				Config: &deps.Config.AppConfig,
 			}
 			return commonMiddleware.AuthenticateServiceHTTP(handler, config)
 		},
@@ -224,7 +226,7 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, apiServer *server
 func startGameServices(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
-	config util.Config,
+	config *util.Config,
 	store db.Store,
 	cache commonCache.Cache,
 	bus eventbus.EventBus,

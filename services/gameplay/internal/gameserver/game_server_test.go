@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
 
 	"github.com/google/uuid"
@@ -42,9 +44,11 @@ func createTestGameServer(t *testing.T) (*MockConfig, *GameServer) {
 
 	serverID := uuid.New()
 
-	env := util.Config{
-		ServiceName: "test",
-		Environment: util.Development,
+	env := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+			Environment: commonConfig.Development,
+		},
 	}
 
 	mockCache := mockcache.NewMockCache(ctrl)

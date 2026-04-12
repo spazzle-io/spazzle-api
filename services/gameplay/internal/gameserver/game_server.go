@@ -37,7 +37,7 @@ const (
 var ErrClosedGameServer = errors.New("game server is closed")
 
 type Config struct {
-	Env       util.Config
+	Env       *util.Config
 	Store     db.Store
 	Cache     commonCache.Cache
 	GameCache *gamecache.GameCache

@@ -63,7 +63,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				authService.EXPECT().
-					Authenticate(gomock.Any(), "test", authenticateReq).
+					Authenticate(gomock.Any(), gomock.Any(), authenticateReq).
 					Times(1).
 					Return(&authPb.AuthenticateResponse{
 						Credential: &authPb.Credential{
@@ -123,7 +123,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				authService.EXPECT().
-					Authenticate(gomock.Any(), "test", authenticateReq).
+					Authenticate(gomock.Any(), gomock.Any(), authenticateReq).
 					Times(1).
 					Return(&authPb.AuthenticateResponse{
 						Credential: &authPb.Credential{
@@ -199,7 +199,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				authService.EXPECT().
-					Authenticate(gomock.Any(), "test", authenticateReq).
+					Authenticate(gomock.Any(), gomock.Any(), authenticateReq).
 					Times(1).
 					Return(&authPb.AuthenticateResponse{}, errors.New("could not authenticate user"))
 			},
@@ -245,7 +245,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				authService.EXPECT().
-					Authenticate(gomock.Any(), "test", authenticateReq).
+					Authenticate(gomock.Any(), gomock.Any(), authenticateReq).
 					Times(1).
 					Return(&authPb.AuthenticateResponse{}, errors.New("could not authenticate user"))
 			},
@@ -291,7 +291,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				authService.EXPECT().
-					Authenticate(gomock.Any(), "test", authenticateReq).
+					Authenticate(gomock.Any(), gomock.Any(), authenticateReq).
 					Times(1).
 					Return(&authPb.AuthenticateResponse{}, db.ErrUserAlreadyExists)
 			},
@@ -337,7 +337,7 @@ func TestAuthenticateUser(t *testing.T) {
 				}
 
 				authService.EXPECT().
-					Authenticate(gomock.Any(), "test", authenticateReq).
+					Authenticate(gomock.Any(), gomock.Any(), authenticateReq).
 					Times(1).
 					Return(&authPb.AuthenticateResponse{}, db.ErrGamerTagAlreadyInUse)
 			},

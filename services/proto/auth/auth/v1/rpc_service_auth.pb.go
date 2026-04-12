@@ -189,7 +189,6 @@ type GetSIWEPayloadRequest struct {
 	WalletAddress string                 `protobuf:"bytes,1,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
 	Domain        string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
 	Uri           string                 `protobuf:"bytes,3,opt,name=uri,proto3" json:"uri,omitempty"`
-	ChainId       uint32                 `protobuf:"varint,4,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,20 +244,14 @@ func (x *GetSIWEPayloadRequest) GetUri() string {
 	return ""
 }
 
-func (x *GetSIWEPayloadRequest) GetChainId() uint32 {
-	if x != nil {
-		return x.ChainId
-	}
-	return 0
-}
-
 type GetSIWEPayloadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	WalletAddress string                 `protobuf:"bytes,3,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
-	IssuedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ChainId       uint32                 `protobuf:"varint,4,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	IssuedAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -312,6 +305,13 @@ func (x *GetSIWEPayloadResponse) GetWalletAddress() string {
 		return x.WalletAddress
 	}
 	return ""
+}
+
+func (x *GetSIWEPayloadResponse) GetChainId() uint32 {
+	if x != nil {
+		return x.ChainId
+	}
+	return 0
 }
 
 func (x *GetSIWEPayloadResponse) GetIssuedAt() *timestamppb.Timestamp {
@@ -639,11 +639,12 @@ func (x *Credential) GetCreatedAt() *timestamppb.Timestamp {
 type Session struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	SessionId             string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	AccessToken           string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	RefreshToken          string                 `protobuf:"bytes,3,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	AccessTokenExpiresAt  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=access_token_expires_at,json=accessTokenExpiresAt,proto3" json:"access_token_expires_at,omitempty"`
-	RefreshTokenExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=refresh_token_expires_at,json=refreshTokenExpiresAt,proto3" json:"refresh_token_expires_at,omitempty"`
-	TokenType             string                 `protobuf:"bytes,6,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
+	UserId                string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AccessToken           string                 `protobuf:"bytes,3,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	RefreshToken          string                 `protobuf:"bytes,4,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	AccessTokenExpiresAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=access_token_expires_at,json=accessTokenExpiresAt,proto3" json:"access_token_expires_at,omitempty"`
+	RefreshTokenExpiresAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=refresh_token_expires_at,json=refreshTokenExpiresAt,proto3" json:"refresh_token_expires_at,omitempty"`
+	TokenType             string                 `protobuf:"bytes,7,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -681,6 +682,13 @@ func (*Session) Descriptor() ([]byte, []int) {
 func (x *Session) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
+	}
+	return ""
+}
+
+func (x *Session) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -817,19 +825,19 @@ const file_auth_v1_rpc_service_auth_proto_rawDesc = "" +
 	"\n" +
 	"credential\x18\x01 \x01(\v2\x13.auth.v1.CredentialR\n" +
 	"credential\x12*\n" +
-	"\asession\x18\x02 \x01(\v2\x10.auth.v1.SessionR\asession\"\xa3\x01\n" +
+	"\asession\x18\x02 \x01(\v2\x10.auth.v1.SessionR\asession\"\x80\x01\n" +
 	"\x15GetSIWEPayloadRequest\x12-\n" +
 	"\x0ewallet_address\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rwalletAddress\x12\x1e\n" +
 	"\x06domain\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06domain\x12\x18\n" +
-	"\x03uri\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03uri\x12!\n" +
-	"\bchain_id\x18\x04 \x01(\rB\x06\xbaH\x03\xc8\x01\x01R\achainId\"\xe3\x01\n" +
+	"\x03uri\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03uri\"\xfe\x01\n" +
 	"\x16GetSIWEPayloadResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12%\n" +
-	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x127\n" +
-	"\tissued_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x129\n" +
+	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x12\x19\n" +
+	"\bchain_id\x18\x04 \x01(\rR\achainId\x127\n" +
+	"\tissued_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x129\n" +
 	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x1b\n" +
+	"expires_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x1b\n" +
 	"\x19RefreshAccessTokenRequest\"H\n" +
 	"\x1aRefreshAccessTokenResponse\x12*\n" +
 	"\asession\x18\x01 \x01(\v2\x10.auth.v1.SessionR\asession\"\x1c\n" +
@@ -845,16 +853,17 @@ const file_auth_v1_rpc_service_auth_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12%\n" +
 	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xb7\x02\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xd0\x02\n" +
 	"\aSession\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +
-	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\x12Q\n" +
-	"\x17access_token_expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x14accessTokenExpiresAt\x12S\n" +
-	"\x18refresh_token_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiresAt\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12!\n" +
+	"\faccess_token\x18\x03 \x01(\tR\vaccessToken\x12#\n" +
+	"\rrefresh_token\x18\x04 \x01(\tR\frefreshToken\x12Q\n" +
+	"\x17access_token_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x14accessTokenExpiresAt\x12S\n" +
+	"\x18refresh_token_expires_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiresAt\x12\x1d\n" +
 	"\n" +
-	"token_type\x18\x06 \x01(\tR\ttokenType\"\xcb\x02\n" +
+	"token_type\x18\a \x01(\tR\ttokenType\"\xcb\x02\n" +
 	"\x12AccessTokenPayload\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12%\n" +

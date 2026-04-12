@@ -27,7 +27,7 @@ func NewSession(
 	userId uuid.UUID,
 	walletAddress string,
 	role token.Role,
-	config util.Config,
+	config *util.Config,
 	tokenMaker token.Maker,
 ) (*Session, error) {
 	accessToken, accessTokenPayload, err := tokenMaker.CreateToken(

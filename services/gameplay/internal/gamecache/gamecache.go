@@ -6,11 +6,11 @@ import (
 )
 
 type GameCache struct {
-	config util.Config
+	config *util.Config
 	cache  commonCache.Cache
 }
 
-func New(config util.Config, cache commonCache.Cache) *GameCache {
+func New(config *util.Config, cache commonCache.Cache) *GameCache {
 	return &GameCache{
 		config: config,
 		cache:  cache,

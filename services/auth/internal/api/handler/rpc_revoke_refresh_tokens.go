@@ -21,9 +21,9 @@ func (h *Handler) RevokeRefreshTokens(
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
 	}
 
-	logger := log.With().Str("user_id", tkPayload.UserId.String()).Logger()
+	logger := log.With().Str("user_id", tkPayload.UserID.String()).Logger()
 
-	ct, err := h.store.RevokeSessions(ctx, tkPayload.UserId)
+	ct, err := h.store.RevokeSessions(ctx, tkPayload.UserID)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not revoke sessions")
 		return nil, status.Error(codes.Internal, InternalServerError)

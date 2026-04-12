@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/rs/zerolog/log"
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/util"
@@ -37,34 +38,23 @@ Nonce: %s
 Issued At: %s
 Expiration Time: %s`
 
-var (
-	siweConfig      *Config
-	ErrInvalidInput = errors.New("invalid input")
-)
+var ErrInvalidInput = errors.New("invalid input")
 
 type Payload struct {
 	Nonce         string
 	Message       string
 	WalletAddress string
+	ChainID       uint64
 	IssuedAt      time.Time
 	ExpiresAt     time.Time
 }
 
-func init() {
-	var err error
-	siweConfig, err = loadDefaultSIWEConfig()
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not load SIWE config")
-	}
-}
-
 func GenerateSIWEPayload(
 	ctx context.Context,
-	config util.Config,
+	config *util.Config,
 	cache commonCache.Cache,
 	domain string,
 	uri string,
-	chainId uint32,
 	walletAddress string,
 ) (*Payload, error) {
 	walletAddress = commonUtil.NormalizeHexString(walletAddress)
@@ -77,11 +67,6 @@ func GenerateSIWEPayload(
 		return nil, fmt.Errorf("%w: domain %s is not allowed", ErrInvalidInput, domain)
 	}
 
-	chain := siweConfig.getChain(chainId, string(config.Environment))
-	if chain == nil {
-		return nil, fmt.Errorf("%w: chain %d is not supported", ErrInvalidInput, chainId)
-	}
-
 	parsedUri, err := url.ParseRequestURI(strings.TrimSpace(uri))
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not parse uri %s", ErrInvalidInput, uri)
@@ -92,7 +77,7 @@ func GenerateSIWEPayload(
 		return nil, fmt.Errorf("%w: uri hostname: %s does not match provided domain: %s", ErrInvalidInput, uriHostName, domain)
 	}
 
-	if parsedUri.Scheme != "https" && config.Environment != util.Development {
+	if parsedUri.Scheme != "https" && !config.Is(commonConfig.Development) {
 		return nil, fmt.Errorf("%w: uri %s is using an unsupported scheme %s", ErrInvalidInput, uri, parsedUri.Scheme)
 	}
 
@@ -111,9 +96,11 @@ func GenerateSIWEPayload(
 	issuedAtFormatted := issuedAt.Format("2006-01-02T15:04:05Z")
 	expirationTimeFormatted := expirationTime.Format("2006-01-02T15:04:05Z")
 
+	chain := config.Chains.Current()
+
 	message := fmt.Sprintf(
 		template,
-		domain, walletAddress, domain, parsedUri.String(), version, chainId, nonce, issuedAtFormatted, expirationTimeFormatted,
+		domain, walletAddress, domain, parsedUri.String(), version, chain.ID, nonce, issuedAtFormatted, expirationTimeFormatted,
 	)
 
 	cacheKey := fmt.Sprintf("%s-%s:%s", config.ServiceName, prefix, walletAddress)
@@ -128,6 +115,7 @@ func GenerateSIWEPayload(
 		IssuedAt:      issuedAt,
 		ExpiresAt:     expirationTime,
 		WalletAddress: walletAddress,
+		ChainID:       chain.ID,
 	}
 
 	return payload, nil
@@ -135,7 +123,7 @@ func GenerateSIWEPayload(
 
 func FetchSIWEMessage(
 	ctx context.Context,
-	config util.Config,
+	config *util.Config,
 	cache commonCache.Cache,
 	walletAddress string,
 ) (string, error) {

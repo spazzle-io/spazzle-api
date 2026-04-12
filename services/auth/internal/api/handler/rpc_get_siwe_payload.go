@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+
 	"buf.build/go/protovalidate"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -28,7 +30,7 @@ func (h *Handler) GetSIWEPayload(
 	}
 
 	payload, err := siwe.GenerateSIWEPayload(
-		ctx, h.config, h.cache, req.GetDomain(), req.GetUri(), req.GetChainId(), req.GetWalletAddress(),
+		ctx, h.config, h.cache, req.GetDomain(), req.GetUri(), req.GetWalletAddress(),
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not generate SIWE payload")
@@ -39,10 +41,17 @@ func (h *Handler) GetSIWEPayload(
 		return nil, status.Error(codes.Internal, InternalServerError)
 	}
 
+	chainID, err := commonUtil.Uint64ToUint32(payload.ChainID)
+	if err != nil {
+		logger.Error().Err(err).Msg("could not determine chain ID")
+		return nil, status.Error(codes.Internal, InternalServerError)
+	}
+
 	response := &pb.GetSIWEPayloadResponse{
 		Message:       payload.Message,
 		Nonce:         payload.Nonce,
 		WalletAddress: payload.WalletAddress,
+		ChainId:       chainID,
 		IssuedAt:      timestamppb.New(payload.IssuedAt),
 		ExpiresAt:     timestamppb.New(payload.ExpiresAt),
 	}

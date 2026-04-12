@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/spf13/viper"
 
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
@@ -20,37 +22,15 @@ const (
 	testServicePrivateKeyPEM = "MHcCAQEEINIZr7eRHNKIo+kqyLU5j8Y3mRmfn+5k2OY685DzM1MOoAoGCCqGSM49AwEHoUQDQgAEkcpsUaeko+BLe9sutR3FRCIQPBwlRU9UN2/69Q4RLb8upVzVcK+22dEJtvVzhu3bl1hgPk3HLIYPrtuLqKOQbw=="
 )
 
-func TestGetViperSlice(t *testing.T) {
-	testCases := []struct {
-		name     string
-		value    string
-		expected []string
-	}{
-		{
-			name:     "no item in slice",
-			value:    "",
-			expected: []string{""},
-		},
-		{
-			name:     "one item in slice",
-			value:    "val1",
-			expected: []string{"val1"},
-		},
-		{
-			name:     "multiple items in slice",
-			value:    "val1,val2",
-			expected: []string{"val1", "val2"},
-		},
+func newTestAppConfig(t *testing.T, keys map[string]string) *config.AppConfig {
+	t.Helper()
+
+	v := viper.New()
+	for k, val := range keys {
+		v.Set(k, val)
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			key := "TEST_KEY"
-			viper.Set(key, tc.value)
-
-			require.Equal(t, tc.expected, getViperStringSlice(key))
-		})
-	}
+	return config.NewTestAppConfig(v)
 }
 
 func TestAuthenticateService(t *testing.T) {
@@ -58,16 +38,12 @@ func TestAuthenticateService(t *testing.T) {
 	oneMinuteAgoUTCMillis := oneMinuteAgo.UnixNano() / int64(time.Millisecond)
 	currentTimeUTCMillis := time.Now().UTC().UnixNano() / int64(time.Millisecond)
 
-	initialGetViperStringSliceFunc := getViperStringSlice
-	defer func() {
-		getViperStringSlice = initialGetViperStringSliceFunc
-	}()
+	appCfg := newTestAppConfig(t, map[string]string{
+		"SERVICE":                    "users",
+		"SERVICE_USERS_PRIVATE_KEYS": testServicePrivateKeyPEM,
+	})
 
-	getViperStringSlice = func(_ string) []string {
-		return []string{testServicePrivateKeyPEM}
-	}
-
-	validPayload, err := GenerateServiceAuthenticationPayload("UsERs")
+	validPayload, err := GenerateServiceAuthenticationPayload(appCfg)
 	require.NoError(t, err)
 	require.NotEmpty(t, validPayload)
 
@@ -202,52 +178,45 @@ func TestAuthenticateService(t *testing.T) {
 			cache := mockcache.NewMockCache(ctrl)
 			tc.buildStubs(cache)
 
-			config := &AuthenticateServiceConfig{
+			cfg := &AuthenticateServiceConfig{
 				Cache: cache,
+				Config: newTestAppConfig(t, map[string]string{
+					"SERVICE_USERS_PUBLIC_KEYS": testServicePublicKeyPEM,
+				}),
 			}
 
-			getViperStringSlice = func(_ string) []string {
-				return []string{testServicePublicKeyPEM}
-			}
-
-			resultContext := authenticateService(tc.inputContext, config)
+			resultContext := authenticateService(tc.inputContext, cfg)
 			require.Equal(t, tc.expectedResultContext, resultContext)
 		})
 	}
 }
 
 func TestGenerateServiceAuthenticationPayload_noPrivateKeysProvided(t *testing.T) {
-	initialGetViperStringSliceFunc := getViperStringSlice
-	defer func() {
-		getViperStringSlice = initialGetViperStringSliceFunc
-	}()
-
 	testCases := []struct {
-		name                string
-		getViperStringSlice func(_ string) []string
-		expectedToError     bool
+		name            string
+		config          *config.AppConfig
+		expectedToError bool
 	}{
 		{
-			name: "empty private keys slice",
-			getViperStringSlice: func(_ string) []string {
-				return []string{}
-			},
+			name: "empty private keys env string",
+			config: newTestAppConfig(t, map[string]string{
+				"SERVICE":                    "users",
+				"SERVICE_USERS_PRIVATE_KEYS": "",
+			}),
 			expectedToError: true,
 		},
 		{
-			name: "nil private keys slice",
-			getViperStringSlice: func(_ string) []string {
-				return nil
-			},
+			name: "private keys env string not provided",
+			config: newTestAppConfig(t, map[string]string{
+				"SERVICE": "users",
+			}),
 			expectedToError: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getViperStringSlice = tc.getViperStringSlice
-
-			payload, err := GenerateServiceAuthenticationPayload("users")
+			payload, err := GenerateServiceAuthenticationPayload(tc.config)
 			require.Error(t, err)
 			require.Empty(t, payload)
 		})
@@ -255,31 +224,23 @@ func TestGenerateServiceAuthenticationPayload_noPrivateKeysProvided(t *testing.T
 }
 
 func TestGenerateServiceAuthenticationPayload_couldNotParsePEM(t *testing.T) {
-	initialGetViperStringSliceFunc := getViperStringSlice
-	defer func() {
-		getViperStringSlice = initialGetViperStringSliceFunc
-	}()
+	appCfg := newTestAppConfig(t, map[string]string{
+		"SERVICE":                    "users",
+		"SERVICE_USERS_PRIVATE_KEYS": "invalid_PEM",
+	})
 
-	getViperStringSlice = func(_ string) []string {
-		return []string{"invalid_PEM"}
-	}
-
-	payload, err := GenerateServiceAuthenticationPayload("users")
+	payload, err := GenerateServiceAuthenticationPayload(appCfg)
 	require.Error(t, err)
 	require.Empty(t, payload)
 }
 
 func TestGenerateServiceAuthenticationPayload_success(t *testing.T) {
-	initialGetViperStringSliceFunc := getViperStringSlice
-	defer func() {
-		getViperStringSlice = initialGetViperStringSliceFunc
-	}()
+	appCfg := newTestAppConfig(t, map[string]string{
+		"SERVICE":                    "users",
+		"SERVICE_USERS_PRIVATE_KEYS": testServicePrivateKeyPEM,
+	})
 
-	getViperStringSlice = func(_ string) []string {
-		return []string{testServicePrivateKeyPEM}
-	}
-
-	payload, err := GenerateServiceAuthenticationPayload("users")
+	payload, err := GenerateServiceAuthenticationPayload(appCfg)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 

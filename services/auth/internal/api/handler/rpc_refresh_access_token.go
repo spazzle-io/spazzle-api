@@ -22,7 +22,7 @@ func (h *Handler) RefreshAccessToken(
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
 	}
 
-	logger := log.With().Str("user_id", tkPayload.UserId.String()).Logger()
+	logger := log.With().Str("user_id", tkPayload.UserID.String()).Logger()
 
 	session, err := h.store.GetSessionById(ctx, tkPayload.ID)
 	if err != nil {
@@ -36,7 +36,7 @@ func (h *Handler) RefreshAccessToken(
 	}
 
 	accessToken, accessTokenPayload, err := h.tokenMaker.CreateToken(
-		tkPayload.UserId, tkPayload.WalletAddress, tkPayload.Role, token.AccessToken, h.config.AccessTokenDuration,
+		tkPayload.UserID, tkPayload.WalletAddress, tkPayload.Role, token.AccessToken, h.config.AccessTokenDuration,
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not create access token")
@@ -46,6 +46,7 @@ func (h *Handler) RefreshAccessToken(
 	res := &pb.RefreshAccessTokenResponse{
 		Session: &pb.Session{
 			SessionId:             session.ID.String(),
+			UserId:                accessTokenPayload.UserID.String(),
 			AccessToken:           accessToken,
 			RefreshToken:          session.RefreshToken,
 			AccessTokenExpiresAt:  timestamppb.New(accessTokenPayload.ExpiresAt),

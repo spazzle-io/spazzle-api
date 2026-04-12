@@ -60,7 +60,7 @@ type client struct {
 
 var temporalDial = temporalclient.Dial
 
-func NewClient(config util.Config, opts ...ClientOption) (Client, error) {
+func NewClient(config *util.Config, opts ...ClientOption) (Client, error) {
 	options := &clientOptions{}
 	for _, opt := range opts {
 		opt(options)

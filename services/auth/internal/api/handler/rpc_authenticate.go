@@ -80,6 +80,7 @@ func (h *Handler) Authenticate(ctx context.Context, req *pb.AuthenticateRequest)
 		},
 		Session: &pb.Session{
 			SessionId:             session.ID,
+			UserId:                session.AccessTokenPayload.UserID.String(),
 			AccessToken:           session.AccessToken,
 			RefreshToken:          session.RefreshToken,
 			AccessTokenExpiresAt:  timestamppb.New(session.AccessTokenPayload.ExpiresAt),

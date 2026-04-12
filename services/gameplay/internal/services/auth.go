@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	"google.golang.org/grpc"
@@ -15,12 +19,13 @@ import (
 
 type AuthGrpcService interface {
 	Close() error
-	VerifyAccessToken(context.Context, string, *pb.VerifyAccessTokenRequest) (*pb.VerifyAccessTokenResponse, error)
+	VerifyAccessToken(context.Context, *util.Config) (*pb.VerifyAccessTokenResponse, error)
 }
 
 type AuthServiceGrpcClient struct {
-	conn   *grpc.ClientConn
-	client pb.AuthServiceClient
+	conn                *grpc.ClientConn
+	client              pb.AuthServiceClient
+	generateAuthPayload func(*commonConfig.AppConfig) (string, error)
 }
 
 func NewAuthServiceGrpcClient(serverAddress string) (AuthGrpcService, error) {
@@ -32,16 +37,15 @@ func NewAuthServiceGrpcClient(serverAddress string) (AuthGrpcService, error) {
 	client := pb.NewAuthServiceClient(conn)
 
 	return &AuthServiceGrpcClient{
-		conn:   conn,
-		client: client,
+		conn:                conn,
+		client:              client,
+		generateAuthPayload: commonMiddleware.GenerateServiceAuthenticationPayload,
 	}, nil
 }
 
 func (c *AuthServiceGrpcClient) Close() error {
 	return c.conn.Close()
 }
-
-var getServiceAuthenticationPayload = commonMiddleware.GenerateServiceAuthenticationPayload
 
 func populateMetadataPairs(mtdt metadata.MD, keys []string, additionalPairs map[string]string) metadata.MD {
 	pairs := metadata.MD{}
@@ -62,16 +66,13 @@ func populateMetadataPairs(mtdt metadata.MD, keys []string, additionalPairs map[
 	return pairs
 }
 
-func (c *AuthServiceGrpcClient) withMetadata(
-	ctx context.Context,
-	serviceName string,
-) (context.Context, error) {
+func (c *AuthServiceGrpcClient) withMetadata(ctx context.Context, config *util.Config) (context.Context, error) {
 	mtdt, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, errors.New("could not get metadata from context")
 	}
 
-	serviceAuthenticationPayload, err := getServiceAuthenticationPayload(serviceName)
+	serviceAuthenticationPayload, err := c.generateAuthPayload(&config.AppConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate service authentication payload: %w", err)
 	}
@@ -92,16 +93,15 @@ func (c *AuthServiceGrpcClient) withMetadata(
 
 func (c *AuthServiceGrpcClient) VerifyAccessToken(
 	ctx context.Context,
-	serviceName string,
-	payload *pb.VerifyAccessTokenRequest,
+	config *util.Config,
 ) (*pb.VerifyAccessTokenResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	ctx, err := c.withMetadata(ctx, serviceName)
+	ctx, err := c.withMetadata(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("could not add metadata to verify access token request: %w", err)
 	}
 
-	return c.client.VerifyAccessToken(ctx, payload)
+	return c.client.VerifyAccessToken(ctx, &pb.VerifyAccessTokenRequest{})
 }

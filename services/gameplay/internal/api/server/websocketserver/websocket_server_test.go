@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
 
 	"github.com/google/uuid"
@@ -121,9 +123,11 @@ func TestCheckOrigin(t *testing.T) {
 				environment = "production"
 			}
 
-			cfg := util.Config{
-				AllowedOrigins: tc.allowed,
-				Environment:    util.Environment(environment),
+			cfg := &util.Config{
+				AppConfig: commonConfig.AppConfig{
+					AllowedOrigins: tc.allowed,
+					Environment:    commonConfig.Environment(environment),
+				},
 			}
 
 			req := &http.Request{

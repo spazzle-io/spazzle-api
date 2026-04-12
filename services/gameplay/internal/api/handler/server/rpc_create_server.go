@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
-	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -27,7 +26,7 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		return nil, handler.InvalidArgumentError(violations)
 	}
 
-	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config)
 	if err != nil {
 		log.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)

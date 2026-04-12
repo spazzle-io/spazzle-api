@@ -16,7 +16,7 @@ type Server struct {
 	handler.Handler
 }
 
-func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
+func New(config *util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
 	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
 	if err != nil {
 		return nil, fmt.Errorf("could not create auth service gRPC client: %w", err)

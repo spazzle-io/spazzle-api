@@ -31,7 +31,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -80,7 +80,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("could not verify access token"))
 			},
@@ -98,7 +98,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -125,7 +125,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 					Return(db.GetServerUserPermissionsRow{}, errors.New("could not get user server permissions"))
 
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -154,7 +154,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 					}, nil)
 
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -176,7 +176,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -210,7 +210,7 @@ func TestRemoveServerAdmin(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{

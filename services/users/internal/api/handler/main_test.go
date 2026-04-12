@@ -3,6 +3,8 @@ package handler
 import (
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/users/internal/services"
@@ -12,10 +14,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func getTestConfig() util.Config {
-	return util.Config{
-		ServiceName: "test",
-		Environment: "development",
+func getTestConfig() *util.Config {
+	return &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+			Environment: "development",
+		},
 	}
 }
 

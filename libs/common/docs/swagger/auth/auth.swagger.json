@@ -171,13 +171,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "chainId",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int64"
           }
         ],
         "tags": [
@@ -344,6 +337,10 @@
         "walletAddress": {
           "type": "string"
         },
+        "chainId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "issuedAt": {
           "type": "string",
           "format": "date-time"
@@ -381,6 +378,9 @@
       "type": "object",
       "properties": {
         "sessionId": {
+          "type": "string"
+        },
+        "userId": {
           "type": "string"
         },
         "accessToken": {

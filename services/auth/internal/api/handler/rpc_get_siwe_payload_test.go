@@ -30,7 +30,6 @@ func TestHandler_GetSIWEPayload(t *testing.T) {
 				WalletAddress: wallet.Address,
 				Domain:        "localhost",
 				Uri:           "http://localhost:3000/login",
-				ChainId:       2021,
 			},
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().
@@ -49,14 +48,13 @@ func TestHandler_GetSIWEPayload(t *testing.T) {
 				WalletAddress: "",
 				Domain:        "",
 				Uri:           "",
-				ChainId:       0,
 			},
 			buildStubs: func(cache *mockcache.MockCache) {},
 			checkResponse: func(t *testing.T, res *pb.GetSIWEPayloadResponse, err error) {
 				require.Error(t, err)
 				require.Empty(t, res)
 
-				expectedFieldViolations := []string{"walletAddress", "walletAddress", "domain", "uri", "chainId"}
+				expectedFieldViolations := []string{"walletAddress", "walletAddress", "domain", "uri"}
 				checkInvalidRequestParams(t, err, expectedFieldViolations)
 			},
 		},
@@ -66,7 +64,6 @@ func TestHandler_GetSIWEPayload(t *testing.T) {
 				WalletAddress: "invalid_wallet_address",
 				Domain:        "localhost",
 				Uri:           "http://localhost:3000/login",
-				ChainId:       2021,
 			},
 			buildStubs: func(cache *mockcache.MockCache) {},
 			checkResponse: func(t *testing.T, res *pb.GetSIWEPayloadResponse, err error) {
@@ -83,7 +80,6 @@ func TestHandler_GetSIWEPayload(t *testing.T) {
 				WalletAddress: wallet.Address,
 				Domain:        "localhost",
 				Uri:           "http://localhost:3000/login",
-				ChainId:       2021,
 			},
 			buildStubs: func(cache *mockcache.MockCache) {
 				cache.EXPECT().

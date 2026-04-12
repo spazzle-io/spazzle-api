@@ -90,7 +90,7 @@ func (h *Handler) handleExistingUser(
 		Signature:     signature,
 	}
 
-	authenticateRes, err := h.authService.Authenticate(ctx, h.config.ServiceName, authenticateRequest)
+	authenticateRes, err := h.authService.Authenticate(ctx, h.config, authenticateRequest)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not authenticate user")
 		return nil, status.Error(codes.Internal, InternalServerError)
@@ -117,7 +117,7 @@ func (h *Handler) handleCreateUser(
 				Signature:     signature,
 			}
 
-			authenticateRes, err = h.authService.Authenticate(ctx, h.config.ServiceName, authenticateRequest)
+			authenticateRes, err = h.authService.Authenticate(ctx, h.config, authenticateRequest)
 			if err != nil {
 				logger.Error().Err(err).Msg("could not authenticate user")
 			}

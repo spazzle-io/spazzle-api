@@ -57,7 +57,7 @@ func TestCreateServer(t *testing.T) {
 			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -102,7 +102,7 @@ func TestCreateServer(t *testing.T) {
 			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("could not verify access token"))
 			},
@@ -117,7 +117,7 @@ func TestCreateServer(t *testing.T) {
 			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -144,7 +144,7 @@ func TestCreateServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -163,7 +163,7 @@ func TestCreateServer(t *testing.T) {
 			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -195,7 +195,7 @@ func TestCreateServer(t *testing.T) {
 					Return(db.Server{}, errors.New("unknown error"))
 
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -214,7 +214,7 @@ func TestCreateServer(t *testing.T) {
 			req:  createServerParams,
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{

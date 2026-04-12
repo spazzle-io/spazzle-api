@@ -24,7 +24,7 @@ func createNewPayload(t *testing.T, role Role, tokenType Type, duration time.Dur
 
 	require.NotEmpty(t, payload.ID)
 	require.IsType(t, uuid.UUID{}, payload.ID)
-	require.Equal(t, userId, payload.UserId)
+	require.Equal(t, userId, payload.UserID)
 	require.Equal(t, ethereumWallet.Address, payload.WalletAddress)
 	require.Equal(t, tokenType, payload.TokenType)
 	require.Equal(t, role, payload.Role)

@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
@@ -27,7 +30,7 @@ func TestResolveServerUserContext(t *testing.T) {
 			serverId: uuid.New().String(),
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -68,7 +71,7 @@ func TestResolveServerUserContext(t *testing.T) {
 			serverId: uuid.New().String(),
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("could not verify access token"))
 			},
@@ -82,7 +85,7 @@ func TestResolveServerUserContext(t *testing.T) {
 			serverId: uuid.New().String(),
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -100,7 +103,7 @@ func TestResolveServerUserContext(t *testing.T) {
 			serverId: uuid.New().String(),
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -130,7 +133,12 @@ func TestResolveServerUserContext(t *testing.T) {
 
 			tc.buildStubs(store, authService)
 
-			serverUserCtx, err := ResolveServerUserContext(context.Background(), tc.serverId, "test", store, authService)
+			config := &util.Config{
+				AppConfig: commonConfig.AppConfig{
+					ServiceName: "test",
+				},
+			}
+			serverUserCtx, err := ResolveServerUserContext(context.Background(), config, tc.serverId, store, authService)
 			tc.checkResponse(t, serverUserCtx, err)
 		})
 	}

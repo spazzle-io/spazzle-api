@@ -32,7 +32,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -88,7 +88,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("could not verify access token"))
 			},
@@ -105,7 +105,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -126,7 +126,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -152,7 +152,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -180,7 +180,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -213,7 +213,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -246,7 +246,7 @@ func TestArchiveServer(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{

@@ -3,6 +3,8 @@ package server
 import (
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
@@ -18,10 +20,12 @@ type testDeps struct {
 	authService *mockservices.MockAuthGrpcService
 }
 
-func getTestConfig() util.Config {
-	return util.Config{
-		ServiceName: "test",
-		Environment: "development",
+func getTestConfig() *util.Config {
+	return &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+			Environment: "development",
+		},
 	}
 }
 

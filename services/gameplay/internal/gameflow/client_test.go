@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/workflow"
@@ -93,9 +95,11 @@ func createTestClient(t *testing.T) (*mockgameflow.MockTemporal, Client) {
 		return temporal, nil
 	})
 
-	config := util.Config{
-		ServiceName: "test",
-		Environment: util.Development,
+	config := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+			Environment: commonConfig.Development,
+		},
 	}
 	client, err := NewClient(config, WithoutAutoFlush())
 	require.NoError(t, err)

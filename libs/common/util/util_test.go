@@ -102,6 +102,45 @@ func TestInt64ToInt32(t *testing.T) {
 	}
 }
 
+func TestUInt64ToUInt32(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    uint64
+		expected uint32
+		success  bool
+	}{
+		{
+			name:     "success",
+			input:    1,
+			expected: 1,
+			success:  true,
+		},
+		{
+			name:    "zero",
+			input:   uint64(0),
+			success: true,
+		},
+		{
+			name:    "input too large",
+			input:   uint64(math.MaxUint64),
+			success: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Uint64ToUint32(tc.input)
+			if tc.success {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+				return
+			}
+
+			require.Error(t, err)
+		})
+	}
+}
+
 func TestIntToInt32(t *testing.T) {
 	testCases := []struct {
 		name     string

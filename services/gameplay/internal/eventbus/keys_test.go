@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStreamKey(t *testing.T) {
-	config := util.Config{
-		ServiceName: "gameplay",
+	config := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "gameplay",
+		},
 	}
 
 	gameServerId := uuid.New()
@@ -28,8 +32,10 @@ func TestStreamKey(t *testing.T) {
 }
 
 func TestMarkerKey(t *testing.T) {
-	config := util.Config{
-		ServiceName: "gameplay",
+	config := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "gameplay",
+		},
 	}
 
 	gameServerId := uuid.New()

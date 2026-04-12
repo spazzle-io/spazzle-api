@@ -44,7 +44,7 @@ func TestReplayGame(t *testing.T) {
 				userID := uuid.New()
 
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{
 						AccessTokenPayload: &authPb.AccessTokenPayload{
@@ -87,7 +87,7 @@ func TestReplayGame(t *testing.T) {
 			req:  replayGameParams,
 			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
 
@@ -147,7 +147,7 @@ func TestReplayGame(t *testing.T) {
 			},
 			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
 				authService.EXPECT().
-					VerifyAccessToken(gomock.Any(), gomock.Any(), gomock.Any()).
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
 

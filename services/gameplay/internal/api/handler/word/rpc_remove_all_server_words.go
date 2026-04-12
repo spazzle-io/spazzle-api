@@ -23,7 +23,7 @@ func (h *Handler) RemoveAllWords(ctx context.Context, req *pb.RemoveAllWordsRequ
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
+		ctx, h.Config, req.GetServerId(), h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err
