@@ -3,6 +3,8 @@ package gameflow
 import (
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"github.com/stretchr/testify/require"
 )
@@ -16,16 +18,20 @@ func TestGetTemporalNamespace(t *testing.T) {
 		{
 			name: "dev namespace",
 			config: util.Config{
-				ServiceName: "test",
-				Environment: "dev",
+				AppConfig: commonConfig.AppConfig{
+					ServiceName: "test",
+					Environment: "dev",
+				},
 			},
 			expectedNamespace: "test-dev",
 		},
 		{
 			name: "production namespace",
 			config: util.Config{
-				ServiceName: "gameplay",
-				Environment: "production",
+				AppConfig: commonConfig.AppConfig{
+					ServiceName: "gameplay",
+					Environment: "production",
+				},
 			},
 			expectedNamespace: "gameplay-production",
 		},
@@ -33,7 +39,7 @@ func TestGetTemporalNamespace(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotNamespace := getTemporalNamespace(tc.config)
+			gotNamespace := getTemporalNamespace(&tc.config)
 			require.Equal(t, tc.expectedNamespace, gotNamespace)
 		})
 	}
@@ -48,8 +54,10 @@ func TestGetTemporalClientOpts(t *testing.T) {
 		{
 			name: "dev environment",
 			config: util.Config{
-				Environment:      util.Development,
-				ServiceName:      "gameplay",
+				AppConfig: commonConfig.AppConfig{
+					Environment: commonConfig.Development,
+					ServiceName: "gameplay",
+				},
 				TemporalHostPort: "some-host-port",
 				TemporalAPIKey:   "some-api-key",
 			},
@@ -58,8 +66,10 @@ func TestGetTemporalClientOpts(t *testing.T) {
 		{
 			name: "production environment",
 			config: util.Config{
-				Environment:      "production",
-				ServiceName:      "gameplay",
+				AppConfig: commonConfig.AppConfig{
+					Environment: "production",
+					ServiceName: "gameplay",
+				},
 				TemporalHostPort: "some-host-port",
 				TemporalAPIKey:   "some-api-key",
 			},
@@ -69,7 +79,7 @@ func TestGetTemporalClientOpts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gotOpts := getTemporalClientOpts(tc.config)
+			gotOpts := getTemporalClientOpts(&tc.config)
 			if tc.hasCredentials {
 				require.NotEmpty(t, gotOpts.HostPort)
 				require.NotEmpty(t, gotOpts.Credentials)

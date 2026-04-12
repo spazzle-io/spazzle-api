@@ -6,7 +6,7 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 )
 
-func streamKey(config util.Config, streamType StreamType, game GameIdentifier) string {
+func streamKey(config *util.Config, streamType StreamType, game GameIdentifier) string {
 	return fmt.Sprintf("%s-%s:%s:%s",
 		config.ServiceName,
 		streamType,
@@ -15,7 +15,7 @@ func streamKey(config util.Config, streamType StreamType, game GameIdentifier) s
 	)
 }
 
-func markerKey(config util.Config, streamType StreamType, game GameIdentifier, marker Marker) string {
+func markerKey(config *util.Config, streamType StreamType, game GameIdentifier, marker Marker) string {
 	return fmt.Sprintf("%s-%s:%s:%s:%s",
 		config.ServiceName,
 		streamType,

@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/google/uuid"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
@@ -14,8 +16,10 @@ const testRedisConnURL = "redis://0.0.0.0:6379"
 
 func newEventBus(t *testing.T) EventBus {
 	ctx := context.Background()
-	config := util.Config{
-		ServiceName:  "test",
+	config := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+		},
 		RedisConnURL: testRedisConnURL,
 	}
 
@@ -46,8 +50,10 @@ func TestNewInvalidRedisConnURL(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	config := util.Config{
-		ServiceName:  "test",
+	config := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+		},
 		RedisConnURL: "invalid-redis-conn-url",
 	}
 

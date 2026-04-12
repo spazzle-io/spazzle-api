@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
@@ -151,14 +153,14 @@ func (h *WsHandler) checkOrigin(userID uuid.UUID) func(r *http.Request) bool {
 				Str("origin", origin).
 				Str("user_id", userID.String()).
 				Bool("is_valid", isValid).
-				Bool("in_dev_env", h.Config.IsDevelopmentEnvironment()).
+				Bool("in_dev_env", h.Config.Is(commonConfig.Development)).
 				Msg("validated ws upgrade request origin")
 		}()
 		if origin == "" {
 			return true
 		}
 
-		if h.Config.IsDevelopmentEnvironment() {
+		if h.Config.Is(commonConfig.Development) {
 			return true
 		}
 

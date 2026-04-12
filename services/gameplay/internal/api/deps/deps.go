@@ -15,7 +15,7 @@ import (
 )
 
 type APIServerDeps struct {
-	Config          util.Config
+	Config          *util.Config
 	Store           db.Store
 	Cache           commonCache.Cache
 	GameCache       *gamecache.GameCache

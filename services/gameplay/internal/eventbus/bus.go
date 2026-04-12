@@ -18,7 +18,7 @@ var ErrClosedEventBus = errors.New("event bus is closed")
 type redisEventBus struct {
 	client        *redis.Client
 	busConfig     Config
-	serviceConfig util.Config
+	serviceConfig *util.Config
 
 	gameEventsMultiplexer     *multiplexer
 	drawingUpdatesMultiplexer *multiplexer
@@ -28,7 +28,7 @@ type redisEventBus struct {
 	closed   bool
 }
 
-func New(ctx context.Context, config util.Config, opts ...Option) (EventBus, error) {
+func New(ctx context.Context, config *util.Config, opts ...Option) (EventBus, error) {
 	redisOpts, err := redis.ParseURL(config.RedisConnURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid redis connection URL: %w", err)
