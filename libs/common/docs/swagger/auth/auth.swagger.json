@@ -380,6 +380,9 @@
         "sessionId": {
           "type": "string"
         },
+        "userId": {
+          "type": "string"
+        },
         "accessToken": {
           "type": "string"
         },

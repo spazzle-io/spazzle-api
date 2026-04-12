@@ -26,7 +26,7 @@ const (
 
 type Payload struct {
 	ID            uuid.UUID `json:"id"`
-	UserId        uuid.UUID `json:"user_id"`
+	UserID        uuid.UUID `json:"user_id"`
 	WalletAddress string    `json:"wallet_address"`
 	Role          Role      `json:"role"`
 	TokenType     Type      `json:"token_type"`
@@ -48,7 +48,7 @@ func NewPayload(
 
 	payload := &Payload{
 		ID:            tokenId,
-		UserId:        userId,
+		UserID:        userId,
 		WalletAddress: walletAddress,
 		Role:          role,
 		TokenType:     tokenType,

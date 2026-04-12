@@ -60,7 +60,7 @@ func TestAuthorize(t *testing.T) {
 
 				require.NotZero(t, payload.ID)
 
-				require.Equal(t, testUserId, payload.UserId)
+				require.Equal(t, testUserId, payload.UserID)
 				require.Equal(t, testWalletAddress, payload.WalletAddress)
 				require.Equal(t, token.AccessToken, payload.TokenType)
 				require.Equal(t, token.User, payload.Role)
@@ -93,7 +93,7 @@ func TestAuthorize(t *testing.T) {
 
 				require.NotZero(t, payload.ID)
 
-				require.Equal(t, testUserId, payload.UserId)
+				require.Equal(t, testUserId, payload.UserID)
 				require.Equal(t, testWalletAddress, payload.WalletAddress)
 				require.Equal(t, token.AccessToken, payload.TokenType)
 				require.Equal(t, token.User, payload.Role)

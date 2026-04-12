@@ -113,7 +113,7 @@ func TestPasetoMaker_VerifyToken(t *testing.T) {
 
 			require.NotEmpty(t, payload.ID)
 			require.IsType(t, uuid.UUID{}, payload.ID)
-			require.NotEmpty(t, payload.UserId)
+			require.NotEmpty(t, payload.UserID)
 			require.Equal(t, wallet.Address, payload.WalletAddress)
 			require.Equal(t, User, payload.Role)
 			require.WithinDuration(t, time.Now().UTC(), payload.IssuedAt, time.Second)

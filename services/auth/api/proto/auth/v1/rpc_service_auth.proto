@@ -60,11 +60,12 @@ message Credential {
 
 message Session {
   string session_id = 1;
-  string access_token = 2;
-  string refresh_token = 3;
-  google.protobuf.Timestamp access_token_expires_at = 4;
-  google.protobuf.Timestamp refresh_token_expires_at = 5;
-  string token_type = 6;
+  string user_id = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  google.protobuf.Timestamp access_token_expires_at = 5;
+  google.protobuf.Timestamp refresh_token_expires_at = 6;
+  string token_type = 7;
 }
 
 message AccessTokenPayload {

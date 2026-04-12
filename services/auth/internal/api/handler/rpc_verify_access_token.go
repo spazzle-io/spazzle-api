@@ -22,7 +22,7 @@ func (h *Handler) VerifyAccessToken(
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
 	}
 
-	logger := log.With().Str("user_id", tkPayload.UserId.String()).Logger()
+	logger := log.With().Str("user_id", tkPayload.UserID.String()).Logger()
 
 	resPayloadRole := pb.AccessTokenPayload_ROLE_UNSPECIFIED
 	switch tkPayload.Role {
@@ -35,7 +35,7 @@ func (h *Handler) VerifyAccessToken(
 	res := &pb.VerifyAccessTokenResponse{
 		AccessTokenPayload: &pb.AccessTokenPayload{
 			Id:            tkPayload.ID.String(),
-			UserId:        tkPayload.UserId.String(),
+			UserId:        tkPayload.UserID.String(),
 			WalletAddress: tkPayload.WalletAddress,
 			Role:          resPayloadRole,
 			IssuedAt:      timestamppb.New(tkPayload.IssuedAt),
