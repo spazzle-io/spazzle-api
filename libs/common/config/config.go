@@ -32,7 +32,7 @@ import (
 //	}
 type AppConfig struct {
 	Environment    Environment    `mapstructure:"ENVIRONMENT"`
-	ServiceName    string         `mapstructure:"SERVICE_NAME"`
+	ServiceName    string         `mapstructure:"SERVICE"`
 	AllowedOrigins []string       `mapstructure:"ALLOWED_ORIGINS"`
 	Chains         *ChainRegistry `mapstructure:"-"`
 }
