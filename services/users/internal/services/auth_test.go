@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+	"github.com/spazzle-io/spazzle-api/services/users/internal/util"
+
 	"github.com/google/uuid"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
@@ -114,7 +117,7 @@ func TestAuthServiceGrpcClient_withMetadata(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-			getServiceAuthenticationPayload = func(serviceName string) (string, error) {
+			getServiceAuthenticationPayload = func(cfg *commonConfig.AppConfig) (string, error) {
 				return tc.serviceAuthenticationPayload, tc.serviceAuthenticationPayloadError
 			}
 			defer func() {
@@ -132,7 +135,13 @@ func TestAuthServiceGrpcClient_withMetadata(t *testing.T) {
 				require.NoError(t, err)
 			}()
 
-			ctx, err = client.(*AuthServiceGrpcClient).withMetadata(ctx, "test")
+			cfg := &util.Config{
+				AppConfig: commonConfig.AppConfig{
+					ServiceName: "test",
+				},
+			}
+
+			ctx, err = client.(*AuthServiceGrpcClient).withMetadata(ctx, cfg)
 			tc.checkResponse(t, ctx, err)
 		})
 	}
@@ -173,7 +182,7 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 	}
 
 	initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-	getServiceAuthenticationPayload = func(serviceName string) (string, error) {
+	getServiceAuthenticationPayload = func(cfg *commonConfig.AppConfig) (string, error) {
 		return "some authentication payload", nil
 	}
 	defer func() {
@@ -185,7 +194,13 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 
 	payload := &pb.VerifyAccessTokenRequest{}
 
-	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, "test", payload)
+	cfg := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+		},
+	}
+
+	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, cfg, payload)
 	require.NoError(t, err)
 
 	require.True(t, dummyClient.IsVerifyAccessTokenCalled)
@@ -199,7 +214,7 @@ func TestAuthServiceGrpcClient_Authenticate(t *testing.T) {
 	}
 
 	initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-	getServiceAuthenticationPayload = func(serviceName string) (string, error) {
+	getServiceAuthenticationPayload = func(cfg *commonConfig.AppConfig) (string, error) {
 		return "some authentication payload", nil
 	}
 	defer func() {
@@ -215,7 +230,13 @@ func TestAuthServiceGrpcClient_Authenticate(t *testing.T) {
 		Signature:     "some-signature",
 	}
 
-	_, err := mockAuthServiceGrpcClient.Authenticate(ctx, "test", payload)
+	cfg := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+		},
+	}
+
+	_, err := mockAuthServiceGrpcClient.Authenticate(ctx, cfg, payload)
 	require.NoError(t, err)
 
 	require.True(t, dummyClient.IsAuthenticateCalled)

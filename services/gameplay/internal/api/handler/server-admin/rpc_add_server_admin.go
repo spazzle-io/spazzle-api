@@ -28,7 +28,7 @@ func (h *Handler) AddServerAdmin(ctx context.Context, req *pb.AddServerAdminRequ
 	}
 
 	serverUserCtx, err := middleware.ResolveServerUserContext(
-		ctx, req.GetServerId(), h.Config.ServiceName, h.Store, h.AuthService,
+		ctx, h.Config, req.GetServerId(), h.Store, h.AuthService,
 	)
 	if err != nil {
 		return nil, err

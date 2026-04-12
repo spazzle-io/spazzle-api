@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/libs/common/cache"
 	"github.com/spazzle-io/spazzle-api/libs/common/util"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -25,11 +26,8 @@ const (
 )
 
 type AuthenticateServiceConfig struct {
-	Cache cache.Cache
-}
-
-var getViperStringSlice = func(key string) []string {
-	return strings.Split(viper.GetString(key), ",")
+	Cache  cache.Cache
+	Config *commonConfig.AppConfig
 }
 
 func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) context.Context {
@@ -83,7 +81,7 @@ func authenticateService(ctx context.Context, c *AuthenticateServiceConfig) cont
 	isSignatureValid := false
 	payloadVerificationMsg := fmt.Sprintf("%s.%s.%s", serviceName, reqTimestampStr, nonce)
 
-	authenticatingServicePubKeys := getViperStringSlice(fmt.Sprintf(serviceAuthenticationPubKeysKey, serviceName))
+	authenticatingServicePubKeys := c.Config.GetStringSlice(fmt.Sprintf(serviceAuthenticationPubKeysKey, serviceName))
 	if len(authenticatingServicePubKeys) == 0 {
 		logger.Warn().Msg("service authentication public keys not found")
 		return ctx
@@ -157,11 +155,12 @@ func AuthenticateServiceHTTP(handler http.Handler, config *AuthenticateServiceCo
 	})
 }
 
-func GenerateServiceAuthenticationPayload(authenticatingServiceName string) (string, error) {
-	authenticatingServiceName = strings.ToLower(strings.TrimSpace(authenticatingServiceName))
-	logger := log.With().Str("authenticating_service", authenticatingServiceName).Logger()
+func GenerateServiceAuthenticationPayload(cfg *commonConfig.AppConfig) (string, error) {
+	logger := log.With().Str("authenticating_service", cfg.ServiceName).Logger()
 
-	servicePrivateKeys := getViperStringSlice(fmt.Sprintf(serviceAuthenticationPrivateKeysKey, authenticatingServiceName))
+	servicePrivateKeys := cfg.GetStringSlice(
+		fmt.Sprintf(serviceAuthenticationPrivateKeysKey, cfg.ServiceName),
+	)
 	if len(servicePrivateKeys) == 0 {
 		logger.Warn().Msg("service authentication private keys not found")
 		return "", errors.New("service authentication private keys not found")
@@ -182,14 +181,14 @@ func GenerateServiceAuthenticationPayload(authenticatingServiceName string) (str
 		return "", err
 	}
 
-	payloadSignedMsg := fmt.Sprintf("%s.%s.%s", authenticatingServiceName, currentUTCTimeMillisStr, nonce)
+	payloadSignedMsg := fmt.Sprintf("%s.%s.%s", cfg.ServiceName, currentUTCTimeMillisStr, nonce)
 	signature, err := util.ECDSASign([]byte(payloadSignedMsg), privateKey)
 	if err != nil {
 		log.Error().Err(err).Str("payload", payloadSignedMsg).Msg("could not sign service authentication payload")
 		return "", err
 	}
 
-	payload := fmt.Sprintf("%s.%s.%s.%s", authenticatingServiceName, currentUTCTimeMillisStr, nonce, signature)
+	payload := fmt.Sprintf("%s.%s.%s.%s", cfg.ServiceName, currentUTCTimeMillisStr, nonce, signature)
 
 	return payload, nil
 }

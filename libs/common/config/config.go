@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -31,6 +32,8 @@ import (
 //	    return &c.AppConfig
 //	}
 type AppConfig struct {
+	viper *viper.Viper `mapstructure:"-"`
+
 	Environment    Environment    `mapstructure:"ENVIRONMENT"`
 	ServiceName    string         `mapstructure:"SERVICE"`
 	AllowedOrigins []string       `mapstructure:"ALLOWED_ORIGINS"`
@@ -39,6 +42,17 @@ type AppConfig struct {
 
 func (a *AppConfig) Is(env Environment) bool {
 	return a.Environment.Is(env)
+}
+
+// GetStringSlice retrieves a dynamic config key as a string slice.
+// Use for keys that are not known at compile time.
+func (a *AppConfig) GetStringSlice(key string) []string {
+	raw := a.viper.GetString(key)
+	if raw == "" {
+		return []string{}
+	}
+
+	return strings.Split(raw, ",")
 }
 
 type baseProvider interface {
@@ -53,7 +67,7 @@ type baseProvider interface {
 //
 // T must embed AppConfig and implement getBase()
 func Load[T baseProvider](path string, name string) (T, error) {
-	cfg, err := LoadConfig[T](path, name)
+	cfg, v, err := loadConfigInternal[T](path, name)
 	if err != nil {
 		return cfg, fmt.Errorf("failed to load config: %w", err)
 	}
@@ -68,7 +82,10 @@ func Load[T baseProvider](path string, name string) (T, error) {
 	if err != nil {
 		return cfg, err
 	}
+
+	base.ServiceName = strings.ToLower(strings.TrimSpace(base.ServiceName))
 	base.Chains = chains
+	base.viper = v
 
 	return cfg, nil
 }
@@ -84,7 +101,12 @@ func Load[T baseProvider](path string, name string) (T, error) {
 // This is the low-level loader. Most services should call Load instead, which runs LoadConfig and
 // additionally validates the environment and wires the chain registry.
 func LoadConfig[T any](path string, configName string) (config T, err error) {
-	v := viper.New()
+	config, _, err = loadConfigInternal[T](path, configName)
+	return config, err
+}
+
+func loadConfigInternal[T any](path string, configName string) (config T, v *viper.Viper, err error) {
+	v = viper.New()
 	v.AddConfigPath(path)
 	v.SetConfigName(configName)
 	v.SetConfigType("env")

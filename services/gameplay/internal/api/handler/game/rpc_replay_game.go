@@ -36,7 +36,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		Logger()
 
 	userID := uuid.Nil
-	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	tkPayload, err := h.AuthService.VerifyAccessToken(ctx, h.Config, &authPb.VerifyAccessTokenRequest{})
 	if err == nil {
 		userID, err = uuid.Parse(tkPayload.AccessTokenPayload.UserId)
 		if err != nil {

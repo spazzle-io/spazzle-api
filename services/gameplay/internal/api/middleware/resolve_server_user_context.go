@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
@@ -23,8 +25,8 @@ type ServerUserContext struct {
 
 func ResolveServerUserContext(
 	ctx context.Context,
+	config *util.Config,
 	serverId string,
-	serviceName string,
 	store db.Store,
 	authService services.AuthGrpcService,
 ) (serverUserContext ServerUserContext, err error) {
@@ -36,7 +38,7 @@ func ResolveServerUserContext(
 		return serverUserContext, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
 	}
 
-	verifyAccessTokenResp, err := authService.VerifyAccessToken(ctx, serviceName, &authPb.VerifyAccessTokenRequest{})
+	verifyAccessTokenResp, err := authService.VerifyAccessToken(ctx, config, &authPb.VerifyAccessTokenRequest{})
 	if err != nil {
 		logger.Error().Err(err).Msg("access token verification failed")
 		return serverUserContext, status.Error(codes.Unauthenticated, handler.UnauthorizedAccessError)

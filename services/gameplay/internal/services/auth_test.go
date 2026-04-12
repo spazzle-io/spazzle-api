@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
+
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	"github.com/stretchr/testify/require"
@@ -113,7 +116,7 @@ func TestAuthServiceGrpcClient_withMetadata(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-			getServiceAuthenticationPayload = func(serviceName string) (string, error) {
+			getServiceAuthenticationPayload = func(config *commonConfig.AppConfig) (string, error) {
 				return tc.serviceAuthenticationPayload, tc.serviceAuthenticationPayloadError
 			}
 			defer func() {
@@ -131,7 +134,11 @@ func TestAuthServiceGrpcClient_withMetadata(t *testing.T) {
 				require.NoError(t, err)
 			}()
 
-			ctx, err = client.(*AuthServiceGrpcClient).withMetadata(ctx, "test")
+			ctx, err = client.(*AuthServiceGrpcClient).withMetadata(ctx, &util.Config{
+				AppConfig: commonConfig.AppConfig{
+					ServiceName: "test",
+				},
+			})
 			tc.checkResponse(t, ctx, err)
 		})
 	}
@@ -172,7 +179,7 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 	}
 
 	initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-	getServiceAuthenticationPayload = func(serviceName string) (string, error) {
+	getServiceAuthenticationPayload = func(config *commonConfig.AppConfig) (string, error) {
 		return "some authentication payload", nil
 	}
 	defer func() {
@@ -184,7 +191,11 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 
 	payload := &pb.VerifyAccessTokenRequest{}
 
-	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, "test", payload)
+	_, err := mockAuthServiceGrpcClient.VerifyAccessToken(ctx, &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName: "test",
+		},
+	}, payload)
 	require.NoError(t, err)
 
 	require.True(t, dummyClient.IsVerifyAccessTokenCalled)

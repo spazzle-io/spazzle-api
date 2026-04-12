@@ -92,7 +92,8 @@ func runGRPCServer(
 		[]commonServer.GrpcMiddlewareProvider{
 			func() grpc.UnaryServerInterceptor {
 				config := &commonMiddleware.AuthenticateServiceConfig{
-					Cache: cache,
+					Cache:  cache,
+					Config: &config.AppConfig,
 				}
 				return config.AuthenticateServiceGrpc
 			},
@@ -126,7 +127,8 @@ func runGatewayServer(
 		[]commonServer.HttpRouteRegistrar{},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{
-				Cache: cache,
+				Cache:  cache,
+				Config: &config.AppConfig,
 			}
 			return commonMiddleware.AuthenticateServiceHTTP(handler, config)
 		},

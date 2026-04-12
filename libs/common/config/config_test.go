@@ -64,7 +64,7 @@ func TestLoadConfig_ChainsFieldIsNil(t *testing.T) {
 }
 
 func TestLoadConfig_EnvVarOverridesFile(t *testing.T) {
-	t.Setenv("SERVICE_NAME", "overridden")
+	t.Setenv("SERVICE", "overridden")
 
 	cfg, err := LoadConfig[serviceConfig]("testdata", "app")
 	if err != nil {
@@ -79,7 +79,7 @@ func TestLoadConfig_EnvVarOverridesFile(t *testing.T) {
 func TestLoadConfig_MissingFileIsNotAnError(t *testing.T) {
 	// A missing config file is tolerated. Env vars alone are sufficient.
 	t.Setenv("ENVIRONMENT", "staging")
-	t.Setenv("SERVICE_NAME", "payments")
+	t.Setenv("SERVICE", "payments")
 
 	cfg, err := LoadConfig[serviceConfig]("testdata", "nonexistent")
 	if err != nil {
@@ -174,5 +174,69 @@ func TestLoad_ServiceSpecificFieldsStillUnmarshal(t *testing.T) {
 	}
 	if cfg.HTTPServerAddress == "" {
 		t.Error("expected HTTPServerAddress to unmarshal from testdata/app.env")
+	}
+}
+
+func TestGetStringSlice_ReturnsSliceFromFile(t *testing.T) {
+	cfg, err := Load[*serviceConfig]("testdata", "app")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := cfg.GetStringSlice("SERVICE_USERS_PUBLIC_KEYS")
+	if len(keys) != 3 {
+		t.Fatalf("expected 3 keys, got %d: %v", len(keys), keys)
+	}
+
+	if keys[0] != "key1" || keys[1] != "key2" || keys[2] != "key3" {
+		t.Errorf("unexpected key values: %v", keys)
+	}
+}
+
+func TestGetStringSlice_ReturnsSliceFromEnvVar(t *testing.T) {
+	t.Setenv("SERVICE_PAYMENTS_PUBLIC_KEYS", "pubkey1,pubkey2")
+
+	cfg, err := Load[*serviceConfig]("testdata", "app")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := cfg.GetStringSlice("SERVICE_PAYMENTS_PUBLIC_KEYS")
+	if len(keys) != 2 {
+		t.Fatalf("expected 2 keys, got %d: %v", len(keys), keys)
+	}
+
+	if keys[0] != "pubkey1" || keys[1] != "pubkey2" {
+		t.Errorf("unexpected key values: %v", keys)
+	}
+}
+
+func TestGetStringSlice_EnvVarOverridesFile(t *testing.T) {
+	t.Setenv("SERVICE_USERS_PUBLIC_KEYS", "overridden1,overridden2")
+
+	cfg, err := Load[*serviceConfig]("./testdata", "app")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := cfg.GetStringSlice("SERVICE_USERS_PUBLIC_KEYS")
+	if len(keys) != 2 {
+		t.Fatalf("expected 2 keys, got %d: %v", len(keys), keys)
+	}
+
+	if keys[0] != "overridden1" || keys[1] != "overridden2" {
+		t.Errorf("expected overridden1, got %q", keys[0])
+	}
+}
+
+func TestGetStringSlice_MissingKeyReturnsEmptySlice(t *testing.T) {
+	cfg, err := Load[*serviceConfig]("testdata", "app")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	keys := cfg.GetStringSlice("SERVICE_NONEXISTENT_KEYS")
+	if len(keys) != 0 {
+		t.Errorf("expected empty slice for missing key, got %v", keys)
 	}
 }

@@ -31,7 +31,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
 	}
 
-	_, err = h.authService.VerifyAccessToken(ctx, h.config.ServiceName, &authPb.VerifyAccessTokenRequest{})
+	_, err = h.authService.VerifyAccessToken(ctx, h.config, &authPb.VerifyAccessTokenRequest{})
 	if err != nil {
 		logger.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)

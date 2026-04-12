@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
+	util "github.com/spazzle-io/spazzle-api/services/users/internal/util"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,7 +43,7 @@ func (m *MockAuthGrpcService) EXPECT() *MockAuthGrpcServiceMockRecorder {
 }
 
 // Authenticate mocks base method.
-func (m *MockAuthGrpcService) Authenticate(arg0 context.Context, arg1 string, arg2 *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error) {
+func (m *MockAuthGrpcService) Authenticate(arg0 context.Context, arg1 *util.Config, arg2 *pb.AuthenticateRequest) (*pb.AuthenticateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Authenticate", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*pb.AuthenticateResponse)
@@ -71,7 +72,7 @@ func (mr *MockAuthGrpcServiceMockRecorder) Close() *gomock.Call {
 }
 
 // VerifyAccessToken mocks base method.
-func (m *MockAuthGrpcService) VerifyAccessToken(arg0 context.Context, arg1 string, arg2 *pb.VerifyAccessTokenRequest) (*pb.VerifyAccessTokenResponse, error) {
+func (m *MockAuthGrpcService) VerifyAccessToken(arg0 context.Context, arg1 *util.Config, arg2 *pb.VerifyAccessTokenRequest) (*pb.VerifyAccessTokenResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyAccessToken", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*pb.VerifyAccessTokenResponse)

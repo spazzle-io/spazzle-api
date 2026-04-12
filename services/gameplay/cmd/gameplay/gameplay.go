@@ -156,7 +156,8 @@ func runGRPCServer(ctx context.Context, wg *errgroup.Group, apiServer *server.AP
 		[]commonServer.GrpcMiddlewareProvider{
 			func() grpc.UnaryServerInterceptor {
 				config := &commonMiddleware.AuthenticateServiceConfig{
-					Cache: deps.Cache,
+					Cache:  deps.Cache,
+					Config: &deps.Config.AppConfig,
 				}
 				return config.AuthenticateServiceGrpc
 			},
@@ -214,7 +215,8 @@ func runGatewayServer(ctx context.Context, wg *errgroup.Group, apiServer *server
 		},
 		func(handler http.Handler) http.Handler {
 			config := &commonMiddleware.AuthenticateServiceConfig{
-				Cache: deps.Cache,
+				Cache:  deps.Cache,
+				Config: &deps.Config.AppConfig,
 			}
 			return commonMiddleware.AuthenticateServiceHTTP(handler, config)
 		},
