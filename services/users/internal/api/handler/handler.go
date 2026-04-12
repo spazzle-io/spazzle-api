@@ -14,13 +14,13 @@ import (
 type Handler struct {
 	pb.UnimplementedUserServiceServer
 
-	config      util.Config
+	config      *util.Config
 	store       db.Store
 	cache       commonCache.Cache
 	authService services.AuthGrpcService
 }
 
-func New(config util.Config, store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
+func New(config *util.Config, store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
 	return &Handler{
 		config:      config,
 		store:       store,
