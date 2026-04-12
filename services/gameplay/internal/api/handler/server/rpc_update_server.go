@@ -47,10 +47,6 @@ func (h *Handler) UpdateServer(ctx context.Context, req *pb.UpdateServerRequest)
 			String: req.GetName().GetValue(),
 			Valid:  req.GetName() != nil,
 		},
-		IsPubliclyVisible: pgtype.Bool{
-			Bool:  req.GetIsPubliclyVisible().GetValue(),
-			Valid: req.GetIsPubliclyVisible() != nil,
-		},
 		NumRoundsPerGame: pgtype.Int4{
 			Int32: req.GetNumRoundsPerGame().GetValue(),
 			Valid: req.GetNumRoundsPerGame() != nil,

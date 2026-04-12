@@ -31,7 +31,6 @@ func generateUpdateServerReqParams(t *testing.T) *pb.UpdateServerRequest {
 	return &pb.UpdateServerRequest{
 		ServerId:          uuid.New().String(),
 		Name:              &wrapperspb.StringValue{Value: fmt.Sprintf("%s_%s", gofakeit.PetName(), randStr)},
-		IsPubliclyVisible: &wrapperspb.BoolValue{Value: true},
 		StakePerGame:      &wrapperspb.StringValue{Value: "150000"},
 		NumRoundsPerGame:  &wrapperspb.Int32Value{Value: 8},
 		RoundDurationSecs: &wrapperspb.Int32Value{Value: 60},

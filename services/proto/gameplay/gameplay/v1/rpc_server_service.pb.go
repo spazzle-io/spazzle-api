@@ -80,11 +80,10 @@ type CreateServerRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	ServerAddress     string                 `protobuf:"bytes,2,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
-	IsPubliclyVisible bool                   `protobuf:"varint,3,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
-	StakePerGame      string                 `protobuf:"bytes,4,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  int32                  `protobuf:"varint,5,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs int32                  `protobuf:"varint,6,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions int32                  `protobuf:"varint,7,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	StakePerGame      string                 `protobuf:"bytes,3,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  int32                  `protobuf:"varint,4,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs int32                  `protobuf:"varint,5,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions int32                  `protobuf:"varint,6,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -131,13 +130,6 @@ func (x *CreateServerRequest) GetServerAddress() string {
 		return x.ServerAddress
 	}
 	return ""
-}
-
-func (x *CreateServerRequest) GetIsPubliclyVisible() bool {
-	if x != nil {
-		return x.IsPubliclyVisible
-	}
-	return false
 }
 
 func (x *CreateServerRequest) GetStakePerGame() string {
@@ -792,11 +784,10 @@ type UpdateServerRequest struct {
 	state             protoimpl.MessageState  `protogen:"open.v1"`
 	ServerId          string                  `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
 	Name              *wrapperspb.StringValue `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	IsPubliclyVisible *wrapperspb.BoolValue   `protobuf:"bytes,3,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
-	StakePerGame      *wrapperspb.StringValue `protobuf:"bytes,4,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  *wrapperspb.Int32Value  `protobuf:"bytes,5,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs *wrapperspb.Int32Value  `protobuf:"bytes,6,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions *wrapperspb.Int32Value  `protobuf:"bytes,7,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	StakePerGame      *wrapperspb.StringValue `protobuf:"bytes,3,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  *wrapperspb.Int32Value  `protobuf:"bytes,4,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs *wrapperspb.Int32Value  `protobuf:"bytes,5,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions *wrapperspb.Int32Value  `protobuf:"bytes,6,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -841,13 +832,6 @@ func (x *UpdateServerRequest) GetServerId() string {
 func (x *UpdateServerRequest) GetName() *wrapperspb.StringValue {
 	if x != nil {
 		return x.Name
-	}
-	return nil
-}
-
-func (x *UpdateServerRequest) GetIsPubliclyVisible() *wrapperspb.BoolValue {
-	if x != nil {
-		return x.IsPubliclyVisible
 	}
 	return nil
 }
@@ -1019,19 +1003,18 @@ type Server struct {
 	OwnerId           string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	NumAdmins         int32                  `protobuf:"varint,4,opt,name=num_admins,json=numAdmins,proto3" json:"num_admins,omitempty"`
 	NumCustomWords    int32                  `protobuf:"varint,5,opt,name=num_custom_words,json=numCustomWords,proto3" json:"num_custom_words,omitempty"`
-	IsPubliclyVisible bool                   `protobuf:"varint,6,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
-	ServerAddress     string                 `protobuf:"bytes,7,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
-	StakePerGame      string                 `protobuf:"bytes,8,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  int32                  `protobuf:"varint,9,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs int32                  `protobuf:"varint,10,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions int32                  `protobuf:"varint,11,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
-	IsArchived        bool                   `protobuf:"varint,12,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
-	ArchivedAt        *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	TotalGames        int32                  `protobuf:"varint,15,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
-	TotalVolume       string                 `protobuf:"bytes,16,opt,name=total_volume,json=totalVolume,proto3" json:"total_volume,omitempty"`
-	TotalPlayers      int32                  `protobuf:"varint,17,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
-	TrendingScore     float64                `protobuf:"fixed64,18,opt,name=trending_score,json=trendingScore,proto3" json:"trending_score,omitempty"`
+	ServerAddress     string                 `protobuf:"bytes,6,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
+	StakePerGame      string                 `protobuf:"bytes,7,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  int32                  `protobuf:"varint,8,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs int32                  `protobuf:"varint,9,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions int32                  `protobuf:"varint,10,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	IsArchived        bool                   `protobuf:"varint,11,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
+	ArchivedAt        *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	TotalGames        int32                  `protobuf:"varint,14,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
+	TotalVolume       string                 `protobuf:"bytes,15,opt,name=total_volume,json=totalVolume,proto3" json:"total_volume,omitempty"`
+	TotalPlayers      int32                  `protobuf:"varint,16,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
+	TrendingScore     float64                `protobuf:"fixed64,17,opt,name=trending_score,json=trendingScore,proto3" json:"trending_score,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1099,13 +1082,6 @@ func (x *Server) GetNumCustomWords() int32 {
 		return x.NumCustomWords
 	}
 	return 0
-}
-
-func (x *Server) GetIsPubliclyVisible() bool {
-	if x != nil {
-		return x.IsPubliclyVisible
-	}
-	return false
 }
 
 func (x *Server) GetServerAddress() string {
@@ -1199,21 +1175,20 @@ type UserServer struct {
 	OwnerId           string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	NumAdmins         int32                  `protobuf:"varint,4,opt,name=num_admins,json=numAdmins,proto3" json:"num_admins,omitempty"`
 	NumCustomWords    int32                  `protobuf:"varint,5,opt,name=num_custom_words,json=numCustomWords,proto3" json:"num_custom_words,omitempty"`
-	IsPubliclyVisible bool                   `protobuf:"varint,6,opt,name=is_publicly_visible,json=isPubliclyVisible,proto3" json:"is_publicly_visible,omitempty"`
-	ServerAddress     string                 `protobuf:"bytes,7,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
-	StakePerGame      string                 `protobuf:"bytes,8,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  int32                  `protobuf:"varint,9,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs int32                  `protobuf:"varint,10,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions int32                  `protobuf:"varint,11,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
-	IsArchived        bool                   `protobuf:"varint,12,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
-	IsOwner           bool                   `protobuf:"varint,13,opt,name=is_owner,json=isOwner,proto3" json:"is_owner,omitempty"`
-	IsAdmin           bool                   `protobuf:"varint,14,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
-	ArchivedAt        *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	TotalGames        int32                  `protobuf:"varint,17,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
-	TotalVolume       string                 `protobuf:"bytes,18,opt,name=total_volume,json=totalVolume,proto3" json:"total_volume,omitempty"`
-	TotalPlayers      int32                  `protobuf:"varint,19,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
-	TrendingScore     float64                `protobuf:"fixed64,20,opt,name=trending_score,json=trendingScore,proto3" json:"trending_score,omitempty"`
+	ServerAddress     string                 `protobuf:"bytes,6,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
+	StakePerGame      string                 `protobuf:"bytes,7,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  int32                  `protobuf:"varint,8,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs int32                  `protobuf:"varint,9,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions int32                  `protobuf:"varint,10,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	IsArchived        bool                   `protobuf:"varint,11,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
+	IsOwner           bool                   `protobuf:"varint,12,opt,name=is_owner,json=isOwner,proto3" json:"is_owner,omitempty"`
+	IsAdmin           bool                   `protobuf:"varint,13,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
+	ArchivedAt        *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	TotalGames        int32                  `protobuf:"varint,16,opt,name=total_games,json=totalGames,proto3" json:"total_games,omitempty"`
+	TotalVolume       string                 `protobuf:"bytes,17,opt,name=total_volume,json=totalVolume,proto3" json:"total_volume,omitempty"`
+	TotalPlayers      int32                  `protobuf:"varint,18,opt,name=total_players,json=totalPlayers,proto3" json:"total_players,omitempty"`
+	TrendingScore     float64                `protobuf:"fixed64,19,opt,name=trending_score,json=trendingScore,proto3" json:"trending_score,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1281,13 +1256,6 @@ func (x *UserServer) GetNumCustomWords() int32 {
 		return x.NumCustomWords
 	}
 	return 0
-}
-
-func (x *UserServer) GetIsPubliclyVisible() bool {
-	if x != nil {
-		return x.IsPubliclyVisible
-	}
-	return false
 }
 
 func (x *UserServer) GetServerAddress() string {
@@ -1468,15 +1436,14 @@ var File_gameplay_v1_rpc_server_service_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\n" +
-	"$gameplay/v1/rpc_server_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe5\x02\n" +
+	"$gameplay/v1/rpc_server_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb5\x02\n" +
 	"\x13CreateServerRequest\x12\x1a\n" +
 	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
-	"\x0eserver_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rserverAddress\x12.\n" +
-	"\x13is_publicly_visible\x18\x03 \x01(\bR\x11isPubliclyVisible\x12,\n" +
-	"\x0estake_per_game\x18\x04 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fstakePerGame\x125\n" +
-	"\x13num_rounds_per_game\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10numRoundsPerGame\x126\n" +
-	"\x13round_duration_secs\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11roundDurationSecs\x126\n" +
-	"\x13num_drawing_options\x18\a \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11numDrawingOptions\"C\n" +
+	"\x0eserver_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rserverAddress\x12,\n" +
+	"\x0estake_per_game\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fstakePerGame\x125\n" +
+	"\x13num_rounds_per_game\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10numRoundsPerGame\x126\n" +
+	"\x13round_duration_secs\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11roundDurationSecs\x126\n" +
+	"\x13num_drawing_options\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11numDrawingOptions\"C\n" +
 	"\x14CreateServerResponse\x12+\n" +
 	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"/\n" +
 	"\x10GetServerRequest\x12\x1b\n" +
@@ -1517,46 +1484,44 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	" GetUserServerPermissionsResponse\x12\x19\n" +
 	"\bis_owner\x18\x01 \x01(\bR\aisOwner\x12\x19\n" +
 	"\bis_admin\x18\x02 \x01(\bR\aisAdmin\x128\n" +
-	"\x18has_elevated_permissions\x18\x03 \x01(\bR\x16hasElevatedPermissions\"\xe7\x03\n" +
+	"\x18has_elevated_permissions\x18\x03 \x01(\bR\x16hasElevatedPermissions\"\x9b\x03\n" +
 	"\x13UpdateServerRequest\x12(\n" +
 	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x120\n" +
-	"\x04name\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\x04name\x12J\n" +
-	"\x13is_publicly_visible\x18\x03 \x01(\v2\x1a.google.protobuf.BoolValueR\x11isPubliclyVisible\x12B\n" +
-	"\x0estake_per_game\x18\x04 \x01(\v2\x1c.google.protobuf.StringValueR\fstakePerGame\x12J\n" +
-	"\x13num_rounds_per_game\x18\x05 \x01(\v2\x1b.google.protobuf.Int32ValueR\x10numRoundsPerGame\x12K\n" +
-	"\x13round_duration_secs\x18\x06 \x01(\v2\x1b.google.protobuf.Int32ValueR\x11roundDurationSecs\x12K\n" +
-	"\x13num_drawing_options\x18\a \x01(\v2\x1b.google.protobuf.Int32ValueR\x11numDrawingOptions\"C\n" +
+	"\x04name\x18\x02 \x01(\v2\x1c.google.protobuf.StringValueR\x04name\x12B\n" +
+	"\x0estake_per_game\x18\x03 \x01(\v2\x1c.google.protobuf.StringValueR\fstakePerGame\x12J\n" +
+	"\x13num_rounds_per_game\x18\x04 \x01(\v2\x1b.google.protobuf.Int32ValueR\x10numRoundsPerGame\x12K\n" +
+	"\x13round_duration_secs\x18\x05 \x01(\v2\x1b.google.protobuf.Int32ValueR\x11roundDurationSecs\x12K\n" +
+	"\x13num_drawing_options\x18\x06 \x01(\v2\x1b.google.protobuf.Int32ValueR\x11numDrawingOptions\"C\n" +
 	"\x14UpdateServerResponse\x12+\n" +
 	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"@\n" +
 	"\x14ArchiveServerRequest\x12(\n" +
 	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"D\n" +
 	"\x15ArchiveServerResponse\x12+\n" +
-	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\xc5\x05\n" +
+	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"\x95\x05\n" +
 	"\x06Server\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
 	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12\x1d\n" +
 	"\n" +
 	"num_admins\x18\x04 \x01(\x05R\tnumAdmins\x12(\n" +
-	"\x10num_custom_words\x18\x05 \x01(\x05R\x0enumCustomWords\x12.\n" +
-	"\x13is_publicly_visible\x18\x06 \x01(\bR\x11isPubliclyVisible\x12%\n" +
-	"\x0eserver_address\x18\a \x01(\tR\rserverAddress\x12$\n" +
-	"\x0estake_per_game\x18\b \x01(\tR\fstakePerGame\x12-\n" +
-	"\x13num_rounds_per_game\x18\t \x01(\x05R\x10numRoundsPerGame\x12.\n" +
-	"\x13round_duration_secs\x18\n" +
-	" \x01(\x05R\x11roundDurationSecs\x12.\n" +
-	"\x13num_drawing_options\x18\v \x01(\x05R\x11numDrawingOptions\x12\x1f\n" +
-	"\vis_archived\x18\f \x01(\bR\n" +
+	"\x10num_custom_words\x18\x05 \x01(\x05R\x0enumCustomWords\x12%\n" +
+	"\x0eserver_address\x18\x06 \x01(\tR\rserverAddress\x12$\n" +
+	"\x0estake_per_game\x18\a \x01(\tR\fstakePerGame\x12-\n" +
+	"\x13num_rounds_per_game\x18\b \x01(\x05R\x10numRoundsPerGame\x12.\n" +
+	"\x13round_duration_secs\x18\t \x01(\x05R\x11roundDurationSecs\x12.\n" +
+	"\x13num_drawing_options\x18\n" +
+	" \x01(\x05R\x11numDrawingOptions\x12\x1f\n" +
+	"\vis_archived\x18\v \x01(\bR\n" +
 	"isArchived\x12;\n" +
-	"\varchived_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\varchived_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"archivedAt\x129\n" +
 	"\n" +
-	"created_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1f\n" +
-	"\vtotal_games\x18\x0f \x01(\x05R\n" +
+	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1f\n" +
+	"\vtotal_games\x18\x0e \x01(\x05R\n" +
 	"totalGames\x12!\n" +
-	"\ftotal_volume\x18\x10 \x01(\tR\vtotalVolume\x12#\n" +
-	"\rtotal_players\x18\x11 \x01(\x05R\ftotalPlayers\x12%\n" +
-	"\x0etrending_score\x18\x12 \x01(\x01R\rtrendingScore\"\xff\x05\n" +
+	"\ftotal_volume\x18\x0f \x01(\tR\vtotalVolume\x12#\n" +
+	"\rtotal_players\x18\x10 \x01(\x05R\ftotalPlayers\x12%\n" +
+	"\x0etrending_score\x18\x11 \x01(\x01R\rtrendingScore\"\xcf\x05\n" +
 	"\n" +
 	"UserServer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -1564,27 +1529,26 @@ const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\bowner_id\x18\x03 \x01(\tR\aownerId\x12\x1d\n" +
 	"\n" +
 	"num_admins\x18\x04 \x01(\x05R\tnumAdmins\x12(\n" +
-	"\x10num_custom_words\x18\x05 \x01(\x05R\x0enumCustomWords\x12.\n" +
-	"\x13is_publicly_visible\x18\x06 \x01(\bR\x11isPubliclyVisible\x12%\n" +
-	"\x0eserver_address\x18\a \x01(\tR\rserverAddress\x12$\n" +
-	"\x0estake_per_game\x18\b \x01(\tR\fstakePerGame\x12-\n" +
-	"\x13num_rounds_per_game\x18\t \x01(\x05R\x10numRoundsPerGame\x12.\n" +
-	"\x13round_duration_secs\x18\n" +
-	" \x01(\x05R\x11roundDurationSecs\x12.\n" +
-	"\x13num_drawing_options\x18\v \x01(\x05R\x11numDrawingOptions\x12\x1f\n" +
-	"\vis_archived\x18\f \x01(\bR\n" +
+	"\x10num_custom_words\x18\x05 \x01(\x05R\x0enumCustomWords\x12%\n" +
+	"\x0eserver_address\x18\x06 \x01(\tR\rserverAddress\x12$\n" +
+	"\x0estake_per_game\x18\a \x01(\tR\fstakePerGame\x12-\n" +
+	"\x13num_rounds_per_game\x18\b \x01(\x05R\x10numRoundsPerGame\x12.\n" +
+	"\x13round_duration_secs\x18\t \x01(\x05R\x11roundDurationSecs\x12.\n" +
+	"\x13num_drawing_options\x18\n" +
+	" \x01(\x05R\x11numDrawingOptions\x12\x1f\n" +
+	"\vis_archived\x18\v \x01(\bR\n" +
 	"isArchived\x12\x19\n" +
-	"\bis_owner\x18\r \x01(\bR\aisOwner\x12\x19\n" +
-	"\bis_admin\x18\x0e \x01(\bR\aisAdmin\x12;\n" +
-	"\varchived_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\bis_owner\x18\f \x01(\bR\aisOwner\x12\x19\n" +
+	"\bis_admin\x18\r \x01(\bR\aisAdmin\x12;\n" +
+	"\varchived_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"archivedAt\x129\n" +
 	"\n" +
-	"created_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1f\n" +
-	"\vtotal_games\x18\x11 \x01(\x05R\n" +
+	"created_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1f\n" +
+	"\vtotal_games\x18\x10 \x01(\x05R\n" +
 	"totalGames\x12!\n" +
-	"\ftotal_volume\x18\x12 \x01(\tR\vtotalVolume\x12#\n" +
-	"\rtotal_players\x18\x13 \x01(\x05R\ftotalPlayers\x12%\n" +
-	"\x0etrending_score\x18\x14 \x01(\x01R\rtrendingScore\"\xef\x01\n" +
+	"\ftotal_volume\x18\x11 \x01(\tR\vtotalVolume\x12#\n" +
+	"\rtotal_players\x18\x12 \x01(\x05R\ftotalPlayers\x12%\n" +
+	"\x0etrending_score\x18\x13 \x01(\x01R\rtrendingScore\"\xef\x01\n" +
 	"\x11ListServersCursor\x12\x19\n" +
 	"\bafter_id\x18\x01 \x01(\tR\aafterId\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12D\n" +
@@ -1637,7 +1601,6 @@ var file_gameplay_v1_rpc_server_service_proto_goTypes = []any{
 	(*wrapperspb.Int32Value)(nil),            // 21: google.protobuf.Int32Value
 	(*timestamppb.Timestamp)(nil),            // 22: google.protobuf.Timestamp
 	(*wrapperspb.DoubleValue)(nil),           // 23: google.protobuf.DoubleValue
-	(*wrapperspb.BoolValue)(nil),             // 24: google.protobuf.BoolValue
 }
 var file_gameplay_v1_rpc_server_service_proto_depIdxs = []int32{
 	17, // 0: gameplay.v1.CreateServerResponse.server:type_name -> gameplay.v1.Server
@@ -1658,23 +1621,22 @@ var file_gameplay_v1_rpc_server_service_proto_depIdxs = []int32{
 	18, // 15: gameplay.v1.ListUserServersResponse.servers:type_name -> gameplay.v1.UserServer
 	19, // 16: gameplay.v1.ListUserServersResponse.cursor:type_name -> gameplay.v1.ListServersCursor
 	20, // 17: gameplay.v1.UpdateServerRequest.name:type_name -> google.protobuf.StringValue
-	24, // 18: gameplay.v1.UpdateServerRequest.is_publicly_visible:type_name -> google.protobuf.BoolValue
-	20, // 19: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
-	21, // 20: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
-	21, // 21: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
-	21, // 22: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
-	17, // 23: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
-	17, // 24: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
-	22, // 25: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
-	22, // 26: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
-	22, // 27: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
-	22, // 28: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
-	22, // 29: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	20, // 18: gameplay.v1.UpdateServerRequest.stake_per_game:type_name -> google.protobuf.StringValue
+	21, // 19: gameplay.v1.UpdateServerRequest.num_rounds_per_game:type_name -> google.protobuf.Int32Value
+	21, // 20: gameplay.v1.UpdateServerRequest.round_duration_secs:type_name -> google.protobuf.Int32Value
+	21, // 21: gameplay.v1.UpdateServerRequest.num_drawing_options:type_name -> google.protobuf.Int32Value
+	17, // 22: gameplay.v1.UpdateServerResponse.server:type_name -> gameplay.v1.Server
+	17, // 23: gameplay.v1.ArchiveServerResponse.server:type_name -> gameplay.v1.Server
+	22, // 24: gameplay.v1.Server.archived_at:type_name -> google.protobuf.Timestamp
+	22, // 25: gameplay.v1.Server.created_at:type_name -> google.protobuf.Timestamp
+	22, // 26: gameplay.v1.UserServer.archived_at:type_name -> google.protobuf.Timestamp
+	22, // 27: gameplay.v1.UserServer.created_at:type_name -> google.protobuf.Timestamp
+	22, // 28: gameplay.v1.ListServersCursor.after_created_at:type_name -> google.protobuf.Timestamp
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_gameplay_v1_rpc_server_service_proto_init() }

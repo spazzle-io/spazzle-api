@@ -1230,9 +1230,6 @@
         "name": {
           "type": "string"
         },
-        "isPubliclyVisible": {
-          "type": "boolean"
-        },
         "stakePerGame": {
           "type": "string"
         },
@@ -1341,9 +1338,6 @@
         },
         "serverAddress": {
           "type": "string"
-        },
-        "isPubliclyVisible": {
-          "type": "boolean"
         },
         "stakePerGame": {
           "type": "string"
@@ -1971,9 +1965,6 @@
           "type": "integer",
           "format": "int32"
         },
-        "isPubliclyVisible": {
-          "type": "boolean"
-        },
         "serverAddress": {
           "type": "string"
         },
@@ -2124,9 +2115,6 @@
         "numCustomWords": {
           "type": "integer",
           "format": "int32"
-        },
-        "isPubliclyVisible": {
-          "type": "boolean"
         },
         "serverAddress": {
           "type": "string"

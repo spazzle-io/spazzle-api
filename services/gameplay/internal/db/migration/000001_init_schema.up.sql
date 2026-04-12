@@ -4,7 +4,6 @@ CREATE TABLE "servers" (
   "owner_id" UUID NOT NULL,
   "num_admins" int NOT NULL DEFAULT 0,
   "num_custom_words" int NOT NULL DEFAULT 0,
-  "is_publicly_visible" boolean NOT NULL DEFAULT true,
   "server_address" text NOT NULL,
   "stake_per_game" numeric(78,0) NOT NULL CHECK (stake_per_game >= 0),
   "num_rounds_per_game" int NOT NULL,
