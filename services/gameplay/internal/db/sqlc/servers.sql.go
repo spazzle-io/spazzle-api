@@ -18,21 +18,19 @@ INSERT INTO servers (
     name,
     owner_id,
     server_address,
-    is_publicly_visible,
     stake_per_game,
     num_rounds_per_game,
     round_duration_secs,
     num_drawing_options
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
+    $1, $2, $3, $4, $5, $6, $7
+) RETURNING id, name, owner_id, num_admins, num_custom_words, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
 type CreateServerParams struct {
 	Name              string         `json:"name"`
 	OwnerID           uuid.UUID      `json:"owner_id"`
 	ServerAddress     string         `json:"server_address"`
-	IsPubliclyVisible bool           `json:"is_publicly_visible"`
 	StakePerGame      pgtype.Numeric `json:"stake_per_game"`
 	NumRoundsPerGame  int32          `json:"num_rounds_per_game"`
 	RoundDurationSecs int32          `json:"round_duration_secs"`
@@ -44,7 +42,6 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 		arg.Name,
 		arg.OwnerID,
 		arg.ServerAddress,
-		arg.IsPubliclyVisible,
 		arg.StakePerGame,
 		arg.NumRoundsPerGame,
 		arg.RoundDurationSecs,
@@ -57,7 +54,6 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 		&i.OwnerID,
 		&i.NumAdmins,
 		&i.NumCustomWords,
-		&i.IsPubliclyVisible,
 		&i.ServerAddress,
 		&i.StakePerGame,
 		&i.NumRoundsPerGame,
@@ -81,7 +77,6 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
-    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -108,7 +103,6 @@ func (q *Queries) GetServerById(ctx context.Context, serverID uuid.UUID) (Server
 		&i.OwnerID,
 		&i.NumAdmins,
 		&i.NumCustomWords,
-		&i.IsPubliclyVisible,
 		&i.ServerAddress,
 		&i.StakePerGame,
 		&i.NumRoundsPerGame,
@@ -132,7 +126,6 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
-    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -159,7 +152,6 @@ func (q *Queries) GetServerByName(ctx context.Context, name string) (Server, err
 		&i.OwnerID,
 		&i.NumAdmins,
 		&i.NumCustomWords,
-		&i.IsPubliclyVisible,
 		&i.ServerAddress,
 		&i.StakePerGame,
 		&i.NumRoundsPerGame,
@@ -243,7 +235,6 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
-    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -287,7 +278,6 @@ func (q *Queries) ListServers(ctx context.Context, arg ListServersParams) ([]Ser
 			&i.OwnerID,
 			&i.NumAdmins,
 			&i.NumCustomWords,
-			&i.IsPubliclyVisible,
 			&i.ServerAddress,
 			&i.StakePerGame,
 			&i.NumRoundsPerGame,
@@ -318,7 +308,6 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
-    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -361,7 +350,6 @@ func (q *Queries) ListServersByPopular(ctx context.Context, arg ListServersByPop
 			&i.OwnerID,
 			&i.NumAdmins,
 			&i.NumCustomWords,
-			&i.IsPubliclyVisible,
 			&i.ServerAddress,
 			&i.StakePerGame,
 			&i.NumRoundsPerGame,
@@ -392,7 +380,6 @@ SELECT
     owner_id,
     num_admins,
     num_custom_words,
-    is_publicly_visible,
     server_address,
     stake_per_game,
     num_rounds_per_game,
@@ -435,7 +422,6 @@ func (q *Queries) ListServersByTrending(ctx context.Context, arg ListServersByTr
 			&i.OwnerID,
 			&i.NumAdmins,
 			&i.NumCustomWords,
-			&i.IsPubliclyVisible,
 			&i.ServerAddress,
 			&i.StakePerGame,
 			&i.NumRoundsPerGame,
@@ -466,7 +452,6 @@ SELECT
     s.owner_id,
     s.num_admins,
     s.num_custom_words,
-    s.is_publicly_visible,
     s.server_address,
     s.stake_per_game,
     s.num_rounds_per_game,
@@ -511,7 +496,6 @@ type ListUserServersRow struct {
 	OwnerID           uuid.UUID          `json:"owner_id"`
 	NumAdmins         int32              `json:"num_admins"`
 	NumCustomWords    int32              `json:"num_custom_words"`
-	IsPubliclyVisible bool               `json:"is_publicly_visible"`
 	ServerAddress     string             `json:"server_address"`
 	StakePerGame      pgtype.Numeric     `json:"stake_per_game"`
 	NumRoundsPerGame  int32              `json:"num_rounds_per_game"`
@@ -548,7 +532,6 @@ func (q *Queries) ListUserServers(ctx context.Context, arg ListUserServersParams
 			&i.OwnerID,
 			&i.NumAdmins,
 			&i.NumCustomWords,
-			&i.IsPubliclyVisible,
 			&i.ServerAddress,
 			&i.StakePerGame,
 			&i.NumRoundsPerGame,
@@ -617,18 +600,17 @@ SET
     owner_id = COALESCE($2, owner_id),
     num_admins = COALESCE($3, num_admins),
     num_custom_words = COALESCE($4, num_custom_words),
-    is_publicly_visible = COALESCE($5, is_publicly_visible),
-    server_address = COALESCE($6, server_address),
-    stake_per_game = COALESCE($7, stake_per_game),
-    num_rounds_per_game = COALESCE($8, num_rounds_per_game),
-    round_duration_secs = COALESCE($9, round_duration_secs),
-    num_drawing_options = COALESCE($10, num_drawing_options),
-    trending_score = COALESCE($11, trending_score),
-    is_archived = COALESCE($12, is_archived),
-    archived_at = COALESCE($13, archived_at)
+    server_address = COALESCE($5, server_address),
+    stake_per_game = COALESCE($6, stake_per_game),
+    num_rounds_per_game = COALESCE($7, num_rounds_per_game),
+    round_duration_secs = COALESCE($8, round_duration_secs),
+    num_drawing_options = COALESCE($9, num_drawing_options),
+    trending_score = COALESCE($10, trending_score),
+    is_archived = COALESCE($11, is_archived),
+    archived_at = COALESCE($12, archived_at)
 WHERE
-    id = $14
-    RETURNING id, name, owner_id, num_admins, num_custom_words, is_publicly_visible, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
+    id = $13
+    RETURNING id, name, owner_id, num_admins, num_custom_words, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
 type UpdateServerParams struct {
@@ -636,7 +618,6 @@ type UpdateServerParams struct {
 	OwnerID           pgtype.UUID        `json:"owner_id"`
 	NumAdmins         pgtype.Int4        `json:"num_admins"`
 	NumCustomWords    pgtype.Int4        `json:"num_custom_words"`
-	IsPubliclyVisible pgtype.Bool        `json:"is_publicly_visible"`
 	ServerAddress     pgtype.Text        `json:"server_address"`
 	StakePerGame      pgtype.Numeric     `json:"stake_per_game"`
 	NumRoundsPerGame  pgtype.Int4        `json:"num_rounds_per_game"`
@@ -654,7 +635,6 @@ func (q *Queries) UpdateServer(ctx context.Context, arg UpdateServerParams) (Ser
 		arg.OwnerID,
 		arg.NumAdmins,
 		arg.NumCustomWords,
-		arg.IsPubliclyVisible,
 		arg.ServerAddress,
 		arg.StakePerGame,
 		arg.NumRoundsPerGame,
@@ -672,7 +652,6 @@ func (q *Queries) UpdateServer(ctx context.Context, arg UpdateServerParams) (Ser
 		&i.OwnerID,
 		&i.NumAdmins,
 		&i.NumCustomWords,
-		&i.IsPubliclyVisible,
 		&i.ServerAddress,
 		&i.StakePerGame,
 		&i.NumRoundsPerGame,

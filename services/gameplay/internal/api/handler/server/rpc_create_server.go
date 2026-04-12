@@ -47,10 +47,9 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 	}
 
 	params := db.CreateServerParams{
-		Name:              req.GetName(),
-		OwnerID:           userId,
-		ServerAddress:     req.GetServerAddress(),
-		IsPubliclyVisible: req.GetIsPubliclyVisible(),
+		Name:          req.GetName(),
+		OwnerID:       userId,
+		ServerAddress: req.GetServerAddress(),
 		StakePerGame: pgtype.Numeric{
 			Int:   stakePerGame.BigInt(),
 			Valid: true,

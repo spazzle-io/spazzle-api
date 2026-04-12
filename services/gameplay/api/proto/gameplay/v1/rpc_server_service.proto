@@ -11,11 +11,10 @@ option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
 message CreateServerRequest {
   string name = 1 [(buf.validate.field).required = true];
   string server_address = 2 [(buf.validate.field).required = true];
-  bool is_publicly_visible = 3;
-  string stake_per_game = 4 [(buf.validate.field).required = true];
-  int32 num_rounds_per_game = 5 [(buf.validate.field).required = true];
-  int32 round_duration_secs = 6 [(buf.validate.field).required = true];
-  int32 num_drawing_options = 7 [(buf.validate.field).required = true];
+  string stake_per_game = 3 [(buf.validate.field).required = true];
+  int32 num_rounds_per_game = 4 [(buf.validate.field).required = true];
+  int32 round_duration_secs = 5 [(buf.validate.field).required = true];
+  int32 num_drawing_options = 6 [(buf.validate.field).required = true];
 }
 
 message CreateServerResponse {
@@ -82,11 +81,10 @@ message GetUserServerPermissionsResponse {
 message UpdateServerRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
   google.protobuf.StringValue name = 2;
-  google.protobuf.BoolValue is_publicly_visible = 3;
-  google.protobuf.StringValue stake_per_game = 4;
-  google.protobuf.Int32Value num_rounds_per_game = 5;
-  google.protobuf.Int32Value round_duration_secs = 6;
-  google.protobuf.Int32Value num_drawing_options = 7;
+  google.protobuf.StringValue stake_per_game = 3;
+  google.protobuf.Int32Value num_rounds_per_game = 4;
+  google.protobuf.Int32Value round_duration_secs = 5;
+  google.protobuf.Int32Value num_drawing_options = 6;
 }
 
 message UpdateServerResponse {
@@ -114,19 +112,18 @@ message Server {
   string owner_id = 3;
   int32 num_admins = 4;
   int32 num_custom_words = 5;
-  bool is_publicly_visible = 6;
-  string server_address = 7;
-  string stake_per_game = 8;
-  int32 num_rounds_per_game = 9;
-  int32 round_duration_secs = 10;
-  int32 num_drawing_options = 11;
-  bool is_archived = 12;
-  google.protobuf.Timestamp archived_at = 13;
-  google.protobuf.Timestamp created_at = 14;
-  int32 total_games = 15;
-  string total_volume = 16;
-  int32 total_players = 17;
-  double trending_score = 18;
+  string server_address = 6;
+  string stake_per_game = 7;
+  int32 num_rounds_per_game = 8;
+  int32 round_duration_secs = 9;
+  int32 num_drawing_options = 10;
+  bool is_archived = 11;
+  google.protobuf.Timestamp archived_at = 12;
+  google.protobuf.Timestamp created_at = 13;
+  int32 total_games = 14;
+  string total_volume = 15;
+  int32 total_players = 16;
+  double trending_score = 17;
 }
 
 message UserServer {
@@ -135,21 +132,20 @@ message UserServer {
   string owner_id = 3;
   int32 num_admins = 4;
   int32 num_custom_words = 5;
-  bool is_publicly_visible = 6;
-  string server_address = 7;
-  string stake_per_game = 8;
-  int32 num_rounds_per_game = 9;
-  int32 round_duration_secs = 10;
-  int32 num_drawing_options = 11;
-  bool is_archived = 12;
-  bool is_owner = 13;
-  bool is_admin = 14;
-  google.protobuf.Timestamp archived_at = 15;
-  google.protobuf.Timestamp created_at = 16;
-  int32 total_games = 17;
-  string total_volume = 18;
-  int32 total_players = 19;
-  double trending_score = 20;
+  string server_address = 6;
+  string stake_per_game = 7;
+  int32 num_rounds_per_game = 8;
+  int32 round_duration_secs = 9;
+  int32 num_drawing_options = 10;
+  bool is_archived = 11;
+  bool is_owner = 12;
+  bool is_admin = 13;
+  google.protobuf.Timestamp archived_at = 14;
+  google.protobuf.Timestamp created_at = 15;
+  int32 total_games = 16;
+  string total_volume = 17;
+  int32 total_players = 18;
+  double trending_score = 19;
 }
 
 message ListServersCursor {

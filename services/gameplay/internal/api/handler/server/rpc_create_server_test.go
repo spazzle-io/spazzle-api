@@ -34,7 +34,6 @@ func generateCreateServerReqParams(t *testing.T) *pb.CreateServerRequest {
 	return &pb.CreateServerRequest{
 		Name:              fmt.Sprintf("%s_%s", gofakeit.PetName(), randStr),
 		ServerAddress:     serverWallet.Address,
-		IsPubliclyVisible: true,
 		StakePerGame:      "1200000000000000000",
 		NumRoundsPerGame:  3,
 		RoundDurationSecs: 60,
@@ -136,7 +135,6 @@ func TestCreateServer(t *testing.T) {
 			req: &pb.CreateServerRequest{
 				Name:              createServerParams.Name,
 				ServerAddress:     createServerParams.ServerAddress,
-				IsPubliclyVisible: false,
 				StakePerGame:      "abc",
 				NumRoundsPerGame:  createServerParams.NumRoundsPerGame,
 				RoundDurationSecs: createServerParams.RoundDurationSecs,
