@@ -16,7 +16,7 @@ type Server struct {
 	handler.Handler
 }
 
-func New(config util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
+func New(config *util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
 		return nil, fmt.Errorf("could create token maker: %w", err)

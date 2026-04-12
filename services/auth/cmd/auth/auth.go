@@ -38,12 +38,12 @@ func main() {
 	ctx, stopInterruptCtx := signal.NotifyContext(context.Background(), interruptSignals...)
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
-	config, err := commonConfig.LoadConfig[util.Config](".", ".development")
+	config, err := commonConfig.Load[*util.Config](".", ".development")
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not load config")
 	}
 
-	commonConfig.SetupLogger(config.ServiceName, config.IsDevelopmentEnvironment())
+	commonConfig.SetupLogger(config.ServiceName, config.Is(commonConfig.Development))
 
 	commonConfig.RunDBMigration(config.DBMigrationURL, config.DBSource)
 
@@ -82,7 +82,7 @@ func main() {
 func runGRPCServer(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
-	config util.Config,
+	config *util.Config,
 	cache commonCache.Cache,
 	apiServer *server.Server,
 ) {
@@ -109,7 +109,7 @@ func runGRPCServer(
 func runGatewayServer(
 	ctx context.Context,
 	waitGroup *errgroup.Group,
-	config util.Config,
+	config *util.Config,
 	cache commonCache.Cache,
 	apiServer *server.Server,
 ) {
@@ -117,7 +117,7 @@ func runGatewayServer(
 		ctx,
 		waitGroup,
 		config.HTTPServerAddress,
-		config.IsDevelopmentEnvironment(),
+		config.Is(commonConfig.Development),
 		config.AllowedOrigins,
 		[]commonServer.GatewayRouteRegistrar{
 			func(ctx context.Context, mux *runtime.ServeMux) error {

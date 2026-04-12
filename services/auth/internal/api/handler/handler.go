@@ -15,13 +15,13 @@ import (
 type Handler struct {
 	pb.UnimplementedAuthServiceServer
 
-	config     util.Config
+	config     *util.Config
 	store      db.Store
 	cache      commonCache.Cache
 	tokenMaker token.Maker
 }
 
-func New(config util.Config, store db.Store, cache commonCache.Cache, tokenMaker token.Maker) *Handler {
+func New(config *util.Config, store db.Store, cache commonCache.Cache, tokenMaker token.Maker) *Handler {
 	return &Handler{
 		config:     config,
 		store:      store,

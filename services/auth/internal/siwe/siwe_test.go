@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/util"
 	"github.com/stretchr/testify/require"
@@ -19,7 +21,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 		name          string
 		domain        string
 		uri           string
-		chainId       uint32
 		walletAddress string
 		environment   string
 		buildStubs    func(cache *mockcache.MockCache)
@@ -29,7 +30,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "success",
 			domain:        "spazzle.io",
 			uri:           "https://spazzle.io/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "staging",
 			buildStubs: func(cache *mockcache.MockCache) {
@@ -47,13 +47,13 @@ func TestGenerateSIWEPayload(t *testing.T) {
 				require.NotEmpty(t, payload.IssuedAt)
 				require.NotEmpty(t, payload.ExpiresAt)
 				require.NotEmpty(t, payload.WalletAddress)
+				require.NotEmpty(t, payload.ChainID)
 			},
 		},
 		{
 			name:          "invalid wallet address",
 			domain:        "spazzle.io",
 			uri:           "https://spazzle.io/login",
-			chainId:       2021,
 			walletAddress: "invalidWalletAddress",
 			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
@@ -66,35 +66,8 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "domain not allowed",
 			domain:        "fakeDomain.io",
 			uri:           "https://spazzle.io/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "staging",
-			buildStubs:    func(cache *mockcache.MockCache) {},
-			checkResponse: func(payload *Payload, err error) {
-				require.Error(t, err)
-				require.Nil(t, payload)
-			},
-		},
-		{
-			name:          "chain not supported",
-			domain:        "spazzle.io",
-			uri:           "https://spazzle.io/login",
-			chainId:       2020,
-			walletAddress: testWalletAddress,
-			environment:   "staging",
-			buildStubs:    func(cache *mockcache.MockCache) {},
-			checkResponse: func(payload *Payload, err error) {
-				require.Error(t, err)
-				require.Nil(t, payload)
-			},
-		},
-		{
-			name:          "environment not supported for chain",
-			domain:        "spazzle.io",
-			uri:           "https://spazzle.io/login",
-			chainId:       2021,
-			walletAddress: testWalletAddress,
-			environment:   "production",
 			buildStubs:    func(cache *mockcache.MockCache) {},
 			checkResponse: func(payload *Payload, err error) {
 				require.Error(t, err)
@@ -105,7 +78,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "invalid uri",
 			domain:        "spazzle.io",
 			uri:           "invalidUri",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
@@ -118,7 +90,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "uri with www prefix",
 			domain:        "spazzle.io",
 			uri:           "https://www.spazzle.io/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "staging",
 			buildStubs: func(cache *mockcache.MockCache) {
@@ -136,7 +107,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "uri hostname does not match domain",
 			domain:        "spazzle.io",
 			uri:           "https://fakeDomain.io/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
@@ -149,7 +119,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "uri using invalid schema",
 			domain:        "spazzle.io",
 			uri:           "http://spazzle.io/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "staging",
 			buildStubs:    func(cache *mockcache.MockCache) {},
@@ -162,7 +131,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "development environment bypasses schema check",
 			domain:        "localhost",
 			uri:           "http://localhost:3000/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "development",
 			buildStubs: func(cache *mockcache.MockCache) {
@@ -186,7 +154,6 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			name:          "payload cannot be cached",
 			domain:        "spazzle.io",
 			uri:           "https://spazzle.io/login",
-			chainId:       2021,
 			walletAddress: testWalletAddress,
 			environment:   "development",
 			buildStubs: func(cache *mockcache.MockCache) {
@@ -202,22 +169,18 @@ func TestGenerateSIWEPayload(t *testing.T) {
 		},
 	}
 
-	siweConfig = &Config{
-		Chains: []Chain{
-			{
-				ChainId:      2021,
-				Name:         "Saigon Testnet",
-				Environments: []string{"development", "staging"},
-			},
-		},
-	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config := util.Config{
-				ServiceName:    "test",
-				Environment:    util.Environment(tc.environment),
-				AllowedOrigins: []string{"http://localhost:3000", "https://spazzle.io"},
+			config := &util.Config{
+				AppConfig: commonConfig.AppConfig{
+					ServiceName:    "test",
+					Environment:    commonConfig.Environment(tc.environment),
+					AllowedOrigins: []string{"http://localhost:3000", "https://spazzle.io"},
+					Chains: commonConfig.NewTestChainRegistry(commonConfig.Chain{
+						ID:   11155111,
+						Name: "Sepolia",
+					}),
+				},
 			}
 
 			ctrl := gomock.NewController(t)
@@ -227,7 +190,7 @@ func TestGenerateSIWEPayload(t *testing.T) {
 			tc.buildStubs(cache)
 
 			payload, err := GenerateSIWEPayload(
-				context.Background(), config, cache, tc.domain, tc.uri, tc.chainId, tc.walletAddress,
+				context.Background(), config, cache, tc.domain, tc.uri, tc.walletAddress,
 			)
 			tc.checkResponse(payload, err)
 		})
@@ -333,19 +296,15 @@ func TestFetchSIWEMessage(t *testing.T) {
 		},
 	}
 
-	config := util.Config{
-		ServiceName:    "test",
-		Environment:    "production",
-		AllowedOrigins: []string{"https://spazzle.io"},
-	}
-
-	siweConfig = &Config{
-		Chains: []Chain{
-			{
-				ChainId:      2021,
-				Name:         "Saigon Testnet",
-				Environments: []string{"production"},
-			},
+	config := &util.Config{
+		AppConfig: commonConfig.AppConfig{
+			ServiceName:    "test",
+			Environment:    "production",
+			AllowedOrigins: []string{"https://spazzle.io"},
+			Chains: commonConfig.NewTestChainRegistry(commonConfig.Chain{
+				ID:   11155111,
+				Name: "Sepolia",
+			}),
 		},
 	}
 
@@ -358,7 +317,7 @@ func TestFetchSIWEMessage(t *testing.T) {
 			tc.buildStubs(cache)
 
 			payload, err := GenerateSIWEPayload(
-				context.Background(), config, cache, "spazzle.io", "https://spazzle.io", 2021, testWalletAddress,
+				context.Background(), config, cache, "spazzle.io", "https://spazzle.io", testWalletAddress,
 			)
 			require.NoError(t, err)
 			require.NotEmpty(t, payload)

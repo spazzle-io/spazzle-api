@@ -189,7 +189,6 @@ type GetSIWEPayloadRequest struct {
 	WalletAddress string                 `protobuf:"bytes,1,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
 	Domain        string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
 	Uri           string                 `protobuf:"bytes,3,opt,name=uri,proto3" json:"uri,omitempty"`
-	ChainId       uint32                 `protobuf:"varint,4,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,20 +244,14 @@ func (x *GetSIWEPayloadRequest) GetUri() string {
 	return ""
 }
 
-func (x *GetSIWEPayloadRequest) GetChainId() uint32 {
-	if x != nil {
-		return x.ChainId
-	}
-	return 0
-}
-
 type GetSIWEPayloadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	Nonce         string                 `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	WalletAddress string                 `protobuf:"bytes,3,opt,name=wallet_address,json=walletAddress,proto3" json:"wallet_address,omitempty"`
-	IssuedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ChainId       uint32                 `protobuf:"varint,4,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	IssuedAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -312,6 +305,13 @@ func (x *GetSIWEPayloadResponse) GetWalletAddress() string {
 		return x.WalletAddress
 	}
 	return ""
+}
+
+func (x *GetSIWEPayloadResponse) GetChainId() uint32 {
+	if x != nil {
+		return x.ChainId
+	}
+	return 0
 }
 
 func (x *GetSIWEPayloadResponse) GetIssuedAt() *timestamppb.Timestamp {
@@ -817,19 +817,19 @@ const file_auth_v1_rpc_service_auth_proto_rawDesc = "" +
 	"\n" +
 	"credential\x18\x01 \x01(\v2\x13.auth.v1.CredentialR\n" +
 	"credential\x12*\n" +
-	"\asession\x18\x02 \x01(\v2\x10.auth.v1.SessionR\asession\"\xa3\x01\n" +
+	"\asession\x18\x02 \x01(\v2\x10.auth.v1.SessionR\asession\"\x80\x01\n" +
 	"\x15GetSIWEPayloadRequest\x12-\n" +
 	"\x0ewallet_address\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rwalletAddress\x12\x1e\n" +
 	"\x06domain\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x06domain\x12\x18\n" +
-	"\x03uri\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03uri\x12!\n" +
-	"\bchain_id\x18\x04 \x01(\rB\x06\xbaH\x03\xc8\x01\x01R\achainId\"\xe3\x01\n" +
+	"\x03uri\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x03uri\"\xfe\x01\n" +
 	"\x16GetSIWEPayloadResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x14\n" +
 	"\x05nonce\x18\x02 \x01(\tR\x05nonce\x12%\n" +
-	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x127\n" +
-	"\tissued_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x129\n" +
+	"\x0ewallet_address\x18\x03 \x01(\tR\rwalletAddress\x12\x19\n" +
+	"\bchain_id\x18\x04 \x01(\rR\achainId\x127\n" +
+	"\tissued_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x129\n" +
 	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x1b\n" +
+	"expires_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x1b\n" +
 	"\x19RefreshAccessTokenRequest\"H\n" +
 	"\x1aRefreshAccessTokenResponse\x12*\n" +
 	"\asession\x18\x01 \x01(\v2\x10.auth.v1.SessionR\asession\"\x1c\n" +

@@ -42,7 +42,6 @@ func generateTestAuthenticateReqParams(t *testing.T) (*siwe.Payload, *pb.Authent
 		cache,
 		"localhost",
 		"http://localhost:3000/login",
-		2021,
 		wallet.Address,
 	)
 	require.NoError(t, err)
