@@ -116,24 +116,15 @@ func TestAuthServiceGrpcClient_withMetadata(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-			getServiceAuthenticationPayload = func(cfg *commonConfig.AppConfig) (string, error) {
-				return tc.serviceAuthenticationPayload, tc.serviceAuthenticationPayloadError
-			}
-			defer func() {
-				getServiceAuthenticationPayload = initialGetServiceAuthenticationPayload
-			}()
-
 			ctx := tc.buildContext(t)
 
-			client, err := NewAuthServiceGrpcClient("some-server-address")
-			require.NoError(t, err)
-			require.NotEmpty(t, client)
-
-			defer func() {
-				err := client.(*AuthServiceGrpcClient).Close()
-				require.NoError(t, err)
-			}()
+			client := &AuthServiceGrpcClient{
+				conn:   nil,
+				client: nil,
+				generateAuthPayload: func(cfg *commonConfig.AppConfig) (string, error) {
+					return tc.serviceAuthenticationPayload, tc.serviceAuthenticationPayloadError
+				},
+			}
 
 			cfg := &util.Config{
 				AppConfig: commonConfig.AppConfig{
@@ -141,7 +132,7 @@ func TestAuthServiceGrpcClient_withMetadata(t *testing.T) {
 				},
 			}
 
-			ctx, err = client.(*AuthServiceGrpcClient).withMetadata(ctx, cfg)
+			ctx, err := client.withMetadata(ctx, cfg)
 			tc.checkResponse(t, ctx, err)
 		})
 	}
@@ -179,15 +170,10 @@ func TestAuthServiceGrpcClient_VerifyAccessToken(t *testing.T) {
 
 	mockAuthServiceGrpcClient := &AuthServiceGrpcClient{
 		client: dummyClient,
+		generateAuthPayload: func(cfg *commonConfig.AppConfig) (string, error) {
+			return "some authentication payload", nil
+		},
 	}
-
-	initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-	getServiceAuthenticationPayload = func(cfg *commonConfig.AppConfig) (string, error) {
-		return "some authentication payload", nil
-	}
-	defer func() {
-		getServiceAuthenticationPayload = initialGetServiceAuthenticationPayload
-	}()
 
 	md := metadata.MD{}
 	ctx := metadata.NewIncomingContext(context.Background(), md)
@@ -211,15 +197,10 @@ func TestAuthServiceGrpcClient_Authenticate(t *testing.T) {
 
 	mockAuthServiceGrpcClient := &AuthServiceGrpcClient{
 		client: dummyClient,
+		generateAuthPayload: func(cfg *commonConfig.AppConfig) (string, error) {
+			return "some authentication payload", nil
+		},
 	}
-
-	initialGetServiceAuthenticationPayload := getServiceAuthenticationPayload
-	getServiceAuthenticationPayload = func(cfg *commonConfig.AppConfig) (string, error) {
-		return "some authentication payload", nil
-	}
-	defer func() {
-		getServiceAuthenticationPayload = initialGetServiceAuthenticationPayload
-	}()
 
 	md := metadata.MD{}
 	ctx := metadata.NewIncomingContext(context.Background(), md)

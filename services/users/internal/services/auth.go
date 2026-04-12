@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/spazzle-io/spazzle-api/services/users/internal/util"
 
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
@@ -22,8 +24,9 @@ type AuthGrpcService interface {
 }
 
 type AuthServiceGrpcClient struct {
-	conn   *grpc.ClientConn
-	client pb.AuthServiceClient
+	conn                *grpc.ClientConn
+	client              pb.AuthServiceClient
+	generateAuthPayload func(*commonConfig.AppConfig) (string, error)
 }
 
 func NewAuthServiceGrpcClient(serverAddress string) (AuthGrpcService, error) {
@@ -35,16 +38,15 @@ func NewAuthServiceGrpcClient(serverAddress string) (AuthGrpcService, error) {
 	client := pb.NewAuthServiceClient(conn)
 
 	return &AuthServiceGrpcClient{
-		conn:   conn,
-		client: client,
+		conn:                conn,
+		client:              client,
+		generateAuthPayload: commonMiddleware.GenerateServiceAuthenticationPayload,
 	}, nil
 }
 
 func (c *AuthServiceGrpcClient) Close() error {
 	return c.conn.Close()
 }
-
-var getServiceAuthenticationPayload = commonMiddleware.GenerateServiceAuthenticationPayload
 
 func populateMetadataPairs(mtdt metadata.MD, keys []string, additionalPairs map[string]string) metadata.MD {
 	pairs := metadata.MD{}
@@ -74,7 +76,7 @@ func (c *AuthServiceGrpcClient) withMetadata(
 		return nil, errors.New("could not get metadata from context")
 	}
 
-	serviceAuthenticationPayload, err := getServiceAuthenticationPayload(&config.AppConfig)
+	serviceAuthenticationPayload, err := c.generateAuthPayload(&config.AppConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate service authentication payload: %w", err)
 	}
