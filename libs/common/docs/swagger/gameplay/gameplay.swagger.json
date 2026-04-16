@@ -893,6 +893,39 @@
         "security": []
       }
     },
+    "/servers/{serverId}/treasury": {
+      "get": {
+        "summary": "Get server treasury",
+        "description": "Get server treasury by server id",
+        "operationId": "ServerService_GetServerTreasury",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetServerTreasuryResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "serverId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerService"
+        ],
+        "security": []
+      }
+    },
     "/servers/{serverId}/words": {
       "get": {
         "summary": "List server words",
@@ -1602,6 +1635,14 @@
         }
       }
     },
+    "v1GetServerTreasuryResponse": {
+      "type": "object",
+      "properties": {
+        "treasury": {
+          "$ref": "#/definitions/v1ServerTreasury"
+        }
+      }
+    },
     "v1GetUserServerPermissionsResponse": {
       "type": "object",
       "properties": {
@@ -2032,6 +2073,57 @@
         "SERVER_SORT_BY_POPULAR"
       ],
       "default": "SERVER_SORT_BY_UNSPECIFIED"
+    },
+    "v1ServerTreasury": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "serverId": {
+          "type": "string"
+        },
+        "ownerAddress": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1ServerTreasuryStatus"
+        },
+        "txHash": {
+          "type": "string"
+        },
+        "blockNumber": {
+          "type": "string",
+          "format": "int64"
+        },
+        "gasUsed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "deployedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1ServerTreasuryStatus": {
+      "type": "string",
+      "enum": [
+        "SERVER_TREASURY_STATUS_UNSPECIFIED",
+        "SERVER_TREASURY_STATUS_PENDING",
+        "SERVER_TREASURY_STATUS_DEPLOYING",
+        "SERVER_TREASURY_STATUS_DEPLOYED",
+        "SERVER_TREASURY_STATUS_FAILED"
+      ],
+      "default": "SERVER_TREASURY_STATUS_UNSPECIFIED"
     },
     "v1StreamType": {
       "type": "string",
