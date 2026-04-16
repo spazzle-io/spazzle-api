@@ -79,11 +79,10 @@ func (ServerSortBy) EnumDescriptor() ([]byte, []int) {
 type CreateServerRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	ServerAddress     string                 `protobuf:"bytes,2,opt,name=server_address,json=serverAddress,proto3" json:"server_address,omitempty"`
-	StakePerGame      string                 `protobuf:"bytes,3,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
-	NumRoundsPerGame  int32                  `protobuf:"varint,4,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
-	RoundDurationSecs int32                  `protobuf:"varint,5,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
-	NumDrawingOptions int32                  `protobuf:"varint,6,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
+	StakePerGame      string                 `protobuf:"bytes,2,opt,name=stake_per_game,json=stakePerGame,proto3" json:"stake_per_game,omitempty"`
+	NumRoundsPerGame  int32                  `protobuf:"varint,3,opt,name=num_rounds_per_game,json=numRoundsPerGame,proto3" json:"num_rounds_per_game,omitempty"`
+	RoundDurationSecs int32                  `protobuf:"varint,4,opt,name=round_duration_secs,json=roundDurationSecs,proto3" json:"round_duration_secs,omitempty"`
+	NumDrawingOptions int32                  `protobuf:"varint,5,opt,name=num_drawing_options,json=numDrawingOptions,proto3" json:"num_drawing_options,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -121,13 +120,6 @@ func (*CreateServerRequest) Descriptor() ([]byte, []int) {
 func (x *CreateServerRequest) GetName() string {
 	if x != nil {
 		return x.Name
-	}
-	return ""
-}
-
-func (x *CreateServerRequest) GetServerAddress() string {
-	if x != nil {
-		return x.ServerAddress
 	}
 	return ""
 }
@@ -1436,14 +1428,13 @@ var File_gameplay_v1_rpc_server_service_proto protoreflect.FileDescriptor
 
 const file_gameplay_v1_rpc_server_service_proto_rawDesc = "" +
 	"\n" +
-	"$gameplay/v1/rpc_server_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb5\x02\n" +
+	"$gameplay/v1/rpc_server_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x86\x02\n" +
 	"\x13CreateServerRequest\x12\x1a\n" +
-	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12-\n" +
-	"\x0eserver_address\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\rserverAddress\x12,\n" +
-	"\x0estake_per_game\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fstakePerGame\x125\n" +
-	"\x13num_rounds_per_game\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10numRoundsPerGame\x126\n" +
-	"\x13round_duration_secs\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11roundDurationSecs\x126\n" +
-	"\x13num_drawing_options\x18\x06 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11numDrawingOptions\"C\n" +
+	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12,\n" +
+	"\x0estake_per_game\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\fstakePerGame\x125\n" +
+	"\x13num_rounds_per_game\x18\x03 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x10numRoundsPerGame\x126\n" +
+	"\x13round_duration_secs\x18\x04 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11roundDurationSecs\x126\n" +
+	"\x13num_drawing_options\x18\x05 \x01(\x05B\x06\xbaH\x03\xc8\x01\x01R\x11numDrawingOptions\"C\n" +
 	"\x14CreateServerResponse\x12+\n" +
 	"\x06server\x18\x01 \x01(\v2\x13.gameplay.v1.ServerR\x06server\"/\n" +
 	"\x10GetServerRequest\x12\x1b\n" +

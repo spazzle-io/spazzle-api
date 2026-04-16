@@ -2,22 +2,28 @@ package server
 
 import (
 	"context"
-	"errors"
-
-	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+	"time"
 
 	"buf.build/go/protovalidate"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	deployTreasuryMaxRetries     = 10
+	deployTreasuryTaskTimeout    = 5 * time.Minute
+	deployTreasuryEnqueueTimeout = 3 * time.Second
 )
 
 func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
@@ -46,25 +52,60 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidStakePerGameError)
 	}
 
-	params := db.CreateServerParams{
-		Name:          req.GetName(),
-		OwnerID:       userId,
-		ServerAddress: req.GetServerAddress(),
-		StakePerGame: pgtype.Numeric{
-			Int:   stakePerGame.BigInt(),
-			Valid: true,
-		},
-		NumRoundsPerGame:  req.GetNumRoundsPerGame(),
-		RoundDurationSecs: req.GetRoundDurationSecs(),
-		NumDrawingOptions: req.GetNumDrawingOptions(),
-	}
-	server, err := h.Store.CreateServer(ctx, params)
+	serverID := uuid.New()
+
+	ownerAddress, err := commonUtil.ParseWalletAddress(tkPayload.AccessTokenPayload.WalletAddress)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to create server")
+		logger.Error().
+			Err(err).
+			Str("owner_address", tkPayload.AccessTokenPayload.WalletAddress).
+			Msg("invalid owner address")
+		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	}
+
+	treasuryAddress, err := h.TreasuryClient.PredictAddress(serverID, ownerAddress)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to predict treasury address")
+		return nil, status.Error(codes.Internal, handler.InternalServerError)
+	}
+
+	params := db.CreateServerTxParams{
+		CreateServerParams: db.CreateServerParams{
+			ID:            serverID,
+			Name:          req.GetName(),
+			OwnerID:       userId,
+			ServerAddress: treasuryAddress.Hex(),
+			StakePerGame: pgtype.Numeric{
+				Int:   stakePerGame.BigInt(),
+				Valid: true,
+			},
+			NumRoundsPerGame:  req.GetNumRoundsPerGame(),
+			RoundDurationSecs: req.GetRoundDurationSecs(),
+			NumDrawingOptions: req.GetNumDrawingOptions(),
+		},
+		ServerOwnerAddress: ownerAddress,
+		AfterCreate: func(treasury db.ServerTreasury) error {
+			enqueueCtx, cancel := context.WithTimeout(ctx, deployTreasuryEnqueueTimeout)
+			defer cancel()
+
+			return h.TaskDistributor.DistributeTaskDeployTreasury(
+				enqueueCtx,
+				&worker.PayloadDeployTreasury{
+					ServerID:     treasury.ServerID,
+					OwnerAddress: ownerAddress,
+				},
+				asynq.MaxRetry(deployTreasuryMaxRetries),
+				asynq.Timeout(deployTreasuryTaskTimeout),
+			)
+		},
+	}
+	result, err := h.Store.CreateServerTx(ctx, params)
+	if err != nil {
+		logger.Error().Err(err).Msg("create server tx failed")
 		return nil, handler.HandleServerDBError(err)
 	}
 
-	pbServer, err := mapDBServerToPb(&server)
+	pbServer, err := mapDBServerToPb(&result.Server)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to map db server to pb")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
@@ -82,10 +123,6 @@ func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest)
 func validateCreateServerRequest(req *pb.CreateServerRequest) (violations []*errdetails.BadRequest_FieldViolation) {
 	if err := protovalidate.Validate(req); err != nil {
 		violations = append(violations, handler.ProtovalidateViolation(err)...)
-	}
-
-	if isHexAddress := common.IsHexAddress(req.GetServerAddress()); !isHexAddress {
-		violations = append(violations, handler.FieldViolation("serverAddress", errors.New("must be a hex address")))
 	}
 
 	return violations

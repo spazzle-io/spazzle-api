@@ -3,6 +3,8 @@ package server
 import (
 	"testing"
 
+	mocktreasury "github.com/spazzle-io/spazzle-api/services/gameplay/internal/treasury/mock"
+
 	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
@@ -14,10 +16,11 @@ import (
 )
 
 type testDeps struct {
-	ctrl        *gomock.Controller
-	store       *mockdb.MockStore
-	cache       *mockcache.MockCache
-	authService *mockservices.MockAuthGrpcService
+	ctrl           *gomock.Controller
+	store          *mockdb.MockStore
+	cache          *mockcache.MockCache
+	treasuryClient *mocktreasury.MockClient
+	authService    *mockservices.MockAuthGrpcService
 }
 
 func getTestConfig() *util.Config {
@@ -35,18 +38,20 @@ func newTestDeps(t *testing.T) *testDeps {
 	ctrl := gomock.NewController(t)
 
 	return &testDeps{
-		ctrl:        ctrl,
-		store:       mockdb.NewMockStore(ctrl),
-		cache:       mockcache.NewMockCache(ctrl),
-		authService: mockservices.NewMockAuthGrpcService(ctrl),
+		ctrl:           ctrl,
+		store:          mockdb.NewMockStore(ctrl),
+		cache:          mockcache.NewMockCache(ctrl),
+		authService:    mockservices.NewMockAuthGrpcService(ctrl),
+		treasuryClient: mocktreasury.NewMockClient(ctrl),
 	}
 }
 
 func newTestHandler(d *testDeps) *Handler {
 	return New(&deps.APIServerDeps{
-		Config:      getTestConfig(),
-		Store:       d.store,
-		Cache:       d.cache,
-		AuthService: d.authService,
+		Config:         getTestConfig(),
+		Store:          d.store,
+		Cache:          d.cache,
+		AuthService:    d.authService,
+		TreasuryClient: d.treasuryClient,
 	})
 }

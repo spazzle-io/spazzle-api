@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/treasury"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
@@ -86,12 +88,17 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create event bus")
 	}
 
+	treasuryClient, err := treasury.New(config)
+	if err != nil {
+		log.Fatal().Err(err).Msg("could not create treasury client")
+	}
+
 	redisOpt, err := asynq.ParseRedisURI(config.RedisConnURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to parse redis URI for asynq")
 	}
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
-	taskProcessor := runTaskProcessor(redisOpt, store, bus, objectStore)
+	taskProcessor := runTaskProcessor(redisOpt, store, bus, objectStore, treasuryClient)
 
 	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
 	if err != nil {
@@ -114,6 +121,7 @@ func main() {
 		AuthService:     authService,
 		GfClient:        gfClient,
 		GsManager:       gsManager,
+		TreasuryClient:  treasuryClient,
 	}
 
 	apiServer, err := server.NewAPIServer(serverDeps)
@@ -134,6 +142,8 @@ func main() {
 	if err = taskDistributor.Close(); err != nil {
 		log.Error().Err(err).Msg("could not close task distributor")
 	}
+
+	treasuryClient.Close()
 
 	if err = redisCache.Close(); err != nil {
 		log.Error().Err(err).Msg("could not close redis cache")
@@ -277,8 +287,9 @@ func runTaskProcessor(
 	store db.Store,
 	bus eventbus.EventBus,
 	objectStore commonStorage.ObjectStore,
+	treasuryClient treasury.Client,
 ) worker.TaskProcessor {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, bus, store, objectStore)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, bus, store, objectStore, treasuryClient)
 
 	err := taskProcessor.Start()
 	if err != nil {

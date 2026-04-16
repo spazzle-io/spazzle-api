@@ -15,6 +15,7 @@ import (
 
 const createServer = `-- name: CreateServer :one
 INSERT INTO servers (
+    id,
     name,
     owner_id,
     server_address,
@@ -23,11 +24,12 @@ INSERT INTO servers (
     round_duration_secs,
     num_drawing_options
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING id, name, owner_id, num_admins, num_custom_words, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
 type CreateServerParams struct {
+	ID                uuid.UUID      `json:"id"`
 	Name              string         `json:"name"`
 	OwnerID           uuid.UUID      `json:"owner_id"`
 	ServerAddress     string         `json:"server_address"`
@@ -39,6 +41,7 @@ type CreateServerParams struct {
 
 func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Server, error) {
 	row := q.db.QueryRow(ctx, createServer,
+		arg.ID,
 		arg.Name,
 		arg.OwnerID,
 		arg.ServerAddress,
@@ -610,7 +613,7 @@ SET
     archived_at = COALESCE($12, archived_at)
 WHERE
     id = $13
-    RETURNING id, name, owner_id, num_admins, num_custom_words, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
+RETURNING id, name, owner_id, num_admins, num_custom_words, server_address, stake_per_game, num_rounds_per_game, round_duration_secs, num_drawing_options, total_games, total_volume, total_players, trending_score, is_archived, archived_at, created_at
 `
 
 type UpdateServerParams struct {

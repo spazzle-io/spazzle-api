@@ -17,6 +17,7 @@ type Store interface {
 	RemoveServerWordsTx(ctx context.Context, params RemoveServerWordsTxParams) (RemoveServerWordsTxResult, error)
 	RemoveAllServerWordsTx(ctx context.Context, serverId uuid.UUID) (RemoveAllServerWordsTxResult, error)
 	ArchiveGameTx(ctx context.Context, params ArchiveGameTxParams) (ArchiveGameTxResult, error)
+	CreateServerTx(ctx context.Context, params CreateServerTxParams) (CreateServerTxResult, error)
 }
 
 type SQLStore struct {

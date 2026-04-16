@@ -1,3 +1,10 @@
+CREATE TYPE treasury_status AS ENUM (
+  'pending',
+  'deploying',
+  'deployed',
+  'failed'
+);
+
 CREATE TABLE "servers" (
   "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
   "name" text NOT NULL,
@@ -78,6 +85,19 @@ CREATE TABLE "words" (
   "added_at" timestamptz NOT NULL DEFAULT (now())
 );
 
+CREATE TABLE "server_treasuries" (
+  "address" text PRIMARY KEY,
+  "server_id" UUID NOT NULL,
+  "owner" text NOT NULL,
+  "status" treasury_status NOT NULL DEFAULT 'pending',
+  "tx_hash" text,
+  "block_number" BIGINT,
+  "gas_used" BIGINT,
+  "deployed_at" timestamptz,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
+);
+
 CREATE INDEX ON "servers" ("name");
 
 CREATE INDEX ON "servers" ("owner_id");
@@ -116,6 +136,10 @@ CREATE UNIQUE INDEX ON "words" ("server_id", "word");
 
 CREATE INDEX words_server_added_at_id_desc ON words (server_id, added_at DESC, id DESC);
 
+CREATE INDEX ON "server_treasuries" ("status");
+
+CREATE INDEX ON "server_treasuries" ("owner");
+
 COMMENT ON COLUMN "servers"."num_drawing_options" IS 'number of word options presented to a player before they select one to draw';
 
 ALTER TABLE "games" ADD FOREIGN KEY ("server_id") REFERENCES "servers" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -127,3 +151,11 @@ ALTER TABLE "server_player_stats" ADD FOREIGN KEY ("server_id") REFERENCES "serv
 ALTER TABLE "server_admins" ADD FOREIGN KEY ("server_id") REFERENCES "servers" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "words" ADD FOREIGN KEY ("server_id") REFERENCES "servers" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "servers" ADD CONSTRAINT "unique_servers_server_address" UNIQUE ("server_address");
+
+ALTER TABLE "server_treasuries" ADD CONSTRAINT "unique_server_treasuries_server_id" UNIQUE ("server_id");
+
+ALTER TABLE "server_treasuries" ADD FOREIGN KEY ("server_id") REFERENCES "servers" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "server_treasuries" ADD FOREIGN KEY ("address") REFERENCES "servers" ("server_address") ON DELETE CASCADE ON UPDATE NO ACTION;

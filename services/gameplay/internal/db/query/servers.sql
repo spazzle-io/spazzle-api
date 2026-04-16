@@ -1,5 +1,6 @@
 -- name: CreateServer :one
 INSERT INTO servers (
+    id,
     name,
     owner_id,
     server_address,
@@ -8,7 +9,7 @@ INSERT INTO servers (
     round_duration_secs,
     num_drawing_options
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
 -- name: GetServerById :one
@@ -164,7 +165,7 @@ SET
     archived_at = COALESCE(sqlc.narg(archived_at), archived_at)
 WHERE
     id = sqlc.arg(server_id)
-    RETURNING *;
+RETURNING *;
 
 -- name: UpdateServerGameStats :exec
 UPDATE servers

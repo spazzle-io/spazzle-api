@@ -74,3 +74,22 @@ func (mr *MockTaskDistributorMockRecorder) DistributeTaskArchiveGame(ctx, payloa
 	varargs := append([]any{ctx, payload}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DistributeTaskArchiveGame", reflect.TypeOf((*MockTaskDistributor)(nil).DistributeTaskArchiveGame), varargs...)
 }
+
+// DistributeTaskDeployTreasury mocks base method.
+func (m *MockTaskDistributor) DistributeTaskDeployTreasury(ctx context.Context, payload *worker.PayloadDeployTreasury, opts ...asynq.Option) error {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, payload}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DistributeTaskDeployTreasury", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DistributeTaskDeployTreasury indicates an expected call of DistributeTaskDeployTreasury.
+func (mr *MockTaskDistributorMockRecorder) DistributeTaskDeployTreasury(ctx, payload any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, payload}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DistributeTaskDeployTreasury", reflect.TypeOf((*MockTaskDistributor)(nil).DistributeTaskDeployTreasury), varargs...)
+}

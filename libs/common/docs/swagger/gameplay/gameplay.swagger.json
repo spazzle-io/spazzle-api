@@ -1336,9 +1336,6 @@
         "name": {
           "type": "string"
         },
-        "serverAddress": {
-          "type": "string"
-        },
         "stakePerGame": {
           "type": "string"
         },

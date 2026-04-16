@@ -9,6 +9,7 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/services"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/treasury"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/wordstore"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
@@ -25,5 +26,6 @@ type APIServerDeps struct {
 	WordStore       wordstore.Store
 	ObjectStore     commonStorage.ObjectStore
 	TaskDistributor worker.TaskDistributor
+	TreasuryClient  treasury.Client
 	AuthService     services.AuthGrpcService
 }

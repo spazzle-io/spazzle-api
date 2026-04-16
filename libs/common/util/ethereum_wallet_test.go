@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/brianvoe/gofakeit/v7"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -203,6 +205,85 @@ func TestIsEthereumSignatureValid(t *testing.T) {
 			}
 
 			require.Equal(t, isSignatureValid, tc.isSignatureValid)
+		})
+	}
+}
+
+func TestParseTestWalletAddress(t *testing.T) {
+	testCases := []struct {
+		name    string
+		input   string
+		address common.Address
+		wantErr bool
+	}{
+		{
+			name:    "valid",
+			input:   "0x718031233DE4cBeD7415c5088e0e23CFbbA2F299",
+			address: common.HexToAddress("0x718031233DE4cBeD7415c5088e0e23CFbbA2F299"),
+			wantErr: false,
+		},
+		{
+			name:    "invalid",
+			input:   "0x718031233",
+			address: common.Address{},
+			wantErr: true,
+		},
+		{
+			name:    "empty string",
+			input:   "",
+			address: common.Address{},
+			wantErr: true,
+		},
+		{
+			name:    "missing 0x prefix",
+			input:   "718031233DE4cBeD7415c5088e0e23CFbbA2F299",
+			address: common.HexToAddress("0x718031233DE4cBeD7415c5088e0e23CFbbA2F299"),
+			wantErr: false,
+		},
+		{
+			name:    "zero address",
+			input:   "0x0000000000000000000000000000000000000000",
+			address: common.Address{},
+			wantErr: false,
+		},
+		{
+			name:    "invalid hex characters",
+			input:   "0xZZZZ31233DE4cBeD7415c5088e0e23CFbbA2F299",
+			address: common.Address{},
+			wantErr: true,
+		},
+		{
+			name:    "too long",
+			input:   "0x718031233DE4cBeD7415c5088e0e23CFbbA2F299FF",
+			address: common.Address{},
+			wantErr: true,
+		},
+		{
+			name:    "checksummed address",
+			input:   "0x718031233DE4cBeD7415c5088e0e23CFbbA2F299",
+			address: common.HexToAddress("0x718031233de4cbed7415c5088e0e23cfbba2f299"),
+			wantErr: false,
+		},
+		{
+			name:    "lowercase address",
+			input:   "0x718031233de4cbed7415c5088e0e23cfbba2f299",
+			address: common.HexToAddress("0x718031233DE4cBeD7415c5088e0e23CFbbA2F299"),
+			wantErr: false,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			gotAddress, err := ParseWalletAddress(tc.input)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.address, gotAddress)
 		})
 	}
 }
