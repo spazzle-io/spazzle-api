@@ -3,6 +3,7 @@ package treasury
 import (
 	"context"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -16,7 +17,14 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 )
 
-const threshold = 1
+const (
+	treasurySafeThreshold         = 1
+	nonceLockPollInterval         = 500 * time.Millisecond
+	staleNonceDelay               = 3 * time.Second
+	gasMultiplier                 = 1.3
+	deployTimeout                 = 10 * time.Minute
+	deploymentReceiptPollInterval = 30 * time.Second
+)
 
 type DeployResult struct {
 	Address     common.Address
@@ -72,9 +80,23 @@ func New(config *util.Config) (Client, error) {
 		return nil, err
 	}
 
-	c, err := chain.Lookup(new(big.Int).SetUint64(config.Chains.Current().ID))
+	chainEnv := config.Chains.Current()
+
+	c, err := chain.Lookup(new(big.Int).SetUint64(chainEnv.ID))
 	if err != nil {
 		return nil, err
+	}
+
+	if chainEnv.ForksChainID != 0 {
+		source, err := chain.Lookup(new(big.Int).SetUint64(chainEnv.ForksChainID))
+		if err != nil {
+			return nil, err
+		}
+
+		c, err = chain.Fork(c, source)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rdbOpts, err := redis.ParseURL(config.RedisConnURL)
@@ -85,18 +107,23 @@ func New(config *util.Config) (Client, error) {
 	rdb = redis.NewClient(rdbOpts)
 
 	nm, err := nonceredis.NewNonceManager(nonceredis.Options{
-		Redis: rdb,
+		Redis:           rdb,
+		PollInterval:    nonceLockPollInterval,
+		StaleNonceDelay: staleNonceDelay,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	safeClient, err := safe.New(safe.Options{
-		Chain:        c,
-		Client:       eth,
-		Signer:       s,
-		Version:      version.V141,
-		NonceManager: nm,
+		Chain:               c,
+		Client:              eth,
+		Signer:              s,
+		Version:             version.V141,
+		NonceManager:        nm,
+		GasMultiplier:       gasMultiplier,
+		DeployTimeout:       deployTimeout,
+		ReceiptPollInterval: deploymentReceiptPollInterval,
 	})
 	if err != nil {
 		return nil, err
@@ -111,7 +138,7 @@ func New(config *util.Config) (Client, error) {
 }
 
 func (c *client) PredictAddress(serverID uuid.UUID, owner common.Address) (common.Address, error) {
-	address, err := c.safe.PredictAddress([]common.Address{owner}, threshold, serverID[:])
+	address, err := c.safe.PredictAddress([]common.Address{owner}, treasurySafeThreshold, serverID[:])
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -120,7 +147,7 @@ func (c *client) PredictAddress(serverID uuid.UUID, owner common.Address) (commo
 }
 
 func (c *client) Deploy(ctx context.Context, serverID uuid.UUID, owner common.Address) (*DeployResult, error) {
-	result, err := c.safe.Deploy(ctx, []common.Address{owner}, threshold, serverID[:])
+	result, err := c.safe.Deploy(ctx, []common.Address{owner}, treasurySafeThreshold, serverID[:])
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +156,7 @@ func (c *client) Deploy(ctx context.Context, serverID uuid.UUID, owner common.Ad
 }
 
 func (c *client) IsDeployed(ctx context.Context, serverID uuid.UUID, owner common.Address) (bool, error) {
-	address, err := c.safe.PredictAddress([]common.Address{owner}, threshold, serverID[:])
+	address, err := c.safe.PredictAddress([]common.Address{owner}, treasurySafeThreshold, serverID[:])
 	if err != nil {
 		return false, err
 	}

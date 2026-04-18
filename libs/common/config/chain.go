@@ -3,9 +3,10 @@ package config
 import "fmt"
 
 type Chain struct {
-	ID   uint64
-	Name string
-	Slug string
+	ID           uint64
+	Name         string
+	Slug         string
+	ForksChainID uint64
 }
 
 type chainDef struct {
@@ -22,12 +23,16 @@ type ChainRegistry struct {
 // note that there can be only one chain per environment.
 var chainDefs = []chainDef{
 	{
-		Chain: Chain{ID: 137, Name: "Polygon Mainnet", Slug: "polygon-mainnet"},
-		envs:  []Environment{Production},
+		Chain: Chain{ID: 31337, Name: "Anvil", Slug: "anvil", ForksChainID: 11155111},
+		envs:  []Environment{Development},
 	},
 	{
-		Chain: Chain{ID: 11155111, Name: "Ethereum Sepolia", Slug: "ethereum-sepolia"},
-		envs:  []Environment{Development, Staging},
+		Chain: Chain{ID: 11155111, Name: "Sepolia", Slug: "sepolia"},
+		envs:  []Environment{Staging},
+	},
+	{
+		Chain: Chain{ID: 137, Name: "Polygon", Slug: "polygon"},
+		envs:  []Environment{Production},
 	},
 }
 

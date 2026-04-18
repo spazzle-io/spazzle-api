@@ -112,6 +112,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 		if _, err = processor.store.RecoverDeployedTreasury(ctx, serverAddress.Hex()); err != nil {
 			return fmt.Errorf("failed to recover deployed treasury: %w", err)
 		}
+		log.Info().Str("server_id", server.ID.String()).Msg("successfully recovered deployed treasury")
 		return nil
 	}
 

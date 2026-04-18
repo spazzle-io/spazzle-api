@@ -15,7 +15,7 @@ require (
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/rs/zerolog v1.35.0
-	github.com/spazzle-io/safekit v1.2.0
+	github.com/spazzle-io/safekit v1.4.0
 	github.com/spazzle-io/spazzle-api/libs/common v0.0.0-20251124205147-578180f7ddbc
 	github.com/spazzle-io/spazzle-api/services/proto v0.0.0-20251124205147-578180f7ddbc
 	github.com/stretchr/testify v1.11.1

@@ -18,14 +18,17 @@ func TestNewChainRegistry(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if r.current.ID != 11155111 {
+		if r.current.ID != 31337 {
 			t.Errorf("unexpected chain ID, got %d", r.current.ID)
 		}
-		if r.current.Name != "Ethereum Sepolia" {
+		if r.current.Name != "Anvil" {
 			t.Errorf("unexpected name, got %q", r.current.Name)
 		}
-		if r.current.Slug != "ethereum-sepolia" {
+		if r.current.Slug != "anvil" {
 			t.Errorf("unexpected slug, got %q", r.current.Slug)
+		}
+		if r.current.ForksChainID != 11155111 {
+			t.Errorf("unexpected ForksChainID, got %d", r.current.ForksChainID)
 		}
 	})
 
@@ -38,11 +41,14 @@ func TestNewChainRegistry(t *testing.T) {
 		if r.current.ID != 11155111 {
 			t.Errorf("unexpected chain ID, got %d", r.current.ID)
 		}
-		if r.current.Name != "Ethereum Sepolia" {
+		if r.current.Name != "Sepolia" {
 			t.Errorf("unexpected name, got %q", r.current.Name)
 		}
-		if r.current.Slug != "ethereum-sepolia" {
+		if r.current.Slug != "sepolia" {
 			t.Errorf("unexpected slug, got %q", r.current.Slug)
+		}
+		if r.current.ForksChainID != 0 {
+			t.Errorf("unexpected ForksChainID, got %d", r.current.ForksChainID)
 		}
 	})
 
@@ -55,11 +61,14 @@ func TestNewChainRegistry(t *testing.T) {
 		if r.current.ID != 137 {
 			t.Errorf("unexpected chain ID, got %d", r.current.ID)
 		}
-		if r.current.Name != "Polygon Mainnet" {
+		if r.current.Name != "Polygon" {
 			t.Errorf("unexpected name, got %q", r.current.Name)
 		}
-		if r.current.Slug != "polygon-mainnet" {
+		if r.current.Slug != "polygon" {
 			t.Errorf("unexpected slug, got %q", r.current.Slug)
+		}
+		if r.current.ForksChainID != 0 {
+			t.Errorf("unexpected ForksChainID, got %d", r.current.ForksChainID)
 		}
 	})
 }
@@ -137,7 +146,7 @@ func TestByID_KnownChain(t *testing.T) {
 		t.Fatal("expected ByID(137) to return true for known chain")
 	}
 
-	if c.Name != "Polygon Mainnet" {
+	if c.Name != "Polygon" {
 		t.Errorf("expected Polygon Mainnet, got %q", c.Name)
 	}
 }
