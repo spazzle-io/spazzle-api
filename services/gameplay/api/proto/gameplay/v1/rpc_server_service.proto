@@ -10,11 +10,10 @@ option go_package = "github.com/spazzle-io/spazzle-api/services/gameplay/pb";
 
 message CreateServerRequest {
   string name = 1 [(buf.validate.field).required = true];
-  string server_address = 2 [(buf.validate.field).required = true];
-  string stake_per_game = 3 [(buf.validate.field).required = true];
-  int32 num_rounds_per_game = 4 [(buf.validate.field).required = true];
-  int32 round_duration_secs = 5 [(buf.validate.field).required = true];
-  int32 num_drawing_options = 6 [(buf.validate.field).required = true];
+  string stake_per_game = 2 [(buf.validate.field).required = true];
+  int32 num_rounds_per_game = 3 [(buf.validate.field).required = true];
+  int32 round_duration_secs = 4 [(buf.validate.field).required = true];
+  int32 num_drawing_options = 5 [(buf.validate.field).required = true];
 }
 
 message CreateServerResponse {
@@ -99,6 +98,14 @@ message ArchiveServerResponse {
   Server server = 1;
 }
 
+message GetServerTreasuryRequest {
+  string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
+}
+
+message GetServerTreasuryResponse {
+  ServerTreasury treasury = 1;
+}
+
 enum ServerSortBy {
   SERVER_SORT_BY_UNSPECIFIED = 0;
   SERVER_SORT_BY_NEW = 1;
@@ -154,4 +161,25 @@ message ListServersCursor {
   google.protobuf.Timestamp after_created_at = 3;
   double after_trending_score = 4;
   int32 after_total_games = 5;
+}
+
+enum ServerTreasuryStatus {
+  SERVER_TREASURY_STATUS_UNSPECIFIED = 0;
+  SERVER_TREASURY_STATUS_PENDING = 1;
+  SERVER_TREASURY_STATUS_DEPLOYING = 2;
+  SERVER_TREASURY_STATUS_DEPLOYED = 3;
+  SERVER_TREASURY_STATUS_FAILED = 4;
+}
+
+message ServerTreasury {
+  string address = 1;
+  string server_id = 2;
+  string owner_address = 3;
+  ServerTreasuryStatus status = 4;
+  string tx_hash = 5;
+  int64 block_number = 6;
+  int64 gas_used = 7;
+  google.protobuf.Timestamp deployed_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
 }

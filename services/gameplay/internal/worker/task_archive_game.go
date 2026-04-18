@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rs/zerolog"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
@@ -72,27 +71,21 @@ func (processor *RedisTaskProcessor) ProcessTaskArchiveGame(ctx context.Context,
 		return fmt.Errorf("failed to unmarshal task payload: %v: %w", err, asynq.SkipRetry)
 	}
 
-	logger := log.With().
-		Str("game_server_id", payload.ServerID.String()).
-		Str("game_id", payload.GameID.String()).
-		Logger()
-
 	game := eventbus.GameIdentifier{
 		GameServerID: payload.ServerID,
 		GameID:       payload.GameID,
 	}
 
-	gameEventsMessages, err := processor.archiveStreamsToS3(ctx, game, payload, logger)
+	gameEventsMessages, err := processor.archiveStreamsToS3(ctx, game, payload)
 	if err != nil {
 		return err
 	}
 
-	if err := processor.archiveGameToDB(ctx, payload, gameEventsMessages, logger); err != nil {
+	if err := processor.archiveGameToDB(ctx, payload, gameEventsMessages); err != nil {
 		return err
 	}
 
 	if err := processor.bus.Cleanup(ctx, game); err != nil {
-		logger.Error().Err(err).Msg("failed to clean up game streams")
 		return fmt.Errorf("failed to clean up game streams: %w", err)
 	}
 
@@ -108,14 +101,12 @@ func (processor *RedisTaskProcessor) archiveStreamsToS3(
 	ctx context.Context,
 	game eventbus.GameIdentifier,
 	payload PayloadArchiveGame,
-	logger zerolog.Logger,
 ) ([]eventbus.Message, error) {
 	var gameEventsMessages []eventbus.Message
 
 	for _, streamType := range eventbus.AllStreamTypes {
 		messages, err := processor.replayGameStream(ctx, game, streamType)
 		if err != nil {
-			logger.Error().Err(err).Str("stream_type", string(streamType)).Msg("failed to replay stream")
 			return nil, err
 		}
 
@@ -124,27 +115,19 @@ func (processor *RedisTaskProcessor) archiveStreamsToS3(
 		}
 
 		if len(messages) == 0 {
-			logger.Info().Str("stream_type", string(streamType)).Msg("no messages to archive")
 			continue
 		}
 
 		data, err := json.Marshal(messages)
 		if err != nil {
-			logger.Error().Err(err).Str("stream_type", string(streamType)).Msg("failed to marshal messages")
 			return nil, err
 		}
 
 		key := fmt.Sprintf("games/%s/%s/%s.json", payload.ServerID, payload.GameID, streamType)
 		err = processor.objectStore.Put(ctx, archiveBucket, key, bytes.NewReader(data), "application/json")
 		if err != nil {
-			logger.Error().Err(err).Str("stream_type", string(streamType)).Msg("failed to upload archive")
 			return nil, err
 		}
-
-		logger.Info().
-			Str("stream_type", string(streamType)).
-			Int("message_count", len(messages)).
-			Msg("archived stream")
 	}
 
 	return gameEventsMessages, nil
@@ -154,22 +137,18 @@ func (processor *RedisTaskProcessor) archiveGameToDB(
 	ctx context.Context,
 	payload PayloadArchiveGame,
 	gameEventsMessages []eventbus.Message,
-	logger zerolog.Logger,
 ) error {
 	if len(gameEventsMessages) == 0 {
-		logger.Info().Msg("no game events to archive")
 		return nil
 	}
 
 	gameEndedPayload, err := extractGameEndedPayload(gameEventsMessages)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to extract game ended payload")
 		return fmt.Errorf("failed to extract game ended payload: %v: %w", err, asynq.SkipRetry)
 	}
 
 	playerResults, err := mapPlayerResults(gameEndedPayload.Results)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to map player results")
 		return fmt.Errorf("failed to map player results: %w", err)
 	}
 
@@ -197,14 +176,10 @@ func (processor *RedisTaskProcessor) archiveGameToDB(
 	_, err = processor.store.ArchiveGameTx(ctx, txParams)
 	if err != nil {
 		if errors.Is(err, db.ErrGameAlreadyExists) {
-			logger.Info().Msg("game already archived in database, skipping")
 		} else {
-			logger.Error().Err(err).Msg("failed to archive game to database")
 			return err
 		}
 	}
-
-	logger.Info().Msg("archived game to database")
 
 	return nil
 }

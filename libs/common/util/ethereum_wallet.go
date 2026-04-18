@@ -105,3 +105,10 @@ func IsEthereumSignatureValid(walletAddress string, message string, signature st
 
 	return true, nil
 }
+
+func ParseWalletAddress(s string) (common.Address, error) {
+	if !common.IsHexAddress(s) {
+		return common.Address{}, fmt.Errorf("invalid wallet address: %q", s)
+	}
+	return common.HexToAddress(s), nil
+}

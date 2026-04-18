@@ -29,6 +29,7 @@ func createTestServer(t *testing.T, userId uuid.UUID) Server {
 	require.NotEmpty(t, stakePerGame)
 
 	params := CreateServerParams{
+		ID:            uuid.New(),
 		Name:          fmt.Sprintf("%s_%s", gofakeit.PetName(), randStr),
 		OwnerID:       userId,
 		ServerAddress: serverWallet.Address,
@@ -123,8 +124,73 @@ func TestCreateServer_UniqueName(t *testing.T) {
 	require.True(t, updatedServer.IsArchived)
 
 	// create a new server with the same name as the previous one - should succeed because it's archived
-	createServerParams := CreateServerParams{
+
+	serverWallet1, err := commonUtil.NewEthereumWallet()
+	require.NoError(t, err)
+	require.NotEmpty(t, serverWallet1)
+
+	createServerParams1 := CreateServerParams{
+		ID:            uuid.New(),
 		Name:          server.Name,
+		OwnerID:       server.OwnerID,
+		ServerAddress: serverWallet1.Address,
+		StakePerGame: pgtype.Numeric{
+			Int:   big.NewInt(20),
+			Valid: true,
+		},
+		NumRoundsPerGame:  10,
+		RoundDurationSecs: 1.5 * 60,
+		NumDrawingOptions: 3,
+	}
+	newServer, err := testStore.CreateServer(context.Background(), createServerParams1)
+	require.NoError(t, err)
+	require.NotEmpty(t, newServer)
+
+	// attempt to create another server with the same name - should fail
+
+	serverWallet2, err := commonUtil.NewEthereumWallet()
+	require.NoError(t, err)
+	require.NotEmpty(t, serverWallet1)
+
+	createServerParams2 := CreateServerParams{
+		ID:            uuid.New(),
+		Name:          server.Name,
+		OwnerID:       server.OwnerID,
+		ServerAddress: serverWallet2.Address,
+		StakePerGame: pgtype.Numeric{
+			Int:   big.NewInt(20),
+			Valid: true,
+		},
+		NumRoundsPerGame:  10,
+		RoundDurationSecs: 1.5 * 60,
+		NumDrawingOptions: 3,
+	}
+
+	anotherNewServer, err := testStore.CreateServer(context.Background(), createServerParams2)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "SQLSTATE 23505")
+	require.ErrorContains(t, err, "servers_name_unique_unarchived_idx")
+	require.Empty(t, anotherNewServer)
+}
+
+func TestCreateServer_UniqueAddress(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping db test in short mode")
+	}
+
+	// create a new server
+	server := createTestServer(t, uuid.New())
+	require.NotEmpty(t, server)
+	require.False(t, server.IsArchived)
+
+	// attempt to create another server with the same server address - should fail
+
+	randStr, err := commonUtil.GenerateRandomAlphanumericString(4)
+	require.NoError(t, err)
+
+	createServerParams2 := CreateServerParams{
+		ID:            uuid.New(),
+		Name:          fmt.Sprintf("%s-%s", gofakeit.PetName(), randStr),
 		OwnerID:       server.OwnerID,
 		ServerAddress: server.ServerAddress,
 		StakePerGame: pgtype.Numeric{
@@ -135,15 +201,11 @@ func TestCreateServer_UniqueName(t *testing.T) {
 		RoundDurationSecs: 1.5 * 60,
 		NumDrawingOptions: 3,
 	}
-	newServer, err := testStore.CreateServer(context.Background(), createServerParams)
-	require.NoError(t, err)
-	require.NotEmpty(t, newServer)
 
-	// attempt to create another server with the same name - should fail
-	anotherNewServer, err := testStore.CreateServer(context.Background(), createServerParams)
+	anotherNewServer, err := testStore.CreateServer(context.Background(), createServerParams2)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "SQLSTATE 23505")
-	require.ErrorContains(t, err, "servers_name_unique_unarchived_idx")
+	require.ErrorContains(t, err, "unique_servers_server_address")
 	require.Empty(t, anotherNewServer)
 }
 

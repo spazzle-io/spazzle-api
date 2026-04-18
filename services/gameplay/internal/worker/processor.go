@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/treasury"
+
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 
 	"github.com/hibiken/asynq"
@@ -21,6 +23,7 @@ type TaskProcessor interface {
 	Stop()
 	ProcessTaskArchiveGame(ctx context.Context, task *asynq.Task) error
 	ProcessTaskRecomputeTrending(ctx context.Context, task *asynq.Task) error
+	ProcessTaskDeployTreasury(ctx context.Context, task *asynq.Task) error
 }
 
 type scheduledTask struct {
@@ -39,11 +42,12 @@ var scheduledTasks = []scheduledTask{
 }
 
 type RedisTaskProcessor struct {
-	server      *asynq.Server
-	scheduler   *asynq.Scheduler
-	bus         eventbus.EventBus
-	store       db.Store
-	objectStore commonStorage.ObjectStore
+	server         *asynq.Server
+	scheduler      *asynq.Scheduler
+	bus            eventbus.EventBus
+	store          db.Store
+	objectStore    commonStorage.ObjectStore
+	treasuryClient treasury.Client
 }
 
 func NewRedisTaskProcessor(
@@ -51,6 +55,7 @@ func NewRedisTaskProcessor(
 	bus eventbus.EventBus,
 	store db.Store,
 	objectStore commonStorage.ObjectStore,
+	treasuryClient treasury.Client,
 ) TaskProcessor {
 	logger := NewLogger()
 	redis.SetLogger(logger)
@@ -74,11 +79,12 @@ func NewRedisTaskProcessor(
 	})
 
 	return &RedisTaskProcessor{
-		server:      server,
-		scheduler:   scheduler,
-		bus:         bus,
-		store:       store,
-		objectStore: objectStore,
+		server:         server,
+		scheduler:      scheduler,
+		bus:            bus,
+		store:          store,
+		objectStore:    objectStore,
+		treasuryClient: treasuryClient,
 	}
 }
 
@@ -86,6 +92,7 @@ func (processor *RedisTaskProcessor) Start() error {
 	mux := asynq.NewServeMux()
 
 	mux.HandleFunc(TaskArchiveGame, processor.ProcessTaskArchiveGame)
+	mux.HandleFunc(TaskDeployTreasury, processor.ProcessTaskDeployTreasury)
 	mux.HandleFunc(TaskRecomputeServerTrendingScores, processor.ProcessTaskRecomputeTrending)
 
 	err := processor.registerScheduledTasks()

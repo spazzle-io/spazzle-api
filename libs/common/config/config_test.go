@@ -118,8 +118,8 @@ func TestLoad_WiresChainsFromEnvironment(t *testing.T) {
 	}
 
 	chain := cfg.Chains.Current()
-	if chain.ID != 11155111 {
-		t.Errorf("expected ETH Sepolia (11155111) for development, got %d", chain.ID)
+	if chain.ID != 31337 {
+		t.Errorf("expected Anvil (31337) for development, got %d", chain.ID)
 	}
 }
 

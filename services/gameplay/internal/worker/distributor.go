@@ -9,6 +9,7 @@ import (
 
 type TaskDistributor interface {
 	DistributeTaskArchiveGame(ctx context.Context, payload *PayloadArchiveGame, opts ...asynq.Option) error
+	DistributeTaskDeployTreasury(ctx context.Context, payload *PayloadDeployTreasury, opts ...asynq.Option) error
 	Close() error
 }
 

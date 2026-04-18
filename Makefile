@@ -15,6 +15,9 @@ POSTGRES_VERSION := 17-alpine
 REDIS_PORT := 6379
 REDIS_VERSION := 8-alpine
 
+ANVIL_PORT ?= 8545
+ANVIL_FORK_URL ?= https://ethereum-sepolia-rpc.publicnode.com
+
 define compute-db-url
 	db_name=$$(basename $(1)); \
 	db_url="postgresql://$(POSTGRES_USER):$(POSTGRES_PASS)@localhost:$(POSTGRES_PORT)/$$db_name?sslmode=disable"
@@ -170,4 +173,13 @@ minio-down:
 minio-logs:
 	docker compose -f docker/minio/docker-compose.minio.yml logs -f
 
-.PHONY: run-module-target test merge-coverage tidy postgres create-db drop-db migrate-create migrate-up migrate-down redis mock sqlc buf-update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs
+anvil-up:
+	docker run --name anvil -p $(ANVIL_PORT):8545 -d --entrypoint "" ghcr.io/foundry-rs/foundry:stable anvil --host 0.0.0.0 --fork-url $(ANVIL_FORK_URL) --chain-id 31337 --no-storage-caching
+
+anvil-down:
+	docker stop anvil && docker rm anvil
+
+anvil-logs:
+	docker logs -f anvil
+
+.PHONY: run-module-target test merge-coverage tidy postgres create-db drop-db migrate-create migrate-up migrate-down redis mock sqlc buf-update proto temporal-up temporal-down temporal-logs minio-up minio-down minio-logs anvil-up anvil-down anvil-logs

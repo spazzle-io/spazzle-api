@@ -10,6 +10,11 @@ import (
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/worker"
 )
 
+const (
+	archiveGameMaxRetries = 5
+	archiveGameTimeout    = 10 * time.Minute
+)
+
 type ArchiveGameParams struct {
 	ServerID      uuid.UUID
 	GameID        uuid.UUID
@@ -33,8 +38,8 @@ func (a *Activities) ArchiveGame(
 			GameStartedAt: params.GameStartedAt,
 			GameEndedAt:   params.GameEndedAt,
 		},
-		asynq.MaxRetry(5),
-		asynq.Timeout(10*time.Minute),
+		asynq.MaxRetry(archiveGameMaxRetries),
+		asynq.Timeout(archiveGameTimeout),
 	)
 	return &ArchiveGameResult{}, err
 }

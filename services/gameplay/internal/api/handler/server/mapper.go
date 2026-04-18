@@ -107,3 +107,33 @@ func mapDBUserServersToPb(userServers []db.ListUserServersRow) (pbUserServers []
 
 	return
 }
+
+func mapDBServerTreasuryStatusToPb(status db.TreasuryStatus) pb.ServerTreasuryStatus {
+	switch status {
+	case db.TreasuryStatusPending:
+		return pb.ServerTreasuryStatus_SERVER_TREASURY_STATUS_PENDING
+	case db.TreasuryStatusDeploying:
+		return pb.ServerTreasuryStatus_SERVER_TREASURY_STATUS_DEPLOYING
+	case db.TreasuryStatusDeployed:
+		return pb.ServerTreasuryStatus_SERVER_TREASURY_STATUS_DEPLOYED
+	case db.TreasuryStatusFailed:
+		return pb.ServerTreasuryStatus_SERVER_TREASURY_STATUS_FAILED
+	default:
+		return pb.ServerTreasuryStatus_SERVER_TREASURY_STATUS_UNSPECIFIED
+	}
+}
+
+func mapDBServerTreasuryToPb(treasury db.ServerTreasury) *pb.ServerTreasury {
+	return &pb.ServerTreasury{
+		Address:      treasury.Address,
+		ServerId:     treasury.ServerID.String(),
+		Status:       mapDBServerTreasuryStatusToPb(treasury.Status),
+		OwnerAddress: treasury.Owner,
+		TxHash:       treasury.TxHash.String,
+		BlockNumber:  treasury.BlockNumber.Int64,
+		GasUsed:      treasury.GasUsed.Int64,
+		DeployedAt:   timestamppb.New(treasury.DeployedAt.Time),
+		CreatedAt:    timestamppb.New(treasury.CreatedAt),
+		UpdatedAt:    timestamppb.New(treasury.UpdatedAt),
+	}
+}

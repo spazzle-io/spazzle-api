@@ -67,6 +67,15 @@ func Uint64ToUint32(n uint64) (uint32, error) {
 	return uint32(n), nil
 }
 
+// Uint64ToInt64 safely converts uint64 to int64 with bounds checking.
+// Returns an error if the value exceeds math.MaxInt64.
+func Uint64ToInt64(n uint64) (int64, error) {
+	if n > math.MaxInt64 {
+		return 0, fmt.Errorf("uint64 value %d overflows int64", n)
+	}
+	return int64(n), nil
+}
+
 // IntToInt32 safely converts int to int32 with bounds checking.
 // Returns an error if the value cannot fit in int32.
 func IntToInt32(n int) (int32, error) {

@@ -27,6 +27,7 @@ const (
 	ServerService_GetUserServerPermissions_FullMethodName = "/gameplay.v1.ServerService/GetUserServerPermissions"
 	ServerService_UpdateServer_FullMethodName             = "/gameplay.v1.ServerService/UpdateServer"
 	ServerService_ArchiveServer_FullMethodName            = "/gameplay.v1.ServerService/ArchiveServer"
+	ServerService_GetServerTreasury_FullMethodName        = "/gameplay.v1.ServerService/GetServerTreasury"
 )
 
 // ServerServiceClient is the client API for ServerService service.
@@ -41,6 +42,7 @@ type ServerServiceClient interface {
 	GetUserServerPermissions(ctx context.Context, in *GetUserServerPermissionsRequest, opts ...grpc.CallOption) (*GetUserServerPermissionsResponse, error)
 	UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*UpdateServerResponse, error)
 	ArchiveServer(ctx context.Context, in *ArchiveServerRequest, opts ...grpc.CallOption) (*ArchiveServerResponse, error)
+	GetServerTreasury(ctx context.Context, in *GetServerTreasuryRequest, opts ...grpc.CallOption) (*GetServerTreasuryResponse, error)
 }
 
 type serverServiceClient struct {
@@ -131,6 +133,16 @@ func (c *serverServiceClient) ArchiveServer(ctx context.Context, in *ArchiveServ
 	return out, nil
 }
 
+func (c *serverServiceClient) GetServerTreasury(ctx context.Context, in *GetServerTreasuryRequest, opts ...grpc.CallOption) (*GetServerTreasuryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetServerTreasuryResponse)
+	err := c.cc.Invoke(ctx, ServerService_GetServerTreasury_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServerServiceServer is the server API for ServerService service.
 // All implementations must embed UnimplementedServerServiceServer
 // for forward compatibility.
@@ -143,6 +155,7 @@ type ServerServiceServer interface {
 	GetUserServerPermissions(context.Context, *GetUserServerPermissionsRequest) (*GetUserServerPermissionsResponse, error)
 	UpdateServer(context.Context, *UpdateServerRequest) (*UpdateServerResponse, error)
 	ArchiveServer(context.Context, *ArchiveServerRequest) (*ArchiveServerResponse, error)
+	GetServerTreasury(context.Context, *GetServerTreasuryRequest) (*GetServerTreasuryResponse, error)
 	mustEmbedUnimplementedServerServiceServer()
 }
 
@@ -176,6 +189,9 @@ func (UnimplementedServerServiceServer) UpdateServer(context.Context, *UpdateSer
 }
 func (UnimplementedServerServiceServer) ArchiveServer(context.Context, *ArchiveServerRequest) (*ArchiveServerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ArchiveServer not implemented")
+}
+func (UnimplementedServerServiceServer) GetServerTreasury(context.Context, *GetServerTreasuryRequest) (*GetServerTreasuryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServerTreasury not implemented")
 }
 func (UnimplementedServerServiceServer) mustEmbedUnimplementedServerServiceServer() {}
 func (UnimplementedServerServiceServer) testEmbeddedByValue()                       {}
@@ -342,6 +358,24 @@ func _ServerService_ArchiveServer_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServerService_GetServerTreasury_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetServerTreasuryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServerServiceServer).GetServerTreasury(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServerService_GetServerTreasury_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServerServiceServer).GetServerTreasury(ctx, req.(*GetServerTreasuryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServerService_ServiceDesc is the grpc.ServiceDesc for ServerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -380,6 +414,10 @@ var ServerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ArchiveServer",
 			Handler:    _ServerService_ArchiveServer_Handler,
+		},
+		{
+			MethodName: "GetServerTreasury",
+			Handler:    _ServerService_GetServerTreasury_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

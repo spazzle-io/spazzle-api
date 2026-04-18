@@ -24,6 +24,7 @@ const (
 	ServerNotFoundError      string = "Server not found"
 	InvalidAfterIdError      string = "Invalid after id"
 	ServerNameInUseError     string = "Server name already in use"
+	ServerAddressInUseError  string = "Server treasury address already in use"
 	ServerArchivedError      string = "Server archived"
 	InvalidStakePerGameError string = "Invalid stake per game"
 	InvalidStreamTypeError   string = "Invalid stream type"
@@ -98,6 +99,11 @@ func HandleServerDBError(dbError error) error {
 	case parsedDBError.Code == db.UniqueViolationCode &&
 		parsedDBError.ConstraintName == "servers_name_unique_unarchived_idx":
 		return status.Error(codes.AlreadyExists, ServerNameInUseError)
+
+	// a server with the same treasury address exists
+	case parsedDBError.Code == db.UniqueViolationCode &&
+		parsedDBError.ConstraintName == "unique_servers_server_address":
+		return status.Error(codes.AlreadyExists, ServerAddressInUseError)
 
 	// no server found
 	case errors.Is(dbError, db.RecordNotFoundError):

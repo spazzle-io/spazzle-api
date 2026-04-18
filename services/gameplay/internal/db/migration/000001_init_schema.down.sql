@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS server_treasuries;
 DROP TABLE IF EXISTS words;
 DROP TABLE IF EXISTS server_admins;
 DROP TABLE IF EXISTS server_player_stats;
@@ -5,3 +6,5 @@ DROP TABLE IF EXISTS game_players;
 DROP TABLE IF EXISTS games;
 DROP TABLE IF EXISTS user_stats;
 DROP TABLE IF EXISTS servers;
+
+DROP TYPE IF EXISTS treasury_status;

@@ -5,11 +5,57 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type TreasuryStatus string
+
+const (
+	TreasuryStatusPending   TreasuryStatus = "pending"
+	TreasuryStatusDeploying TreasuryStatus = "deploying"
+	TreasuryStatusDeployed  TreasuryStatus = "deployed"
+	TreasuryStatusFailed    TreasuryStatus = "failed"
+)
+
+func (e *TreasuryStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TreasuryStatus(s)
+	case string:
+		*e = TreasuryStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TreasuryStatus: %T", src)
+	}
+	return nil
+}
+
+type NullTreasuryStatus struct {
+	TreasuryStatus TreasuryStatus `json:"treasury_status"`
+	Valid          bool           `json:"valid"` // Valid is true if TreasuryStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTreasuryStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.TreasuryStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TreasuryStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTreasuryStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TreasuryStatus), nil
+}
 
 type Game struct {
 	ID         uuid.UUID      `json:"id"`
@@ -70,6 +116,19 @@ type ServerPlayerStat struct {
 	TotalPnl    pgtype.Numeric `json:"total_pnl"`
 	TotalVolume pgtype.Numeric `json:"total_volume"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type ServerTreasury struct {
+	Address     string             `json:"address"`
+	ServerID    uuid.UUID          `json:"server_id"`
+	Owner       string             `json:"owner"`
+	Status      TreasuryStatus     `json:"status"`
+	TxHash      pgtype.Text        `json:"tx_hash"`
+	BlockNumber pgtype.Int8        `json:"block_number"`
+	GasUsed     pgtype.Int8        `json:"gas_used"`
+	DeployedAt  pgtype.Timestamptz `json:"deployed_at"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
 type UserStat struct {

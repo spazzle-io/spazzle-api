@@ -149,6 +149,36 @@ func (mr *MockStoreMockRecorder) CreateServer(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateServer", reflect.TypeOf((*MockStore)(nil).CreateServer), ctx, arg)
 }
 
+// CreateServerTx mocks base method.
+func (m *MockStore) CreateServerTx(ctx context.Context, params db.CreateServerTxParams) (db.CreateServerTxResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateServerTx", ctx, params)
+	ret0, _ := ret[0].(db.CreateServerTxResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateServerTx indicates an expected call of CreateServerTx.
+func (mr *MockStoreMockRecorder) CreateServerTx(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateServerTx", reflect.TypeOf((*MockStore)(nil).CreateServerTx), ctx, params)
+}
+
+// CreateTreasury mocks base method.
+func (m *MockStore) CreateTreasury(ctx context.Context, arg db.CreateTreasuryParams) (db.ServerTreasury, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTreasury", ctx, arg)
+	ret0, _ := ret[0].(db.ServerTreasury)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTreasury indicates an expected call of CreateTreasury.
+func (mr *MockStoreMockRecorder) CreateTreasury(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTreasury", reflect.TypeOf((*MockStore)(nil).CreateTreasury), ctx, arg)
+}
+
 // GetGameById mocks base method.
 func (m *MockStore) GetGameById(ctx context.Context, gameID uuid.UUID) (db.Game, error) {
 	m.ctrl.T.Helper()
@@ -434,6 +464,21 @@ func (mr *MockStoreMockRecorder) GetTotalUserStatsCount(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalUserStatsCount", reflect.TypeOf((*MockStore)(nil).GetTotalUserStatsCount), ctx)
 }
 
+// GetTreasury mocks base method.
+func (m *MockStore) GetTreasury(ctx context.Context, address string) (db.ServerTreasury, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTreasury", ctx, address)
+	ret0, _ := ret[0].(db.ServerTreasury)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTreasury indicates an expected call of GetTreasury.
+func (mr *MockStoreMockRecorder) GetTreasury(ctx, address any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTreasury", reflect.TypeOf((*MockStore)(nil).GetTreasury), ctx, address)
+}
+
 // GetUserStats mocks base method.
 func (m *MockStore) GetUserStats(ctx context.Context, userID uuid.UUID) (db.UserStat, error) {
 	m.ctrl.T.Helper()
@@ -584,6 +629,51 @@ func (mr *MockStoreMockRecorder) ListWords(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWords", reflect.TypeOf((*MockStore)(nil).ListWords), ctx, arg)
 }
 
+// MarkTreasuryDeployed mocks base method.
+func (m *MockStore) MarkTreasuryDeployed(ctx context.Context, arg db.MarkTreasuryDeployedParams) (db.ServerTreasury, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkTreasuryDeployed", ctx, arg)
+	ret0, _ := ret[0].(db.ServerTreasury)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkTreasuryDeployed indicates an expected call of MarkTreasuryDeployed.
+func (mr *MockStoreMockRecorder) MarkTreasuryDeployed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkTreasuryDeployed", reflect.TypeOf((*MockStore)(nil).MarkTreasuryDeployed), ctx, arg)
+}
+
+// MarkTreasuryDeploying mocks base method.
+func (m *MockStore) MarkTreasuryDeploying(ctx context.Context, address string) (db.ServerTreasury, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkTreasuryDeploying", ctx, address)
+	ret0, _ := ret[0].(db.ServerTreasury)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkTreasuryDeploying indicates an expected call of MarkTreasuryDeploying.
+func (mr *MockStoreMockRecorder) MarkTreasuryDeploying(ctx, address any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkTreasuryDeploying", reflect.TypeOf((*MockStore)(nil).MarkTreasuryDeploying), ctx, address)
+}
+
+// MarkTreasuryFailed mocks base method.
+func (m *MockStore) MarkTreasuryFailed(ctx context.Context, address string) (db.ServerTreasury, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkTreasuryFailed", ctx, address)
+	ret0, _ := ret[0].(db.ServerTreasury)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkTreasuryFailed indicates an expected call of MarkTreasuryFailed.
+func (mr *MockStoreMockRecorder) MarkTreasuryFailed(ctx, address any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkTreasuryFailed", reflect.TypeOf((*MockStore)(nil).MarkTreasuryFailed), ctx, address)
+}
+
 // RecomputeTrendingScores mocks base method.
 func (m *MockStore) RecomputeTrendingScores(ctx context.Context, trendingWindow pgtype.Interval) error {
 	m.ctrl.T.Helper()
@@ -596,6 +686,21 @@ func (m *MockStore) RecomputeTrendingScores(ctx context.Context, trendingWindow 
 func (mr *MockStoreMockRecorder) RecomputeTrendingScores(ctx, trendingWindow any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecomputeTrendingScores", reflect.TypeOf((*MockStore)(nil).RecomputeTrendingScores), ctx, trendingWindow)
+}
+
+// RecoverDeployedTreasury mocks base method.
+func (m *MockStore) RecoverDeployedTreasury(ctx context.Context, address string) (db.ServerTreasury, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RecoverDeployedTreasury", ctx, address)
+	ret0, _ := ret[0].(db.ServerTreasury)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RecoverDeployedTreasury indicates an expected call of RecoverDeployedTreasury.
+func (mr *MockStoreMockRecorder) RecoverDeployedTreasury(ctx, address any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecoverDeployedTreasury", reflect.TypeOf((*MockStore)(nil).RecoverDeployedTreasury), ctx, address)
 }
 
 // RemoveAllServerWordsTx mocks base method.
