@@ -21,6 +21,11 @@ type sendGameEventConfig struct {
 	marker         eventbus.Marker
 }
 
+type GameEvent[T any] struct {
+	TargetClientID uuid.UUID
+	Payload        T
+}
+
 type SendGameEventOption func(*sendGameEventConfig)
 
 func WithTargetClient(id uuid.UUID) SendGameEventOption {
@@ -112,27 +117,26 @@ func sendGameEvent[T any](
 	return false, nil
 }
 
-func SendGameEvents[T any](
+func sendGameEvents[T any](
 	ctx workflow.Context,
 	state *GameState,
 	eventType string,
-	payload T,
-	targets []uuid.UUID,
+	events []GameEvent[T],
 	opts ...SendGameEventOption,
 ) error {
 	cfg := newSendGameEventConfig(opts)
 
-	events := make([]activities.GameEventEntry, len(targets))
-	for i, clientID := range targets {
+	entries := make([]activities.GameEventEntry, len(events))
+	for i, event := range events {
 		correlationID, err := generateUUID(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to generate correlation ID: %w", err)
 		}
 
-		events[i] = activities.GameEventEntry{
-			TargetClientID: clientID,
+		entries[i] = activities.GameEventEntry{
+			TargetClientID: event.TargetClientID,
 			CorrelationID:  correlationID,
-			EventPayload:   payload,
+			EventPayload:   event.Payload,
 			Marker:         cfg.marker,
 		}
 	}
@@ -145,7 +149,7 @@ func SendGameEvents[T any](
 		GameID:       state.GameID,
 		StreamType:   cfg.streamType,
 		EventType:    eventType,
-		Events:       events,
+		Events:       entries,
 	}
 
 	err := workflow.ExecuteActivity(ctx, a.PublishGameEvents, publishGameEventsParams).Get(ctx, &publishGameEventResult)

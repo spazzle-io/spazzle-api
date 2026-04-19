@@ -61,15 +61,27 @@ func (s *EndGameTestSuite) TestEndGame() {
 		})
 	}, 200*time.Millisecond)
 
+	numPlayerFinalResultsSent := 0
 	sentGameEndedEvent := false
+
 	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			for _, event := range params.Events {
-				if params.EventType == gameevents.TypeGameEnded {
-					sentGameEndedEvent = true
+			switch params.EventType {
+			case gameevents.TypePlayerFinalResult:
+				for _, event := range params.Events {
+					var payload gameevents.PlayerFinalResult
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
+					numPlayerFinalResultsSent++
+				}
 
+			case gameevents.TypeGameEnded:
+				sentGameEndedEvent = true
+				for _, event := range params.Events {
 					var payload gameevents.GameEndedPayload
 					raw := event.EventPayload.(map[string]interface{})
 					b, err := json.Marshal(raw)
@@ -82,15 +94,18 @@ func (s *EndGameTestSuite) TestEndGame() {
 					s.Len(payload.Results, 2)
 				}
 
-				if event.TargetClientID == uuid.Nil {
-					return
-				}
+			default:
+				for _, event := range params.Events {
+					if event.TargetClientID == uuid.Nil {
+						continue
+					}
 
-				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-					CorrelationID: event.CorrelationID,
-					InstanceID:    instanceID,
-					Status:        gameevents.AckStatusDelivered,
-				})
+					s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+						CorrelationID: event.CorrelationID,
+						InstanceID:    instanceID,
+						Status:        gameevents.AckStatusDelivered,
+					})
+				}
 			}
 		}).
 		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
@@ -121,6 +136,7 @@ func (s *EndGameTestSuite) TestEndGame() {
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
 	s.True(sentGameEndedEvent)
+	s.Equal(2, numPlayerFinalResultsSent)
 	s.True(executedArchiveGameActivity)
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhaseEndGame, capturedState.Phase)

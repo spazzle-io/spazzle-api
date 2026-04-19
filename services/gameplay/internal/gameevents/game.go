@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	TypeGameEnded = "game_ended"
+	TypeGameEnded         = "game_ended"
+	TypePlayerFinalResult = "player_final_result"
 )
 
 type PlayerFinalResult struct {

@@ -35,17 +35,22 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) 
 
 	state.EndedAt = workflow.Now(ctx).UTC()
 
-	// TODO: gameResult should only broadcast the top 10 players and not all players as this will scale linearly with
-	// number of players and exceed our 4KB write limit on wss connections.
-	// Proposed impl: gameResult.Results to be set to results[:min(10, len(results))]
-
-	// TODO: given the change to only broadcast the top 10 players, use the new publish game event activity to send
-	// an end game message to each player in one batch.
+	events := make([]GameEvent[*gameevents.PlayerFinalResult], len(results))
+	for i, r := range results {
+		events[i] = GameEvent[*gameevents.PlayerFinalResult]{
+			TargetClientID: r.PlayerID,
+			Payload:        r,
+		}
+	}
+	err = sendGameEvents(ctx, state, gameevents.TypePlayerFinalResult, events)
+	if err != nil {
+		return fmt.Errorf("failed to send final player results: %w", err)
+	}
 
 	gameResult := gameevents.GameEndedPayload{
 		TotalRounds: state.CurrentRound,
 		TotalPot:    state.GamePot,
-		Results:     results,
+		Results:     results[:min(10, len(results))],
 	}
 	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult)
 	if err != nil {

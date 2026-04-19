@@ -83,27 +83,31 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 		return fmt.Errorf("could not calculate provisional payouts: %v", err)
 	}
 
+	events := make([]GameEvent[*gameevents.PlayerRoundResult], len(results))
+	for i, r := range results {
+		events[i] = GameEvent[*gameevents.PlayerRoundResult]{
+			TargetClientID: r.PlayerID,
+			Payload:        r,
+		}
+	}
+	err = sendGameEvents(ctx, state, gameevents.TypePlayerRoundResult, events)
+	if err != nil {
+		return fmt.Errorf("failed to send player round results: %w", err)
+	}
+
 	isFinalRound := int32(state.CurrentRound) >= state.NumRounds
+	broadcastedResults := topRoundResults(correctGuessersResults, artistResult, 10)
 
-	// TODO: roundResult should only send top 10 guessers for the round + artist in the roundResult.Results list.
-	// This is to prevent this payload from ballooning as it will scale linearly with number of players
-	// and we only have 4KB write limit to player wss connections.
-	// Proposed impl: implement an extractTopResults helper func that takes in correctGuessersResults(already sorted),
-	// artistResult, and n=10. Then return first n from correctGuessersResults and append artist at the end.
-
-	// TODO: With the change to only send top n guessers, we can then use the updated publish game event activity to
-	// send round ended message payloads to each player including the artist in one batch.
-
-	roundResult := gameevents.RoundEndedPayload{
+	roundResults := gameevents.RoundEndedPayload{
 		Round:           state.CurrentRound,
 		ArtistID:        state.CurrentArtist,
 		Word:            state.CurrentWord.Text,
 		DrawingDuration: state.DrawingDuration,
-		Results:         results,
+		Results:         broadcastedResults,
 		TotalPot:        state.GamePot,
 		IsFinalRound:    isFinalRound,
 	}
-	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResult,
+	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResults,
 		WithMarker(eventbus.MarkerRoundEnded),
 	)
 	if err != nil {
@@ -382,4 +386,21 @@ func updatePlayerStates(state *GameState, roundResults []*gameevents.PlayerRound
 	}
 
 	return nil
+}
+
+func topRoundResults(
+	correctGuessers []*gameevents.PlayerRoundResult,
+	artist *gameevents.PlayerRoundResult,
+	n int,
+) []*gameevents.PlayerRoundResult {
+	if len(correctGuessers) < n {
+		n = len(correctGuessers)
+	}
+
+	top := correctGuessers[:n:n]
+	if artist == nil {
+		return top
+	}
+
+	return append(top, artist)
 }
