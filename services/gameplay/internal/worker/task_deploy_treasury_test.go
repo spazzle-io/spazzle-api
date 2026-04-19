@@ -259,15 +259,25 @@ func TestProcessTaskDeployTreasury(t *testing.T) {
 					PredictAddress(testServerID, testOwner).
 					Return(common.HexToAddress(testAddress), nil)
 
+				// failed deployment check does not prevent a deployment attempt
 				treasuryClient.EXPECT().
 					IsDeployed(gomock.Any(), testServerID, testOwner).
 					Return(false, errors.New("rpc error"))
 
-				treasuryClient.EXPECT().Deploy(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+				store.EXPECT().
+					MarkTreasuryDeploying(gomock.Any(), testAddress).
+					Return(testTreasury, nil)
+
+				treasuryClient.EXPECT().
+					Deploy(gomock.Any(), testServerID, testOwner).
+					Return(testDeployResult, nil)
+
+				store.EXPECT().
+					MarkTreasuryDeployed(gomock.Any(), gomock.Any()).
+					Return(testTreasury, nil)
 			},
 			checkResponse: func(t *testing.T, err error) {
-				require.Error(t, err)
-				require.NotErrorIs(t, err, asynq.SkipRetry)
+				require.NoError(t, err)
 			},
 		},
 		{

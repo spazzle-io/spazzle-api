@@ -88,7 +88,7 @@ func main() {
 		log.Fatal().Err(err).Msg("could not create event bus")
 	}
 
-	treasuryClient, err := treasury.New(config)
+	treasuryClient, err := treasury.New(ctx, config)
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create treasury client")
 	}

@@ -106,7 +106,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 
 	deployed, err := processor.treasuryClient.IsDeployed(ctx, payload.ServerID, payload.OwnerAddress)
 	if err != nil {
-		return fmt.Errorf("failed to determine if treasury was deployed: %w", err)
+		log.Warn().Err(err).Str("address", serverAddress.Hex()).Msg("failed to determine if treasury was deployed")
 	}
 	if deployed {
 		if _, err = processor.store.RecoverDeployedTreasury(ctx, serverAddress.Hex()); err != nil {
