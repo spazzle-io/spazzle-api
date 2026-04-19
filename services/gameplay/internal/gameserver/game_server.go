@@ -85,6 +85,7 @@ type GameServer struct {
 	currentRound    uint8
 	currentArtist   uuid.UUID
 	currentWord     string
+	stakePerGame    string
 	activePlayers   map[uuid.UUID]bool
 	correctGuessers map[uuid.UUID]bool
 }
@@ -168,16 +169,16 @@ func (gs *GameServer) loggerWithClient(client *Client) zerolog.Logger {
 		Logger()
 }
 
-func (gs *GameServer) InitializeGame() (*types.GameStateView, error) {
+func (gs *GameServer) InitializeGame() error {
 	if gs.isGameActive.Load() {
-		return gs.activeGameState(), nil
+		return nil
 	}
 
 	gs.initMu.Lock()
 
 	if gs.isGameActive.Load() {
 		gs.initMu.Unlock()
-		return gs.activeGameState(), nil
+		return nil
 	}
 
 	if gs.initBusy {
@@ -187,37 +188,37 @@ func (gs *GameServer) InitializeGame() (*types.GameStateView, error) {
 		gs.initMu.Unlock()
 
 		if gs.isGameActive.Load() {
-			return gs.activeGameState(), nil
+			return nil
 		}
-		return nil, errors.New("game server initialization failed")
+		return errors.New("game server initialization failed")
 	}
 
 	gs.initBusy = true
 	gs.initMu.Unlock()
 
-	gameState, err := gs.doInitialize()
+	err := gs.doInitialize()
 
 	gs.initMu.Lock()
 	gs.initBusy = false
 	gs.initCond.Broadcast()
 	gs.initMu.Unlock()
 
-	return gameState, err
+	return err
 }
 
-func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
+func (gs *GameServer) doInitialize() error {
 	if !gs.cancelScheduledShutdown() {
-		return &types.GameStateView{}, fmt.Errorf("failed to cancel scheduled shutdown")
+		return fmt.Errorf("failed to cancel scheduled shutdown")
 	}
 
 	server, err := gs.Store.GetServerById(gs.ctx, gs.serverID)
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to get server by id: %w", err)
+		return fmt.Errorf("failed to get server by id: %w", err)
 	}
 
 	stakePerGame, err := db.ParseDBNumericToWei(server.StakePerGame)
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to parse stake per game: %w", err)
+		return fmt.Errorf("failed to parse stake per game: %w", err)
 	}
 
 	gameID, err := gs.GfClient.Game(gs.serverID, types.GameInput{
@@ -227,12 +228,12 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 		StakePerGame:    stakePerGame.String(),
 	})
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to get or create game: %w", err)
+		return fmt.Errorf("failed to get or create game: %w", err)
 	}
 
 	err = gs.GfClient.HeartbeatGameServerInstance(gs.serverID, gameID, gs.instanceID)
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to register game server instance: %w", err)
+		return fmt.Errorf("failed to register game server instance: %w", err)
 	}
 
 	busSession, err := gs.Bus.Session(eventbus.GameIdentifier{
@@ -240,7 +241,7 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 		GameServerID: gs.serverID,
 	})
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to create event bus session: %w", err)
+		return fmt.Errorf("failed to create event bus session: %w", err)
 	}
 
 	defer func() {
@@ -254,17 +255,17 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 
 	err = busSession.Subscribe(gs.ctx, eventbus.GameEventsStreamType, eventbus.StartFromNow(), gs.handleEventBusMessage)
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to subscribe to game events stream: %w", err)
+		return fmt.Errorf("failed to subscribe to game events stream: %w", err)
 	}
 
 	err = busSession.Subscribe(gs.ctx, eventbus.DrawingUpdatesStreamType, eventbus.StartFromNow(), gs.handleEventBusMessage)
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to subscribe to drawing updates stream: %w", err)
+		return fmt.Errorf("failed to subscribe to drawing updates stream: %w", err)
 	}
 
 	gameState, err := gs.GfClient.GetGameState(gs.serverID)
 	if err != nil {
-		return &types.GameStateView{}, fmt.Errorf("failed to get game state: %w", err)
+		return fmt.Errorf("failed to get game state: %w", err)
 	}
 
 	if gs.busSession != nil {
@@ -278,6 +279,7 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 	gs.currentRound = gameState.CurrentRound
 	gs.currentArtist = gameState.CurrentArtist
 	gs.currentWord = gameState.CurrentWord.Text
+	gs.stakePerGame = gameState.StakePerGame
 	gs.activePlayers = gameState.Players
 	gs.correctGuessers = make(map[uuid.UUID]bool)
 	gs.isGameActive.Store(true)
@@ -285,16 +287,7 @@ func (gs *GameServer) doInitialize() (*types.GameStateView, error) {
 	logger := gs.logger()
 	logger.Info().Msg("game initialized successfully")
 
-	return gameState, nil
-}
-
-func (gs *GameServer) activeGameState() *types.GameStateView {
-	// TODO: Populate workflow GameStateView with stake per game as str, add a record in GameServer to store it
-	// and update it everytime we initialize game.
-	// This will be used in the JoinGame endpoint to determine the stake amount for players.
-	return &types.GameStateView{
-		GameID: gs.GetGameID(),
-	}
+	return nil
 }
 
 func (gs *GameServer) GetGameID() uuid.UUID {
@@ -302,6 +295,13 @@ func (gs *GameServer) GetGameID() uuid.UUID {
 	defer gs.mu.RUnlock()
 
 	return gs.gameID
+}
+
+func (gs *GameServer) GetStakePerGame() string {
+	gs.mu.RLock()
+	defer gs.mu.RUnlock()
+
+	return gs.stakePerGame
 }
 
 func (gs *GameServer) getBusSession() eventbus.Session {
