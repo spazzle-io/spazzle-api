@@ -25,7 +25,7 @@ func TestPhasePrepareRound(t *testing.T) {
 func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -54,8 +54,6 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 		})
 	}, 200*time.Millisecond)
 
-	var capturedState *types.GameStateView
-
 	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			params := args.Get(1).(activities.PublishGameEventsParams)
@@ -77,13 +75,6 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 			}
 		}).
 		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
-			val, err := s.env.QueryWorkflow(QueryGetGameState)
-			s.NoError(err)
-
-			var state types.GameStateView
-			s.NoError(val.Get(&state))
-			capturedState = &state
-
 			s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
 				GameID: gameID,
 				Reason: "test",
@@ -97,6 +88,14 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
+
+	s.Equal(gameID, capturedState.GameID)
+	s.Len(capturedState.Players, 2)
+
 	s.Equal(gameID, capturedState.GameID)
 	s.Len(capturedState.Players, 2)
 }
@@ -104,7 +103,7 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -167,7 +166,7 @@ func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -196,8 +195,6 @@ func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() 
 		})
 	}, 200*time.Millisecond)
 
-	var capturedState *types.GameStateView
-
 	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			params := args.Get(1).(activities.PublishGameEventsParams)
@@ -223,13 +220,6 @@ func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() 
 			}
 		}).
 		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
-			val, err := s.env.QueryWorkflow(QueryGetGameState)
-			s.NoError(err)
-
-			var state types.GameStateView
-			s.NoError(val.Get(&state))
-			capturedState = &state
-
 			s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
 				GameID: gameID,
 				Reason: "test",
@@ -242,6 +232,11 @@ func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() 
 		ID: serverID.String(),
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
+
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
 
 	s.Equal(gameID, capturedState.GameID)
 	s.Empty(capturedState.CurrentArtist)

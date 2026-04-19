@@ -39,8 +39,6 @@ func (s *EndGameTestSuite) TestEndGame() {
 	player1 := uuid.New()
 	player2 := uuid.New()
 
-	var capturedState *types.GameStateView
-
 	input := types.GameInput{
 		GameID:          gameID,
 		NumRounds:       10,
@@ -109,15 +107,6 @@ func (s *EndGameTestSuite) TestEndGame() {
 			}
 		}).
 		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
-			if params.EventType == gameevents.TypeGameEnded {
-				val, err := s.env.QueryWorkflow(QueryGetGameState)
-				s.NoError(err)
-
-				var state types.GameStateView
-				s.NoError(val.Get(&state))
-				capturedState = &state
-			}
-
 			return &activities.PublishGameEventsResult{}, nil
 		})
 
@@ -134,6 +123,11 @@ func (s *EndGameTestSuite) TestEndGame() {
 		ID: serverID.String(),
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
+
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
 
 	s.True(sentGameEndedEvent)
 	s.Equal(2, numPlayerFinalResultsSent)

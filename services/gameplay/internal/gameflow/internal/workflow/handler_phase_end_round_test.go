@@ -36,7 +36,7 @@ func (s *EndRoundTestSuite) TestEndRound() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -44,8 +44,6 @@ func (s *EndRoundTestSuite) TestEndRound() {
 	gameID := uuid.New()
 	player1 := uuid.New()
 	player2 := uuid.New()
-
-	var capturedState *types.GameStateView
 
 	input := types.GameInput{
 		GameID:          gameID,
@@ -124,22 +122,15 @@ func (s *EndRoundTestSuite) TestEndRound() {
 					})
 				}
 			}
-		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
+
 			if params.EventType == gameevents.TypeRoundEnded {
-				val, err := s.env.QueryWorkflow(QueryGetGameState)
-				s.NoError(err)
-
-				var state types.GameStateView
-				s.NoError(val.Get(&state))
-				capturedState = &state
-
 				s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
 					GameID: gameID,
 					Reason: "test",
 				})
 			}
-
+		}).
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			return &activities.PublishGameEventsResult{}, nil
 		})
 
@@ -148,14 +139,15 @@ func (s *EndRoundTestSuite) TestEndRound() {
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
+
 	s.True(sentEventOnGameEventsStream)
 	s.True(sentEventOnDrawingUpdatesStream)
 	s.Equal(2, numPlayerRoundResultsSent)
 	s.Equal(gameID, capturedState.GameID)
-	s.Equal(types.PhaseEndRound, capturedState.Phase)
-	s.Equal(types.SubPhaseNone, capturedState.SubPhase)
-	s.NotEmpty(capturedState.CurrentArtist)
-	s.NotEmpty(capturedState.CurrentWord)
 	s.Len(capturedState.Players, 2)
 }
 

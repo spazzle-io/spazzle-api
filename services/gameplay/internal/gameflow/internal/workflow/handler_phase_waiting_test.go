@@ -34,7 +34,7 @@ func (s *PhaseWaitingTestSuite) TestTransitionsToPhasePrepareRound() {
 		}, nil)
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	gameID := uuid.New()
@@ -93,7 +93,7 @@ func (s *PhaseWaitingTestSuite) TestNotEnoughPlayers_StaysInWaitingPhase() {
 		}, nil)
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	gameID := uuid.New()

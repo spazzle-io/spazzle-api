@@ -33,7 +33,7 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -81,6 +81,18 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 
 					s.NotEmpty(payload.ArtistID)
 					s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
+
+					val, err := s.env.QueryWorkflow(QueryGetGameState)
+					s.NoError(err)
+
+					var state types.GameStateView
+					s.NoError(val.Get(&state))
+					capturedState = &state
+
+					s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
+						GameID: gameID,
+						Reason: "test",
+					})
 				}
 
 				if event.TargetClientID == uuid.Nil {
@@ -95,20 +107,6 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 			}
 		}).
 		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
-			if params.EventType == gameevents.TypeArtistConfirmed {
-				val, err := s.env.QueryWorkflow(QueryGetGameState)
-				s.NoError(err)
-
-				var state types.GameStateView
-				s.NoError(val.Get(&state))
-				capturedState = &state
-
-				s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
-					GameID: gameID,
-					Reason: "test",
-				})
-			}
-
 			return &activities.PublishGameEventsResult{}, nil
 		})
 
@@ -128,7 +126,7 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -241,7 +239,7 @@ func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -354,7 +352,7 @@ func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -447,7 +445,7 @@ func (s *InRoundTestSuite) TestEndDrawingEventSent() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -540,7 +538,7 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -645,7 +643,7 @@ func (s *InRoundTestSuite) TestSelectsNextArtist() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -747,7 +745,7 @@ func (s *InRoundTestSuite) TestSendsWordHints() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -852,7 +850,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSen
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -973,7 +971,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
