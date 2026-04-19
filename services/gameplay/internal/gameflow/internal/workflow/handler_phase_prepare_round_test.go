@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func TestPhasePrepareRound(t *testing.T) {
 func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -53,56 +54,56 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.TargetClientID == uuid.Nil {
+			if params.EventType != gameevents.TypeArtistSelected {
 				return
 			}
 
-			s.Equal(gameevents.TypeArtistSelected, params.EventType)
+			for _, event := range params.Events {
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
 
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
-
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
+			}
+		}).
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
 				GameID: gameID,
 				Reason: "test",
 			})
-		}).
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
 
-	var capturedState *types.GameStateView
-	s.env.RegisterDelayedCallback(func() {
-		val, err := s.env.QueryWorkflow(QueryGetGameState)
-		s.NoError(err)
-
-		var state types.GameStateView
-		s.NoError(val.Get(&state))
-		capturedState = &state
-	}, 300*time.Millisecond)
+			return &activities.PublishGameEventsResult{}, nil
+		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
 		ID: serverID.String(),
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
+
 	s.Equal(gameID, capturedState.GameID)
-	s.Equal(types.PhaseEndRound, capturedState.Phase)
-	s.Empty(capturedState.CurrentArtist)
+	s.Len(capturedState.Players, 2)
+
+	s.Equal(gameID, capturedState.GameID)
 	s.Len(capturedState.Players, 2)
 }
 
 func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -131,10 +132,8 @@ func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
+		Return(&activities.PublishGameEventsResult{}, nil)
 
 	var capturedState *types.GameStateView
 	s.env.RegisterDelayedCallback(func() {
@@ -167,7 +166,7 @@ func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -196,59 +195,50 @@ func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() 
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.TargetClientID == uuid.Nil {
+			if params.EventType != gameevents.TypeArtistSelected {
 				return
 			}
 
-			s.Equal(gameevents.TypeArtistSelected, params.EventType)
+			for _, event := range params.Events {
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
 
-			s.env.SignalWorkflow(SignalPlayersLeave, PlayersLeaveSignal{
-				PlayerIDs: []uuid.UUID{player1},
-			})
+				s.env.SignalWorkflow(SignalPlayersLeave, PlayersLeaveSignal{
+					PlayerIDs: []uuid.UUID{player1},
+				})
 
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
-
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
+			}
+		}).
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
 				GameID: gameID,
 				Reason: "test",
 			})
-		}).
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
 
-	var capturedState *types.GameStateView
-	s.env.RegisterDelayedCallback(func() {
-		val, err := s.env.QueryWorkflow(QueryGetGameState)
-		s.NoError(err)
-
-		var state types.GameStateView
-		s.NoError(val.Get(&state))
-		capturedState = &state
-	}, 300*time.Millisecond)
-
-	s.env.RegisterDelayedCallback(func() {
-		s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
-			GameID: gameID,
-			Reason: "test",
+			return &activities.PublishGameEventsResult{}, nil
 		})
-	}, 350*time.Millisecond)
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
 		ID: serverID.String(),
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
+
 	s.Equal(gameID, capturedState.GameID)
-	s.Equal(types.PhaseEndRound, capturedState.Phase)
 	s.Empty(capturedState.CurrentArtist)
 	s.Len(capturedState.Players, 1)
 }

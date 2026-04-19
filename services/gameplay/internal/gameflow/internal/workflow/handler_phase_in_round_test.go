@@ -33,7 +33,7 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -65,51 +65,49 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 	}, 200*time.Millisecond)
 
 	sentConfirmArtistEvent := false
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeArtistConfirmed {
-				sentConfirmArtistEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeArtistConfirmed {
+					sentConfirmArtistEvent = true
 
-				var payload gameevents.ArtistConfirmedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+					var payload gameevents.ArtistConfirmedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				s.NotEmpty(payload.ArtistID)
-				s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
-			}
+					s.NotEmpty(payload.ArtistID)
+					s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
 
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
+					val, err := s.env.QueryWorkflow(QueryGetGameState)
+					s.NoError(err)
 
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
-		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
-			if params.EventType == gameevents.TypeArtistConfirmed {
-				val, err := s.env.QueryWorkflow(QueryGetGameState)
-				s.NoError(err)
+					var state types.GameStateView
+					s.NoError(val.Get(&state))
+					capturedState = &state
 
-				var state types.GameStateView
-				s.NoError(val.Get(&state))
-				capturedState = &state
+					s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
+						GameID: gameID,
+						Reason: "test",
+					})
+				}
 
-				s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
-					GameID: gameID,
-					Reason: "test",
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
 				})
 			}
-
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+		}).
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -128,7 +126,7 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -178,25 +176,27 @@ func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeBeginWordSelection {
-				sentBeginWordSelectionEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeBeginWordSelection {
+					sentBeginWordSelectionEvent = true
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeWordSelected {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -211,9 +211,7 @@ func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -241,7 +239,7 @@ func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -285,31 +283,33 @@ func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeBeginWordSelection {
-				sentBeginWordSelectionEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeBeginWordSelection {
+					sentBeginWordSelectionEvent = true
 
-				s.env.SignalWorkflow(SignalWordSelected, WordSelectedSignal{
-					GameID:       gameID,
-					CurrentRound: 1,
-					Word:         selectedWord,
+					s.env.SignalWorkflow(SignalWordSelected, WordSelectedSignal{
+						GameID:       gameID,
+						CurrentRound: 1,
+						Word:         selectedWord,
+					})
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
 				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeWordSelected {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -324,9 +324,7 @@ func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -354,7 +352,7 @@ func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -386,25 +384,27 @@ func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeBeginDrawing {
-				sentBeginDrawingEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeBeginDrawing {
+					sentBeginDrawingEvent = true
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeBeginDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -419,9 +419,7 @@ func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -447,7 +445,7 @@ func (s *InRoundTestSuite) TestEndDrawingEventSent() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -479,25 +477,27 @@ func (s *InRoundTestSuite) TestEndDrawingEventSent() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeEndDrawing {
-				sentEndDrawingEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeEndDrawing {
+					sentEndDrawingEvent = true
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeEndDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -512,9 +512,7 @@ func (s *InRoundTestSuite) TestEndDrawingEventSent() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -540,7 +538,7 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -571,38 +569,40 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeBeginDrawing {
-				s.env.SignalWorkflow(SignalCorrectGuesses, CorrectGuessesSignal{
-					GameID:       gameID,
-					CurrentRound: DefaultRoundNumber,
-					Guesses: []types.CorrectGuess{
-						{
-							PlayerID:  player1,
-							Timestamp: time.Now().UTC(),
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeBeginDrawing {
+					s.env.SignalWorkflow(SignalCorrectGuesses, CorrectGuessesSignal{
+						GameID:       gameID,
+						CurrentRound: DefaultRoundNumber,
+						Guesses: []types.CorrectGuess{
+							{
+								PlayerID:  player1,
+								Timestamp: time.Now().UTC(),
+							},
+							{
+								PlayerID:  player2,
+								Timestamp: time.Now().UTC(),
+							},
 						},
-						{
-							PlayerID:  player2,
-							Timestamp: time.Now().UTC(),
-						},
-					},
+					})
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
 				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeEndDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -617,9 +617,7 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -645,7 +643,7 @@ func (s *InRoundTestSuite) TestSelectsNextArtist() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -677,34 +675,36 @@ func (s *InRoundTestSuite) TestSelectsNextArtist() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeNextArtistSelected {
-				sentNextArtistSelectedEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeNextArtistSelected {
+					sentNextArtistSelectedEvent = true
 
-				var payload gameevents.NextArtistSelectedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+					var payload gameevents.NextArtistSelectedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				s.Equal(uint8(DefaultRoundNumber+1), payload.Round)
-				s.Contains([]uuid.UUID{player1, player2}, payload.PlayerID)
+					s.Equal(uint8(DefaultRoundNumber+1), payload.Round)
+					s.Contains([]uuid.UUID{player1, player2}, payload.PlayerID)
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeEndDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -719,9 +719,7 @@ func (s *InRoundTestSuite) TestSelectsNextArtist() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -747,7 +745,7 @@ func (s *InRoundTestSuite) TestSendsWordHints() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -779,37 +777,39 @@ func (s *InRoundTestSuite) TestSendsWordHints() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeWordHintRevealed {
-				sentWordHintEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeWordHintRevealed {
+					sentWordHintEvent = true
 
-				var payload gameevents.WordHintRevealedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+					var payload gameevents.WordHintRevealedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
-				s.NotEmpty(payload.WordHint)
-				s.GreaterOrEqual(payload.WordHint.WordTokenIdx, 0)
-				s.GreaterOrEqual(payload.WordHint.CharIdx, 0)
-				s.NotZero(payload.WordHint.Char)
+					s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
+					s.NotEmpty(payload.WordHint)
+					s.GreaterOrEqual(payload.WordHint.WordTokenIdx, 0)
+					s.GreaterOrEqual(payload.WordHint.CharIdx, 0)
+					s.NotZero(payload.WordHint.Char)
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeEndDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -824,9 +824,7 @@ func (s *InRoundTestSuite) TestSendsWordHints() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -852,7 +850,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSen
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -885,52 +883,54 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSen
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeArtistConfirmed {
-				var payload gameevents.ArtistConfirmedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeArtistConfirmed {
+					var payload gameevents.ArtistConfirmedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				artistID = payload.ArtistID
-			}
+					artistID = payload.ArtistID
+				}
 
-			if params.EventType == gameevents.TypeBeginDrawing {
-				s.env.SignalWorkflow(SignalArtistDisconnected, ArtistDisconnectedSignal{
-					GameID:       gameID,
-					CurrentRound: DefaultRoundNumber,
-					ArtistID:     artistID,
+				if params.EventType == gameevents.TypeBeginDrawing {
+					s.env.SignalWorkflow(SignalArtistDisconnected, ArtistDisconnectedSignal{
+						GameID:       gameID,
+						CurrentRound: DefaultRoundNumber,
+						ArtistID:     artistID,
+					})
+				}
+
+				if params.EventType == gameevents.TypeArtistDisconnected {
+					sentArtistDisconnectedEvent = true
+
+					var payload gameevents.ArtistDisconnectedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
+
+					s.Equal(artistID, payload.ArtistID)
+					s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
 				})
 			}
-
-			if params.EventType == gameevents.TypeArtistDisconnected {
-				sentArtistDisconnectedEvent = true
-
-				var payload gameevents.ArtistDisconnectedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
-
-				s.Equal(artistID, payload.ArtistID)
-				s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
-			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeEndDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -945,9 +945,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSen
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{
@@ -973,7 +971,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
 
 	s.env.OnActivity(s.activities.ArchiveGame, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.ArchiveGameResult{})
+		Return(&activities.ArchiveGameResult{}, nil)
 
 	serverID := uuid.New()
 	instanceID := uuid.New()
@@ -1006,50 +1004,52 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeArtistConfirmed {
-				var payload gameevents.ArtistConfirmedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeArtistConfirmed {
+					var payload gameevents.ArtistConfirmedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				artistID = payload.ArtistID
-			}
+					artistID = payload.ArtistID
+				}
 
-			if params.EventType == gameevents.TypeBeginDrawing {
-				s.env.SignalWorkflow(SignalPlayersLeave, PlayersLeaveSignal{
-					PlayerIDs: []uuid.UUID{artistID},
+				if params.EventType == gameevents.TypeBeginDrawing {
+					s.env.SignalWorkflow(SignalPlayersLeave, PlayersLeaveSignal{
+						PlayerIDs: []uuid.UUID{artistID},
+					})
+				}
+
+				if params.EventType == gameevents.TypeArtistDisconnected {
+					sentArtistDisconnectedEvent = true
+
+					var payload gameevents.ArtistDisconnectedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
+
+					s.Equal(artistID, payload.ArtistID)
+					s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
 				})
 			}
-
-			if params.EventType == gameevents.TypeArtistDisconnected {
-				sentArtistDisconnectedEvent = true
-
-				var payload gameevents.ArtistDisconnectedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
-
-				s.Equal(artistID, payload.ArtistID)
-				s.Equal(uint8(DefaultRoundNumber), payload.CurrentRound)
-			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeEndDrawing {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -1064,9 +1064,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{

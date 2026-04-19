@@ -24,6 +24,7 @@ const (
 	TypeUpdateDrawing      = "update_drawing"
 	TypeEndDrawing         = "end_drawing"
 	TypeRoundEnded         = "round_ended"
+	TypePlayerRoundResult  = "player_round_result"
 )
 
 type ArtistSelectedPayload struct {

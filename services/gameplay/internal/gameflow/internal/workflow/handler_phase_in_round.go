@@ -75,7 +75,7 @@ func handleSubPhaseConfirmArtist(
 		ArtistID:     state.CurrentArtist,
 		CurrentRound: state.CurrentRound,
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeArtistConfirmed, payload, nil)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeArtistConfirmed, payload)
 	if err != nil {
 		return fmt.Errorf("failed to send artist confirmed event: %w", err)
 	}
@@ -99,7 +99,7 @@ func handleSubPhaseWordSelection(
 			EndsAt:       workflow.Now(ctx).UTC().Add(types.WordSelectionTimeout),
 		}
 		_, err := sendGameEvent(
-			ctx, state, notifyCh, gameevents.TypeBeginWordSelection, beginWordSelectionPayload, nil,
+			ctx, state, notifyCh, gameevents.TypeBeginWordSelection, beginWordSelectionPayload,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to send begin word selection event: %w", err)
@@ -114,7 +114,7 @@ func handleSubPhaseWordSelection(
 		CurrentRound: state.CurrentRound,
 		WordTokens:   toWordTokens(state.CurrentWord.Tokens),
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeWordSelected, wordSelectedPayload, nil)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeWordSelected, wordSelectedPayload)
 	if err != nil {
 		return fmt.Errorf("failed to send word selected event: %w", err)
 	}
@@ -131,7 +131,7 @@ func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh work
 		CurrentRound: state.CurrentRound,
 		EndsAt:       workflow.Now(ctx).UTC().Add(state.DrawingDuration),
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeBeginDrawing, beginDrawingPayload, nil)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeBeginDrawing, beginDrawingPayload)
 	if err != nil {
 		return fmt.Errorf("failed to send begin drawing event: %w", err)
 	}
@@ -194,7 +194,7 @@ func handleSubPhaseDrawing(ctx workflow.Context, state *GameState, notifyCh work
 		CurrentRound: state.CurrentRound,
 		Word:         state.CurrentWord.Text,
 	}
-	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeEndDrawing, endDrawingPayload, nil)
+	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeEndDrawing, endDrawingPayload)
 	if err != nil {
 		state.Logger().Error("failed to send end drawing event", "error", err)
 	}
@@ -233,7 +233,7 @@ func sendArtistDisconnectedEvent(ctx workflow.Context, state *GameState, notifyC
 		CurrentRound: state.CurrentRound,
 		ArtistID:     state.CurrentArtist,
 	}
-	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeArtistDisconnected, payload, nil)
+	_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeArtistDisconnected, payload)
 	if err != nil {
 		state.Logger().Error("failed to send artist disconnected event", "error", err)
 	}
@@ -396,10 +396,9 @@ func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyC
 		Round:    state.CurrentRound + 1,
 	}
 	delivered, err := sendGameEvent(
-		ctx, state, notifyCh, gameevents.TypeNextArtistSelected, payload, &sendGameEventOpts{
-			TargetClientID: nextArtist,
-			WaitForAck:     true,
-		},
+		ctx, state, notifyCh, gameevents.TypeNextArtistSelected, payload,
+		WithTargetClient(nextArtist),
+		WithAck(),
 	)
 	if err != nil {
 		state.Logger().Error("failed to send next artist selected event", "error", err)
@@ -499,7 +498,7 @@ func scheduleHints(ctx workflow.Context, state *GameState, notifyCh workflow.Cha
 			CurrentRound: state.CurrentRound,
 			WordHint:     hint,
 		}
-		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeWordHintRevealed, payload, nil)
+		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypeWordHintRevealed, payload)
 		if err != nil {
 			state.Logger().Error("failed to send word hint revealed event", "error", err)
 		} else {

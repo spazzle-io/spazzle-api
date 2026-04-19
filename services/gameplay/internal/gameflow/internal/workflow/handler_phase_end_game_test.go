@@ -39,8 +39,6 @@ func (s *EndGameTestSuite) TestEndGame() {
 	player1 := uuid.New()
 	player2 := uuid.New()
 
-	var capturedState *types.GameStateView
-
 	input := types.GameInput{
 		GameID:          gameID,
 		NumRounds:       10,
@@ -61,49 +59,55 @@ func (s *EndGameTestSuite) TestEndGame() {
 		})
 	}, 200*time.Millisecond)
 
+	numPlayerFinalResultsSent := 0
 	sentGameEndedEvent := false
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeGameEnded {
+			switch params.EventType {
+			case gameevents.TypePlayerFinalResult:
+				for _, event := range params.Events {
+					var payload gameevents.PlayerFinalResult
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
+					numPlayerFinalResultsSent++
+				}
+
+			case gameevents.TypeGameEnded:
 				sentGameEndedEvent = true
+				for _, event := range params.Events {
+					var payload gameevents.GameEndedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				var payload gameevents.GameEndedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+					s.Equal(uint8(10), payload.TotalRounds)
+					s.Equal("2000000000000000000", payload.TotalPot)
+					s.NotEmpty(payload.Results)
+					s.Len(payload.Results, 2)
+				}
 
-				s.Equal(uint8(10), payload.TotalRounds)
-				s.Equal("2000000000000000000", payload.TotalPot)
-				s.NotEmpty(payload.Results)
-				s.Len(payload.Results, 2)
+			default:
+				for _, event := range params.Events {
+					if event.TargetClientID == uuid.Nil {
+						continue
+					}
+
+					s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+						CorrelationID: event.CorrelationID,
+						InstanceID:    instanceID,
+						Status:        gameevents.AckStatusDelivered,
+					})
+				}
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
-			if params.EventType == gameevents.TypeGameEnded {
-				val, err := s.env.QueryWorkflow(QueryGetGameState)
-				s.NoError(err)
-
-				var state types.GameStateView
-				s.NoError(val.Get(&state))
-				capturedState = &state
-			}
-
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	executedArchiveGameActivity := false
@@ -120,7 +124,13 @@ func (s *EndGameTestSuite) TestEndGame() {
 	})
 	s.env.ExecuteWorkflow(GameWorkflow, input)
 
+	val, err := s.env.QueryWorkflow(QueryGetGameState)
+	s.NoError(err)
+	var capturedState types.GameStateView
+	s.NoError(val.Get(&capturedState))
+
 	s.True(sentGameEndedEvent)
+	s.Equal(2, numPlayerFinalResultsSent)
 	s.True(executedArchiveGameActivity)
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhaseEndGame, capturedState.Phase)
