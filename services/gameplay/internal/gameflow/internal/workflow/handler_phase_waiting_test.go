@@ -24,11 +24,9 @@ func TestPhaseWaiting(t *testing.T) {
 }
 
 func (s *PhaseWaitingTestSuite) TestTransitionsToPhasePrepareRound() {
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
+		Return(&activities.PublishGameEventsResult{}, nil)
 	s.env.OnActivity(s.activities.SelectRandomWord, mock.Anything, mock.Anything).
 		Maybe().
 		Return(&activities.SelectRandomWordResult{
@@ -85,11 +83,9 @@ func (s *PhaseWaitingTestSuite) TestTransitionsToPhasePrepareRound() {
 }
 
 func (s *PhaseWaitingTestSuite) TestNotEnoughPlayers_StaysInWaitingPhase() {
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Maybe().
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
+		Return(&activities.PublishGameEventsResult{}, nil)
 	s.env.OnActivity(s.activities.SelectRandomWord, mock.Anything, mock.Anything).
 		Maybe().
 		Return(&activities.SelectRandomWordResult{

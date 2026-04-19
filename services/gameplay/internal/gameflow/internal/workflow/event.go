@@ -14,11 +14,146 @@ import (
 
 const EventDeliveryTimeout = time.Second * 5
 
-type sendGameEventOpts struct {
-	StreamType     eventbus.StreamType
-	TargetClientID uuid.UUID
-	WaitForAck     bool
-	Marker         eventbus.Marker
+type sendGameEventConfig struct {
+	streamType     eventbus.StreamType
+	targetClientID uuid.UUID
+	waitForAck     bool
+	marker         eventbus.Marker
+}
+
+type SendGameEventOption func(*sendGameEventConfig)
+
+func WithTargetClient(id uuid.UUID) SendGameEventOption {
+	return func(c *sendGameEventConfig) {
+		c.targetClientID = id
+	}
+}
+
+func WithAck() SendGameEventOption {
+	return func(c *sendGameEventConfig) {
+		c.waitForAck = true
+	}
+}
+
+func WithStreamType(st eventbus.StreamType) SendGameEventOption {
+	return func(c *sendGameEventConfig) {
+		c.streamType = st
+	}
+}
+
+func WithMarker(m eventbus.Marker) SendGameEventOption {
+	return func(c *sendGameEventConfig) {
+		c.marker = m
+	}
+}
+
+func newSendGameEventConfig(opts []SendGameEventOption) sendGameEventConfig {
+	cfg := sendGameEventConfig{
+		streamType: eventbus.GameEventsStreamType,
+	}
+	for _, o := range opts {
+		o(&cfg)
+	}
+
+	return cfg
+}
+
+func sendGameEvent[T any](
+	ctx workflow.Context,
+	state *GameState,
+	notifyCh workflow.Channel,
+	eventType string,
+	payload T,
+	opts ...SendGameEventOption,
+) (eventDelivered bool, err error) {
+	cfg := newSendGameEventConfig(opts)
+
+	correlationID, err := generateUUID(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to generate correlation ID: %w", err)
+	}
+
+	if cfg.waitForAck {
+		state.PendingAcks[correlationID] = &PendingAck{
+			CorrelationID: correlationID,
+			ReceivedFrom:  make(map[uuid.UUID]gameevents.AckStatus),
+			CreatedAt:     workflow.Now(ctx).UTC(),
+		}
+		defer delete(state.PendingAcks, correlationID)
+	}
+
+	var a *activities.Activities
+	var publishGameEventResult activities.PublishGameEventsResult
+
+	publishGameEventsParams := activities.PublishGameEventsParams{
+		GameServerID: getGameServerID(ctx),
+		GameID:       state.GameID,
+		StreamType:   cfg.streamType,
+		EventType:    eventType,
+		Events: []activities.GameEventEntry{
+			{
+				TargetClientID: cfg.targetClientID,
+				CorrelationID:  correlationID,
+				EventPayload:   payload,
+				Marker:         cfg.marker,
+			},
+		},
+	}
+
+	err = workflow.ExecuteActivity(ctx, a.PublishGameEvents, publishGameEventsParams).Get(ctx, &publishGameEventResult)
+	if err != nil {
+		return false, fmt.Errorf("failed to publish game event: %w", err)
+	}
+
+	if cfg.waitForAck {
+		return waitForEventAck(ctx, state, correlationID, EventDeliveryTimeout, notifyCh)
+	}
+
+	return false, nil
+}
+
+func SendGameEvents[T any](
+	ctx workflow.Context,
+	state *GameState,
+	eventType string,
+	payload T,
+	targets []uuid.UUID,
+	opts ...SendGameEventOption,
+) error {
+	cfg := newSendGameEventConfig(opts)
+
+	events := make([]activities.GameEventEntry, len(targets))
+	for i, clientID := range targets {
+		correlationID, err := generateUUID(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to generate correlation ID: %w", err)
+		}
+
+		events[i] = activities.GameEventEntry{
+			TargetClientID: clientID,
+			CorrelationID:  correlationID,
+			EventPayload:   payload,
+			Marker:         cfg.marker,
+		}
+	}
+
+	var a *activities.Activities
+	var publishGameEventResult activities.PublishGameEventsResult
+
+	publishGameEventsParams := activities.PublishGameEventsParams{
+		GameServerID: getGameServerID(ctx),
+		GameID:       state.GameID,
+		StreamType:   cfg.streamType,
+		EventType:    eventType,
+		Events:       events,
+	}
+
+	err := workflow.ExecuteActivity(ctx, a.PublishGameEvents, publishGameEventsParams).Get(ctx, &publishGameEventResult)
+	if err != nil {
+		return fmt.Errorf("failed to publish game events: %w", err)
+	}
+
+	return nil
 }
 
 func waitForEventAck(
@@ -28,7 +163,7 @@ func waitForEventAck(
 	deliveryTimeout time.Duration,
 	notifyCh workflow.Channel,
 ) (eventDelivered bool, err error) {
-	pendingAcks := state.PendingAcks[correlationID]
+	pendingAck := state.PendingAcks[correlationID]
 	numGameServerInstances := len(state.GameServerInstances)
 
 	if numGameServerInstances == 0 {
@@ -42,19 +177,16 @@ func waitForEventAck(
 	timedOut := false
 
 	for {
-		for _, instanceID := range sortedUUIDs(pendingAcks.ReceivedFrom) {
-			ackStatus := pendingAcks.ReceivedFrom[instanceID]
-
-			if ackStatus == gameevents.AckStatusDelivered {
+		for _, instanceID := range sortedUUIDs(pendingAck.ReceivedFrom) {
+			switch pendingAck.ReceivedFrom[instanceID] {
+			case gameevents.AckStatusDelivered:
 				return true, nil
-			}
-
-			if ackStatus == gameevents.AckStatusFailed {
+			case gameevents.AckStatusFailed:
 				return false, errors.New("event not delivered successfully")
 			}
 		}
 
-		if len(pendingAcks.ReceivedFrom) >= numGameServerInstances {
+		if len(pendingAck.ReceivedFrom) >= numGameServerInstances {
 			return false, nil
 		}
 
@@ -75,64 +207,4 @@ func waitForEventAck(
 
 		selector.Select(ctx)
 	}
-}
-
-func sendGameEvent[T any](
-	ctx workflow.Context,
-	state *GameState,
-	notifyCh workflow.Channel,
-	eventType string,
-	payload T,
-	opts *sendGameEventOpts,
-) (eventDelivered bool, err error) {
-	o := sendGameEventOpts{
-		StreamType: eventbus.GameEventsStreamType,
-	}
-	if opts != nil {
-		if opts.StreamType != "" {
-			o.StreamType = opts.StreamType
-		}
-		o.TargetClientID = opts.TargetClientID
-		o.WaitForAck = opts.WaitForAck
-		o.Marker = opts.Marker
-	}
-
-	correlationID, err := generateUUID(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to generate correlation ID: %w", err)
-	}
-
-	if o.WaitForAck {
-		state.PendingAcks[correlationID] = &PendingAck{
-			CorrelationID: correlationID,
-			ReceivedFrom:  make(map[uuid.UUID]gameevents.AckStatus),
-			CreatedAt:     workflow.Now(ctx).UTC(),
-		}
-		defer delete(state.PendingAcks, correlationID)
-	}
-
-	var a *activities.Activities
-
-	publishGameEventParams := activities.PublishGameEventParams{
-		GameServerID:   getGameServerID(ctx),
-		GameID:         state.GameID,
-		StreamType:     o.StreamType,
-		TargetClientID: o.TargetClientID,
-		CorrelationID:  correlationID,
-		EventType:      eventType,
-		EventPayload:   payload,
-		Marker:         o.Marker,
-	}
-	var publishGameEventResult activities.PublishGameEventResult
-
-	err = workflow.ExecuteActivity(ctx, a.PublishGameEvent, publishGameEventParams).Get(ctx, &publishGameEventResult)
-	if err != nil {
-		return false, fmt.Errorf("failed to execute publish game event activity: %w", err)
-	}
-
-	if o.WaitForAck {
-		return waitForEventAck(ctx, state, correlationID, EventDeliveryTimeout, notifyCh)
-	}
-
-	return false, nil
 }

@@ -47,7 +47,7 @@ func endGame(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) 
 		TotalPot:    state.GamePot,
 		Results:     results,
 	}
-	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult, nil)
+	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeGameEnded, gameResult)
 	if err != nil {
 		return fmt.Errorf("failed to send game ended event: %w", err)
 	}

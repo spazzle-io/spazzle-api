@@ -103,16 +103,16 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 		TotalPot:        state.GamePot,
 		IsFinalRound:    isFinalRound,
 	}
-	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResult, &sendGameEventOpts{
-		Marker: eventbus.MarkerRoundEnded,
-	})
+	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResult,
+		WithMarker(eventbus.MarkerRoundEnded),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to send round ended event to game events stream: %w", err)
 	}
-	_, err = sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundEnded, nil, &sendGameEventOpts{
-		StreamType: eventbus.DrawingUpdatesStreamType,
-		Marker:     eventbus.MarkerRoundEnded,
-	})
+	_, err = sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundEnded, nil,
+		WithStreamType(eventbus.DrawingUpdatesStreamType),
+		WithMarker(eventbus.MarkerRoundEnded),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to send round ended event to drawing updates stream: %w", err)
 	}

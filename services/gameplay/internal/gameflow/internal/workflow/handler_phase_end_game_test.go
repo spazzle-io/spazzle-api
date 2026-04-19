@@ -62,36 +62,38 @@ func (s *EndGameTestSuite) TestEndGame() {
 	}, 200*time.Millisecond)
 
 	sentGameEndedEvent := false
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeGameEnded {
-				sentGameEndedEvent = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeGameEnded {
+					sentGameEndedEvent = true
 
-				var payload gameevents.GameEndedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+					var payload gameevents.GameEndedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				s.Equal(uint8(10), payload.TotalRounds)
-				s.Equal("2000000000000000000", payload.TotalPot)
-				s.NotEmpty(payload.Results)
-				s.Len(payload.Results, 2)
+					s.Equal(uint8(10), payload.TotalRounds)
+					s.Equal("2000000000000000000", payload.TotalPot)
+					s.NotEmpty(payload.Results)
+					s.Len(payload.Results, 2)
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeGameEnded {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -101,9 +103,7 @@ func (s *EndGameTestSuite) TestEndGame() {
 				capturedState = &state
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	executedArchiveGameActivity := false

@@ -70,43 +70,45 @@ func (s *EndRoundTestSuite) TestEndRound() {
 	sentEventOnGameEventsStream := false
 	sentEventOnDrawingUpdatesStream := false
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.EventType == gameevents.TypeRoundEnded && params.StreamType == eventbus.GameEventsStreamType {
-				sentEventOnGameEventsStream = true
+			for _, event := range params.Events {
+				if params.EventType == gameevents.TypeRoundEnded && params.StreamType == eventbus.GameEventsStreamType {
+					sentEventOnGameEventsStream = true
 
-				var payload gameevents.RoundEndedPayload
-				raw := params.EventPayload.(map[string]interface{})
-				b, err := json.Marshal(raw)
-				s.Require().NoError(err)
-				s.Require().NoError(json.Unmarshal(b, &payload))
+					var payload gameevents.RoundEndedPayload
+					raw := event.EventPayload.(map[string]interface{})
+					b, err := json.Marshal(raw)
+					s.Require().NoError(err)
+					s.Require().NoError(json.Unmarshal(b, &payload))
 
-				s.Equal(uint8(DefaultRoundNumber), payload.Round)
-				s.NotEmpty(payload.ArtistID)
-				s.NotEmpty(payload.Word)
-				s.NotEmpty(payload.DrawingDuration)
-				s.NotEmpty(payload.Results)
-				s.NotEmpty(payload.TotalPot)
-				s.False(payload.IsFinalRound)
+					s.Equal(uint8(DefaultRoundNumber), payload.Round)
+					s.NotEmpty(payload.ArtistID)
+					s.NotEmpty(payload.Word)
+					s.NotEmpty(payload.DrawingDuration)
+					s.NotEmpty(payload.Results)
+					s.NotEmpty(payload.TotalPot)
+					s.False(payload.IsFinalRound)
+				}
+
+				if params.EventType == gameevents.TypeRoundEnded && params.StreamType == eventbus.DrawingUpdatesStreamType {
+					sentEventOnDrawingUpdatesStream = true
+				}
+
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
 			}
-
-			if params.EventType == gameevents.TypeRoundEnded && params.StreamType == eventbus.DrawingUpdatesStreamType {
-				sentEventOnDrawingUpdatesStream = true
-			}
-
-			if params.TargetClientID == uuid.Nil {
-				return
-			}
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
 		}).
-		Return(func(ctx context.Context, params activities.PublishGameEventParams) (*activities.PublishGameEventResult, error) {
+		Return(func(ctx context.Context, params activities.PublishGameEventsParams) (*activities.PublishGameEventsResult, error) {
 			if params.EventType == gameevents.TypeRoundEnded {
 				val, err := s.env.QueryWorkflow(QueryGetGameState)
 				s.NoError(err)
@@ -121,9 +123,7 @@ func (s *EndRoundTestSuite) TestEndRound() {
 				})
 			}
 
-			return &activities.PublishGameEventResult{
-				MessageID: "some-message-id",
-			}, nil
+			return &activities.PublishGameEventsResult{}, nil
 		})
 
 	s.env.SetStartWorkflowOptions(client.StartWorkflowOptions{

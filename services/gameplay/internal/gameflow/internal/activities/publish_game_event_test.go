@@ -16,30 +16,34 @@ import (
 func TestPublishGameEvent(t *testing.T) {
 	deps := setupActivities(t)
 
-	params := PublishGameEventParams{
-		GameServerID:   uuid.New(),
-		GameID:         uuid.New(),
-		StreamType:     eventbus.GameEventsStreamType,
-		TargetClientID: uuid.New(),
-		CorrelationID:  uuid.New(),
-		EventType:      gameevents.TypeBeginDrawing,
-		EventPayload: &gameevents.BeginDrawingPayload{
-			CurrentRound: uint8(1),
-			EndsAt:       time.Now().UTC(),
+	params := PublishGameEventsParams{
+		GameServerID: uuid.New(),
+		GameID:       uuid.New(),
+		StreamType:   eventbus.GameEventsStreamType,
+		EventType:    gameevents.TypeBeginDrawing,
+		Events: []GameEventEntry{
+			{
+				TargetClientID: uuid.New(),
+				CorrelationID:  uuid.New(),
+				EventPayload: &gameevents.BeginDrawingPayload{
+					CurrentRound: uint8(1),
+					EndsAt:       time.Now().UTC(),
+				},
+				Marker: eventbus.MarkerRoundEnded,
+			},
 		},
-		Marker: eventbus.MarkerRoundEnded,
 	}
 
-	marshaledPayload, err := json.Marshal(params.EventPayload)
+	marshaledPayload, err := json.Marshal(params.Events[0].EventPayload)
 	require.NoError(t, err)
 	require.NotEmpty(t, marshaledPayload)
 
 	eventMsg := eventbus.PublishMessage{
 		Type:           params.EventType,
 		Payload:        marshaledPayload,
-		TargetClientID: params.TargetClientID,
-		CorrelationID:  params.CorrelationID,
-		Marker:         params.Marker,
+		TargetClientID: params.Events[0].TargetClientID,
+		CorrelationID:  params.Events[0].CorrelationID,
+		Marker:         params.Events[0].Marker,
 	}
 
 	game := eventbus.GameIdentifier{
@@ -57,11 +61,9 @@ func TestPublishGameEvent(t *testing.T) {
 		Times(1).
 		Return("msg-id", nil)
 
-	expectedResult := &PublishGameEventResult{
-		MessageID: "msg-id",
-	}
+	expectedResult := &PublishGameEventsResult{}
 
-	result, err := deps.Activities.PublishGameEvent(context.Background(), params)
+	result, err := deps.Activities.PublishGameEvents(context.Background(), params)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
 }

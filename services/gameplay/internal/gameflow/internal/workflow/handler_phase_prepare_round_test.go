@@ -53,30 +53,30 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.TargetClientID == uuid.Nil {
-				return
+			for _, event := range params.Events {
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.Equal(gameevents.TypeArtistSelected, params.EventType)
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
+
+				s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
+					GameID: gameID,
+					Reason: "test",
+				})
 			}
-
-			s.Equal(gameevents.TypeArtistSelected, params.EventType)
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
-
-			s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
-				GameID: gameID,
-				Reason: "test",
-			})
 		}).
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
+		Return(&activities.PublishGameEventsResult{}, nil)
 
 	var capturedState *types.GameStateView
 	s.env.RegisterDelayedCallback(func() {
@@ -131,10 +131,8 @@ func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
+		Return(&activities.PublishGameEventsResult{}, nil)
 
 	var capturedState *types.GameStateView
 	s.env.RegisterDelayedCallback(func() {
@@ -196,34 +194,34 @@ func (s *PhasePrepareRoundTestSuite) TestNotEnoughPlayersAfterSelectingArtist() 
 		})
 	}, 200*time.Millisecond)
 
-	s.env.OnActivity(s.activities.PublishGameEvent, mock.Anything, mock.Anything).
+	s.env.OnActivity(s.activities.PublishGameEvents, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(1).(activities.PublishGameEventParams)
+			params := args.Get(1).(activities.PublishGameEventsParams)
 
-			if params.TargetClientID == uuid.Nil {
-				return
+			for _, event := range params.Events {
+				if event.TargetClientID == uuid.Nil {
+					return
+				}
+
+				s.Equal(gameevents.TypeArtistSelected, params.EventType)
+
+				s.env.SignalWorkflow(SignalPlayersLeave, PlayersLeaveSignal{
+					PlayerIDs: []uuid.UUID{player1},
+				})
+
+				s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
+					CorrelationID: event.CorrelationID,
+					InstanceID:    instanceID,
+					Status:        gameevents.AckStatusDelivered,
+				})
+
+				s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
+					GameID: gameID,
+					Reason: "test",
+				})
 			}
-
-			s.Equal(gameevents.TypeArtistSelected, params.EventType)
-
-			s.env.SignalWorkflow(SignalPlayersLeave, PlayersLeaveSignal{
-				PlayerIDs: []uuid.UUID{player1},
-			})
-
-			s.env.SignalWorkflow(SignalEventAck, gameevents.EventAckPayload{
-				CorrelationID: params.CorrelationID,
-				InstanceID:    instanceID,
-				Status:        gameevents.AckStatusDelivered,
-			})
-
-			s.env.SignalWorkflow(SignalTerminateGame, TerminateGameSignal{
-				GameID: gameID,
-				Reason: "test",
-			})
 		}).
-		Return(&activities.PublishGameEventResult{
-			MessageID: "some-message-id",
-		}, nil)
+		Return(&activities.PublishGameEventsResult{}, nil)
 
 	var capturedState *types.GameStateView
 	s.env.RegisterDelayedCallback(func() {
