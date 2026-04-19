@@ -82,7 +82,7 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
-	gameState, err := gameServer.InitializeGame()
+	err = gameServer.InitializeGame()
 	if err != nil {
 		logger.Error().Err(err).Msg("could not initialize game state")
 		if errors.Is(err, gameflow.ErrGameEnding) {
@@ -103,7 +103,7 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 	joinCodeEntry := &gamecache.JoinCodeEntry{
 		UserID:   serverUserCtx.UserId,
 		ServerID: serverId,
-		GameID:   gameState.GameID,
+		GameID:   gameServer.GetGameID(),
 		Role:     string(gameRole),
 	}
 
@@ -116,7 +116,7 @@ func (h *Handler) JoinGame(ctx context.Context, req *pb.JoinGameRequest) (*pb.Jo
 	response := &pb.JoinGameResponse{
 		Status:            pb.JoinGameStatus_JOIN_GAME_STATUS_SUCCESS,
 		UserId:            serverUserCtx.UserId.String(),
-		GameId:            gameState.GameID.String(),
+		GameId:            gameServer.GetGameID().String(),
 		JoinCode:          joinCode,
 		JoinCodeExpiresAt: timestamppb.New(expiresAt),
 	}

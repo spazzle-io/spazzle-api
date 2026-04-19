@@ -411,15 +411,13 @@ func TestInitializeGame(t *testing.T) {
 
 			tc.buildStubs(gameServer, mockConfig)
 
-			gameState, err := gameServer.InitializeGame()
+			err := gameServer.InitializeGame()
 			if tc.shouldErr {
 				require.Error(t, err)
-				require.Empty(t, gameState)
 				return
 			}
 
 			require.NoError(t, err)
-			require.NotEmpty(t, gameState)
 			require.NotEmpty(t, gameServer.gameID)
 			require.NotEmpty(t, gameServer.currentRound)
 			require.NotEmpty(t, gameServer.currentArtist)
@@ -434,9 +432,8 @@ func TestInitializeGame(t *testing.T) {
 
 func TestInitializeGame_GameIsActive(t *testing.T) {
 	_, gameServer := createInitializedTestGameServer(t)
-	gameState, err := gameServer.InitializeGame()
+	err := gameServer.InitializeGame()
 	require.NoError(t, err)
-	require.NotEmpty(t, gameState)
 }
 
 func TestAddClient(t *testing.T) {
