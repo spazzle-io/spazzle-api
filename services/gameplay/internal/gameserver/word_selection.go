@@ -22,8 +22,6 @@ func (gs *GameServer) getWordChoices() ([]string, error) {
 		return nil, fmt.Errorf("failed to get server by id: %w", err)
 	}
 
-	// TODO: Add API validation for fields like NumDrawingOptions when creating/updating server to prevent erroneous input
-
 	serverWords, err := gs.WordStore.GetRandomWords(gs.ctx, gs.Store, gs.serverID, int(server.NumDrawingOptions))
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch server random words: %w", err)

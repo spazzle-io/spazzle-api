@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"time"
 
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
@@ -46,7 +48,7 @@ type client struct {
 	rdb       *redis.Client
 }
 
-func New(config *util.Config) (Client, error) {
+func New(ctx context.Context, config *util.Config) (Client, error) {
 	var (
 		s       signer.Signer
 		eth     *ethclient.Client
@@ -127,6 +129,12 @@ func New(config *util.Config) (Client, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if config.Environment.Is(commonConfig.Development) {
+		if err = nm.Reset(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	success = true
