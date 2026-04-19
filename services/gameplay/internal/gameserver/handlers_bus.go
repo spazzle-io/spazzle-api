@@ -49,8 +49,12 @@ func (gs *GameServer) handleEventBusMessage(_ context.Context, msg eventbus.Mess
 	case gameevents.TypeEndDrawing:
 		gs.broadcastBusMsg(msg)
 
+	case gameevents.TypePlayerRoundResult:
+		gs.sendBusMsgToTargetClient(msg, false, false)
 	case gameevents.TypeRoundEnded:
 		gs.handleRoundEnded(msg)
+	case gameevents.TypePlayerFinalResult:
+		gs.sendBusMsgToTargetClient(msg, false, false)
 	case gameevents.TypeGameEnded:
 		gs.handleGameEnded(msg)
 	}
@@ -109,7 +113,7 @@ func (gs *GameServer) handleArtistSelected(msg eventbus.Message) {
 		return
 	}
 
-	gs.sendBusMsgToTargetClient(msg)
+	gs.sendBusMsgToTargetClient(msg, true, true)
 }
 
 func (gs *GameServer) handleArtistConfirmed(msg eventbus.Message) {
@@ -133,7 +137,7 @@ func (gs *GameServer) handleNextArtistSelected(msg eventbus.Message) {
 		return
 	}
 
-	gs.sendBusMsgToTargetClient(msg)
+	gs.sendBusMsgToTargetClient(msg, true, true)
 }
 
 func (gs *GameServer) handleArtistDisconnected(msg eventbus.Message) {
@@ -209,13 +213,13 @@ func (gs *GameServer) broadcastBusMsg(msg eventbus.Message) {
 	}
 }
 
-func (gs *GameServer) sendBusMsgToTargetClient(msg eventbus.Message) {
+func (gs *GameServer) sendBusMsgToTargetClient(msg eventbus.Message, excludeSpectators bool, requiresAck bool) {
 	logger := gs.logger()
 
 	err := gs.SendDirectMsg(&DirectMsgPayload{
 		Recipients: []DirectMsgRecipient{{
 			UserID:            msg.TargetClientID,
-			ExcludeSpectators: true,
+			ExcludeSpectators: excludeSpectators,
 		}},
 		Msg: &OutgoingMessage{
 			WsMessage: WsMessage{
@@ -226,7 +230,7 @@ func (gs *GameServer) sendBusMsgToTargetClient(msg eventbus.Message) {
 				Payload:    msg.Payload,
 			},
 			CorrelationID:       msg.CorrelationID,
-			RequiresWorkflowAck: true,
+			RequiresWorkflowAck: requiresAck,
 		},
 	})
 	if err != nil {
