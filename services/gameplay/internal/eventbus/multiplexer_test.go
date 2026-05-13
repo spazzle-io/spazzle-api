@@ -282,6 +282,7 @@ func TestHighVolumeMessages(t *testing.T) {
 			Payload: json.RawMessage(`{"x":100,"y":200}`),
 		})
 		require.NoError(t, err)
+		time.Sleep(10 * time.Millisecond) // 100 msg/sec
 	}
 
 	require.Eventually(t, func() bool {
