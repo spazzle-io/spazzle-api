@@ -17,8 +17,8 @@ var (
 )
 
 const (
-	maxLenGameEventsStream     = 500
-	maxLenDrawingUpdatesStream = 9000
+	maxLenGameEventsStream     = 650
+	maxLenDrawingUpdatesStream = 12000
 )
 
 type redisSession struct {
