@@ -16,6 +16,11 @@ var (
 	ErrPublishFailed = errors.New("failed to publish message to event bus")
 )
 
+const (
+	maxLenGameEventsStream     = 500
+	maxLenDrawingUpdatesStream = 9000
+)
+
 type redisSession struct {
 	bus  *redisEventBus
 	game GameIdentifier
@@ -109,9 +114,16 @@ func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg P
 		return "", err
 	}
 
+	maxLen := int64(maxLenGameEventsStream)
+	if streamType == DrawingUpdatesStreamType {
+		maxLen = maxLenDrawingUpdatesStream
+	}
+
 	sk := streamKey(s.bus.serviceConfig, streamType, s.game)
 	id, err := s.bus.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: sk,
+		MaxLen: maxLen,
+		Approx: true,
 		Values: fields,
 	}).Result()
 	if err != nil {

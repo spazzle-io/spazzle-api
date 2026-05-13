@@ -4,18 +4,23 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
-const idlePollInterval = 500 * time.Millisecond
+const (
+	idlePollInterval    = 500 * time.Millisecond
+	streamMessageBuffer = 256
+)
 
 type subscription struct {
 	streamKey string
-	lastID    string
+	lastID    atomic.Value
 	handler   MessageHandler
+	msgCh     chan redis.XMessage
 	ctx       context.Context
 	cancel    context.CancelFunc
 }
@@ -62,30 +67,61 @@ func (m *multiplexer) subscribe(ctx context.Context, streamKey string, startFrom
 
 	lastID := startFrom.String()
 	if lastID == StartFromNow().String() {
-		lastID = m.resolveCurrentStreamID(streamKey)
+		lastID = m.resolveCurrentStreamID(ctx, streamKey)
 	}
 
 	sub := &subscription{
 		streamKey: streamKey,
-		lastID:    lastID,
 		handler:   handler,
+		msgCh:     make(chan redis.XMessage, streamMessageBuffer),
 		ctx:       subCtx,
 		cancel:    subCancel,
 	}
+	sub.lastID.Store(lastID)
 
 	m.mu.Lock()
 	m.subscriptions[streamKey] = sub
 	m.mu.Unlock()
 
+	m.wg.Add(1)
+	go func() {
+		defer m.wg.Done()
+		m.startWorker(sub)
+	}()
+
 	m.interruptXRead()
 }
 
-func (m *multiplexer) resolveCurrentStreamID(streamKey string) string {
-	msgs, err := m.client.XRevRangeN(context.Background(), streamKey, "+", "-", 1).Result()
+func (m *multiplexer) startWorker(sub *subscription) {
+	for {
+		select {
+		case <-sub.ctx.Done():
+			return
+		case msg := <-sub.msgCh:
+			decoded, err := decodeMessage(msg.ID, msg.Values)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Str("id", msg.ID).
+					Any("msg", msg.Values).
+					Str("stream_key", sub.streamKey).
+					Msg("failed to decode redis event message")
+				continue
+			}
+
+			sub.handler(sub.ctx, decoded)
+		}
+	}
+}
+
+func (m *multiplexer) resolveCurrentStreamID(ctx context.Context, streamKey string) string {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	msgs, err := m.client.XRevRangeN(ctx, streamKey, "+", "-", 1).Result()
 	if err != nil || len(msgs) == 0 {
 		return "0"
 	}
-
 	return msgs[0].ID
 }
 
@@ -121,9 +157,14 @@ func (m *multiplexer) buildXReadArgs() (streams []string, lastIDs []string, subs
 			continue
 		}
 
+		lastID, ok := sub.lastID.Load().(string)
+		if !ok {
+			lastID = "0"
+		}
+
 		subs[streamKey] = sub
 		streams = append(streams, streamKey)
-		lastIDs = append(lastIDs, sub.lastID)
+		lastIDs = append(lastIDs, lastID)
 	}
 
 	return
@@ -140,31 +181,14 @@ func (m *multiplexer) routeMessages(results []redis.XStream, subs map[string]*su
 			continue
 		}
 
-		for _, redisMsg := range stream.Messages {
-			msg, err := decodeMessage(redisMsg.ID, redisMsg.Values)
-			if err != nil {
-				log.Error().
-					Err(err).
-					Str("id", redisMsg.ID).
-					Str("stream_key", stream.Stream).
-					Any("msg", redisMsg.Values).
-					Msg("failed to decode redis event message")
-				m.updateLastID(stream.Stream, redisMsg.ID)
-				continue
+		for _, msg := range stream.Messages {
+			sub.lastID.Store(msg.ID)
+			select {
+			case sub.msgCh <- msg:
+			default:
+				log.Warn().Str("stream", stream.Stream).Msg("subscription msg channel full, dropping message")
 			}
-
-			sub.handler(sub.ctx, msg)
-			m.updateLastID(stream.Stream, redisMsg.ID)
 		}
-	}
-}
-
-func (m *multiplexer) updateLastID(streamKey string, id string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if sub, ok := m.subscriptions[streamKey]; ok {
-		sub.lastID = id
 	}
 }
 
@@ -244,6 +268,12 @@ func (m *multiplexer) calculateBackoff(consecutiveErrors int) time.Duration {
 }
 
 func (m *multiplexer) stop() {
+	m.mu.Lock()
+	for _, sub := range m.subscriptions {
+		sub.cancel()
+	}
+	m.mu.Unlock()
+
 	m.cancel()
 	m.wg.Wait()
 }

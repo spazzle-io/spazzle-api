@@ -152,6 +152,8 @@ func (b *redisEventBus) Replay(
 		}
 
 		for _, redisMsg := range msgs {
+			lastID = redisMsg.ID
+
 			msg, err := decodeMessage(redisMsg.ID, redisMsg.Values)
 			if err != nil {
 				log.Error().
@@ -162,8 +164,6 @@ func (b *redisEventBus) Replay(
 					Msg("failed to decode redis event message")
 				continue
 			}
-
-			lastID = redisMsg.ID
 
 			if !shouldIncludeReplayMsg(msg, visibility, clientID) {
 				continue

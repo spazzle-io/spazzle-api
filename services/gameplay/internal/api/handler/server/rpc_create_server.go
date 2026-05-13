@@ -26,6 +26,38 @@ const (
 	deployTreasuryEnqueueTimeout = 3 * time.Second
 )
 
+// TODO: Add API validation for:
+// Num rounds per game -
+// Round duration secs -
+// Num drawing options -
+
+// TODO: Optimize redis streams to be pruned and archived after every round.
+
+// TODO: How many concurrent redis streams can we have a time max? comfortable threshold?
+// How to increase this threshold? Just increase redis instance size?
+
+// TODO: Optimize temporal game workflow to make sure it is efficient.
+// How many concurrent workflows can we have comfortably till we hit temporal limits?
+// What is the maximum amount of players we can have in one temporal game workflow? At max concurrent workflows?
+
+// TODO: Add API validation for max number of concurrent active games
+
+// TODO: Add API validation for max number of concurrent players per game and maybe spectators/mods?
+
+// TODO: What are our Infura limits? Worst case? Limits on the dev key?
+
+// TODO: All notes go here.
+// The point of all this is to get a baseline of the limits of the system, document them, and also document
+// what strategies to be used when the limits are hit and also how to detect the limits are being approached.
+//
+// k8s and deployment
+// - have consistent hashing
+// - have a hpa on cpu, memory, and custom metric ws connections - scale up quick but scale down slow
+// - have a cluster autoscaler
+// - remember to tell nginx to buffer timeout for ws connections otherwise it will close them thinking they're idle http conns
+// - remember to tell k8s never to kill all pods simultaneously even during deployment and maintenance
+// -
+
 func (h *Handler) CreateServer(ctx context.Context, req *pb.CreateServerRequest) (*pb.CreateServerResponse, error) {
 	violations := validateCreateServerRequest(req)
 	if violations != nil {
