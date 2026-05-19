@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	buf.build/go/protovalidate v1.2.0
-	github.com/brianvoe/gofakeit/v7 v7.14.1
+	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/ethereum/go-ethereum v1.17.3
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/golang/protobuf v1.5.4
@@ -19,12 +19,12 @@ require (
 	github.com/spazzle-io/spazzle-api/libs/common v0.0.0-20251124205147-578180f7ddbc
 	github.com/spazzle-io/spazzle-api/services/proto v0.0.0-20251124205147-578180f7ddbc
 	github.com/stretchr/testify v1.11.1
-	go.temporal.io/api v1.62.11
+	go.temporal.io/api v1.62.12
 	go.temporal.io/sdk v1.43.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/sync v0.20.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )

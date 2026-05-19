@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	buf.build/go/protovalidate v1.2.0
-	github.com/brianvoe/gofakeit/v7 v7.14.1
+	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/ethereum/go-ethereum v1.17.3
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
@@ -19,7 +19,7 @@ require (
 	golang.org/x/crypto v0.51.0
 	golang.org/x/sync v0.20.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 )
 

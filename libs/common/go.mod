@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.17
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.16
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0
-	github.com/brianvoe/gofakeit/v7 v7.14.1
+	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/ethereum/go-ethereum v1.17.3
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
@@ -25,7 +25,7 @@ require (
 	golang.org/x/crypto v0.51.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/text v0.37.0
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 )
 
