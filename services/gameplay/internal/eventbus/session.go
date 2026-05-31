@@ -130,14 +130,19 @@ func (s *redisSession) Publish(ctx context.Context, streamType StreamType, msg P
 		return "", fmt.Errorf("%w: %v", ErrPublishFailed, err)
 	}
 
-	if msg.Marker != "" {
+	if msg.Marker != (Marker{}) {
 		mk := markerKey(s.bus.serviceConfig, streamType, s.game, msg.Marker)
-		if err := s.bus.client.Set(ctx, mk, id, 0).Err(); err != nil {
+		rk := markerRegistryKey(s.bus.serviceConfig, streamType, s.game)
+
+		pipe := s.bus.client.Pipeline()
+		pipe.Set(ctx, mk, id, 0)
+		pipe.SAdd(ctx, rk, msg.Marker.String())
+		if _, err := pipe.Exec(ctx); err != nil {
 			s.getLogger().Error().
 				Err(err).
-				Str("marker", string(msg.Marker)).
+				Str("marker", msg.Marker.String()).
 				Str("message_id", id).
-				Msg("failed to set stream marker")
+				Msg("failed to set stream marker and update registry")
 		}
 	}
 

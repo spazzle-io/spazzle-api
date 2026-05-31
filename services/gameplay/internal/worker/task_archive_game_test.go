@@ -91,7 +91,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 				for _, st := range eventbus.AllStreamTypes {
 					bus.EXPECT().
-						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 						Times(1).
 						Return(eventbus.ReplayResult{
 							Messages: validGameEventStreamMessages(t),
@@ -173,7 +173,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 				}
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Any(), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Any(), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 					AnyTimes().
 					Return(eventbus.ReplayResult{}, errors.New("failed to replay game stream"))
 			},
@@ -195,7 +195,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 				for _, st := range eventbus.AllStreamTypes {
 					bus.EXPECT().
-						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 						Times(1).
 						Return(eventbus.ReplayResult{
 							Messages: []eventbus.Message{},
@@ -225,7 +225,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 				}
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Any(), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Any(), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 					AnyTimes().
 					Return(eventbus.ReplayResult{
 						Messages: validGameEventStreamMessages(t),
@@ -256,7 +256,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 				for _, st := range eventbus.AllStreamTypes {
 					bus.EXPECT().
-						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 						Times(1).
 						Return(eventbus.ReplayResult{
 							Messages: []eventbus.Message{
@@ -290,7 +290,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 				for _, st := range eventbus.AllStreamTypes {
 					bus.EXPECT().
-						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 						Times(1).
 						Return(eventbus.ReplayResult{
 							Messages: validGameEventStreamMessages(t),
@@ -331,7 +331,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 				for _, st := range eventbus.AllStreamTypes {
 					bus.EXPECT().
-						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 						Times(1).
 						Return(eventbus.ReplayResult{
 							Messages: validGameEventStreamMessages(t),
@@ -368,7 +368,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 				for _, st := range eventbus.AllStreamTypes {
 					bus.EXPECT().
-						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", archiveReplayLimit).
+						Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Eq(game), gomock.Eq(st), gomock.Eq(eventbus.ReplayVisibilityAll), "0", "0", archiveReplayLimit).
 						Times(1).
 						Return(eventbus.ReplayResult{
 							Messages: validGameEventStreamMessages(t),

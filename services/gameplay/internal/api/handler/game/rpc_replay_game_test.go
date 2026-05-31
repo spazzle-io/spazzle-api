@@ -20,10 +20,11 @@ import (
 
 func generateReplayGameReqParams() *pb.ReplayGameRequest {
 	return &pb.ReplayGameRequest{
-		ServerId:   uuid.New().String(),
-		GameId:     uuid.New().String(),
-		StreamType: pb.StreamType_STREAM_TYPE_GAME_EVENTS,
-		Limit:      800,
+		ServerId:    uuid.New().String(),
+		GameId:      uuid.New().String(),
+		StreamType:  pb.StreamType_STREAM_TYPE_GAME_EVENTS,
+		RoundNumber: 4,
+		Limit:       800,
 	}
 }
 
@@ -53,12 +54,15 @@ func TestReplayGame(t *testing.T) {
 					}, nil)
 
 				bus.EXPECT().
-					MarkerID(gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.MarkerRoundEnded)).
+					MarkerID(gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.Marker{
+						Round: 4,
+						Type:  eventbus.MarkerRoundStarted,
+					})).
 					Times(1).
 					Return("marker-id", nil)
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Eq(userID), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityForClient), gomock.Eq("marker-id"), gomock.Eq(800)).
+					Replay(gomock.Any(), gomock.Eq(userID), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityForClient), gomock.Eq(""), gomock.Eq("marker-id"), gomock.Eq(800)).
 					Times(1).
 					Return(eventbus.ReplayResult{
 						Messages: []eventbus.Message{
@@ -92,12 +96,140 @@ func TestReplayGame(t *testing.T) {
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
 
 				bus.EXPECT().
-					MarkerID(gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.MarkerRoundEnded)).
+					MarkerID(gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.Marker{
+						Round: 4,
+						Type:  eventbus.MarkerRoundStarted,
+					})).
 					Times(1).
 					Return("marker-id", nil)
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq("marker-id"), gomock.Eq(800)).
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq(""), gomock.Eq("marker-id"), gomock.Eq(800)).
+					Times(1).
+					Return(eventbus.ReplayResult{
+						Messages: []eventbus.Message{
+							{
+								ID:         "123",
+								Type:       "some type",
+								Timestamp:  time.Now().UTC(),
+								StreamType: eventbus.GameEventsStreamType,
+								Payload:    []byte(`{"word": "cat", "score": 100}`),
+							},
+						},
+						HasMore: true,
+						LastID:  "last-id",
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ReplayGameResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.NotEmpty(t, res.Messages)
+				require.True(t, res.HasMore)
+				require.NotEmpty(t, res.LastId)
+			},
+		},
+		{
+			name: "success - round number and after params not provided",
+			req: &pb.ReplayGameRequest{
+				ServerId:   uuid.New().String(),
+				GameId:     uuid.New().String(),
+				StreamType: pb.StreamType_STREAM_TYPE_GAME_EVENTS,
+			},
+			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
+
+				bus.EXPECT().
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq(""), gomock.Eq(""), gomock.Eq(500)).
+					Times(1).
+					Return(eventbus.ReplayResult{
+						Messages: []eventbus.Message{
+							{
+								ID:         "123",
+								Type:       "some type",
+								Timestamp:  time.Now().UTC(),
+								StreamType: eventbus.GameEventsStreamType,
+								Payload:    []byte(`{"word": "cat", "score": 100}`),
+							},
+						},
+						HasMore: true,
+						LastID:  "last-id",
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ReplayGameResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.NotEmpty(t, res.Messages)
+				require.True(t, res.HasMore)
+				require.NotEmpty(t, res.LastId)
+			},
+		},
+		{
+			name: "success - round number and after params provided",
+			req: &pb.ReplayGameRequest{
+				ServerId:    uuid.New().String(),
+				GameId:      uuid.New().String(),
+				StreamType:  pb.StreamType_STREAM_TYPE_GAME_EVENTS,
+				RoundNumber: 99,
+				After:       "last-known-msg-id",
+			},
+			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
+
+				bus.EXPECT().
+					MarkerID(gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.Marker{
+						Round: 99,
+						Type:  eventbus.MarkerRoundStarted,
+					})).
+					Times(1).
+					Return("marker-id", nil)
+
+				bus.EXPECT().
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq(""), gomock.Eq("last-known-msg-id"), gomock.Eq(500)).
+					Times(1).
+					Return(eventbus.ReplayResult{
+						Messages: []eventbus.Message{
+							{
+								ID:         "123",
+								Type:       "some type",
+								Timestamp:  time.Now().UTC(),
+								StreamType: eventbus.GameEventsStreamType,
+								Payload:    []byte(`{"word": "cat", "score": 100}`),
+							},
+						},
+						HasMore: true,
+						LastID:  "last-id",
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, res *pb.ReplayGameResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.NotEmpty(t, res.Messages)
+				require.True(t, res.HasMore)
+				require.NotEmpty(t, res.LastId)
+			},
+		},
+		{
+			name: "success - after param provided but no round number",
+			req: &pb.ReplayGameRequest{
+				ServerId:   uuid.New().String(),
+				GameId:     uuid.New().String(),
+				StreamType: pb.StreamType_STREAM_TYPE_GAME_EVENTS,
+				After:      "last-known-msg-id",
+			},
+			buildStubs: func(bus *mockeventbus.MockEventBus, authService *mockservices.MockAuthGrpcService) {
+				authService.EXPECT().
+					VerifyAccessToken(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
+
+				bus.EXPECT().
+					Replay(gomock.Any(), gomock.Eq(uuid.Nil), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq(""), gomock.Eq("last-known-msg-id"), gomock.Eq(500)).
 					Times(1).
 					Return(eventbus.ReplayResult{
 						Messages: []eventbus.Message{
@@ -152,7 +284,7 @@ func TestReplayGame(t *testing.T) {
 					Return(&authPb.VerifyAccessTokenResponse{}, errors.New("unauthorized"))
 
 				bus.EXPECT().
-					Replay(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq("1772996305636-0"), gomock.Eq(defaultReplayLimit)).
+					Replay(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq(eventbus.GameEventsStreamType), gomock.Eq(eventbus.ReplayVisibilityBroadcastOnly), gomock.Eq(""), gomock.Eq("1772996305636-0"), gomock.Eq(defaultReplayLimit)).
 					Times(1).
 					Return(eventbus.ReplayResult{
 						Messages: []eventbus.Message{

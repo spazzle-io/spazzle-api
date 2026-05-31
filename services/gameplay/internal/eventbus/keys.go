@@ -21,6 +21,25 @@ func markerKey(config *util.Config, streamType StreamType, game GameIdentifier, 
 		streamType,
 		game.GameServerID.String(),
 		game.GameID.String(),
-		string(marker),
+		marker.String(),
+	)
+}
+
+func markerRegistryKey(config *util.Config, streamType StreamType, game GameIdentifier) string {
+	return fmt.Sprintf("%s-%s:%s:%s:marker-registry",
+		config.ServiceName,
+		streamType,
+		game.GameServerID.String(),
+		game.GameID.String(),
+	)
+}
+
+func markerKeyFromString(config *util.Config, streamType StreamType, game GameIdentifier, markerStr string) string {
+	return fmt.Sprintf("%s-%s:%s:%s:%s",
+		config.ServiceName,
+		streamType,
+		game.GameServerID.String(),
+		game.GameID.String(),
+		markerStr,
 	)
 }

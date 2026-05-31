@@ -50,17 +50,19 @@ func TestPublish_WithMarker(t *testing.T) {
 	session, err := bus.Session(game)
 	require.NoError(t, err)
 
+	marker := Marker{Type: MarkerRoundEnded, Round: 1}
+
 	msg := PublishMessage{
 		Type:    "test_event",
 		Payload: json.RawMessage(`{"key":"value"}`),
-		Marker:  MarkerRoundEnded,
+		Marker:  marker,
 	}
 
 	messageID, err := session.Publish(context.Background(), GameEventsStreamType, msg)
 	require.NoError(t, err)
 	require.NotEmpty(t, messageID)
 
-	markerID, err := bus.MarkerID(context.Background(), game, GameEventsStreamType, MarkerRoundEnded)
+	markerID, err := bus.MarkerID(context.Background(), game, GameEventsStreamType, marker)
 	require.NoError(t, err)
 	require.Equal(t, messageID, markerID)
 
@@ -90,6 +92,46 @@ func TestPublish_AfterClose(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorIs(t, err, ErrSessionClosed)
 	require.Empty(t, messageID)
+}
+
+func TestPublish_MultipleRoundMarkers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping event bus test in short mode")
+	}
+
+	bus := newEventBus(t)
+	game := newGameIdentifier()
+
+	session, err := bus.Session(game)
+	require.NoError(t, err)
+
+	marker1 := Marker{Type: MarkerRoundEnded, Round: 1}
+	marker2 := Marker{Type: MarkerRoundEnded, Round: 2}
+
+	id1, err := session.Publish(context.Background(), GameEventsStreamType, PublishMessage{
+		Type:   "round_ended",
+		Marker: marker1,
+	})
+	require.NoError(t, err)
+
+	id2, err := session.Publish(context.Background(), GameEventsStreamType, PublishMessage{
+		Type:   "round_ended",
+		Marker: marker2,
+	})
+	require.NoError(t, err)
+
+	require.NotEqual(t, id1, id2)
+
+	markerID1, err := bus.MarkerID(context.Background(), game, GameEventsStreamType, marker1)
+	require.NoError(t, err)
+	require.Equal(t, id1, markerID1)
+
+	markerID2, err := bus.MarkerID(context.Background(), game, GameEventsStreamType, marker2)
+	require.NoError(t, err)
+	require.Equal(t, id2, markerID2)
+
+	err = bus.Cleanup(context.Background(), game)
+	require.NoError(t, err)
 }
 
 func TestSubscribe(t *testing.T) {

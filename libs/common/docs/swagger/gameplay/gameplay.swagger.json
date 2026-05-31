@@ -740,6 +740,13 @@
             "default": "STREAM_TYPE_UNSPECIFIED"
           },
           {
+            "name": "roundNumber",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
             "name": "after",
             "in": "query",
             "required": false,

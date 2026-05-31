@@ -86,18 +86,18 @@ func (mr *MockEventBusMockRecorder) MarkerID(ctx, game, streamType, marker any) 
 }
 
 // Replay mocks base method.
-func (m *MockEventBus) Replay(ctx context.Context, clientID uuid.UUID, game eventbus.GameIdentifier, streamType eventbus.StreamType, visibility eventbus.ReplayVisibility, after string, limit int) (eventbus.ReplayResult, error) {
+func (m *MockEventBus) Replay(ctx context.Context, clientID uuid.UUID, game eventbus.GameIdentifier, streamType eventbus.StreamType, visibility eventbus.ReplayVisibility, before, after string, limit int) (eventbus.ReplayResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Replay", ctx, clientID, game, streamType, visibility, after, limit)
+	ret := m.ctrl.Call(m, "Replay", ctx, clientID, game, streamType, visibility, before, after, limit)
 	ret0, _ := ret[0].(eventbus.ReplayResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Replay indicates an expected call of Replay.
-func (mr *MockEventBusMockRecorder) Replay(ctx, clientID, game, streamType, visibility, after, limit any) *gomock.Call {
+func (mr *MockEventBusMockRecorder) Replay(ctx, clientID, game, streamType, visibility, before, after, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Replay", reflect.TypeOf((*MockEventBus)(nil).Replay), ctx, clientID, game, streamType, visibility, after, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Replay", reflect.TypeOf((*MockEventBus)(nil).Replay), ctx, clientID, game, streamType, visibility, before, after, limit)
 }
 
 // Session mocks base method.
@@ -113,4 +113,18 @@ func (m *MockEventBus) Session(game eventbus.GameIdentifier) (eventbus.Session, 
 func (mr *MockEventBusMockRecorder) Session(game any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Session", reflect.TypeOf((*MockEventBus)(nil).Session), game)
+}
+
+// TrimStreamBefore mocks base method.
+func (m *MockEventBus) TrimStreamBefore(ctx context.Context, game eventbus.GameIdentifier, streamType eventbus.StreamType, upToID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TrimStreamBefore", ctx, game, streamType, upToID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TrimStreamBefore indicates an expected call of TrimStreamBefore.
+func (mr *MockEventBusMockRecorder) TrimStreamBefore(ctx, game, streamType, upToID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrimStreamBefore", reflect.TypeOf((*MockEventBus)(nil).TrimStreamBefore), ctx, game, streamType, upToID)
 }

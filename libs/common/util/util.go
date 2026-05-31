@@ -76,6 +76,15 @@ func Uint64ToInt64(n uint64) (int64, error) {
 	return int64(n), nil
 }
 
+// Uint32ToUint8 safely converts uint32 to uint8 with bounds checking.
+// Returns an error if the value exceeds math.MaxUint8.
+func Uint32ToUint8(n uint32) (uint8, error) {
+	if n > math.MaxUint8 {
+		return 0, fmt.Errorf("uint32 value %d out of uint8 range", n)
+	}
+	return uint8(n), nil
+}
+
 // IntToInt32 safely converts int to int32 with bounds checking.
 // Returns an error if the value cannot fit in int32.
 func IntToInt32(n int) (int32, error) {

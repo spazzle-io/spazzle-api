@@ -1155,8 +1155,9 @@ type ReplayGameRequest struct {
 	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
 	GameId        string                 `protobuf:"bytes,2,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
 	StreamType    StreamType             `protobuf:"varint,3,opt,name=stream_type,json=streamType,proto3,enum=gameplay.v1.StreamType" json:"stream_type,omitempty"`
-	After         string                 `protobuf:"bytes,4,opt,name=after,proto3" json:"after,omitempty"`
-	Limit         int32                  `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	RoundNumber   uint32                 `protobuf:"varint,4,opt,name=round_number,json=roundNumber,proto3" json:"round_number,omitempty"`
+	After         string                 `protobuf:"bytes,5,opt,name=after,proto3" json:"after,omitempty"`
+	Limit         int32                  `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1210,6 +1211,13 @@ func (x *ReplayGameRequest) GetStreamType() StreamType {
 		return x.StreamType
 	}
 	return StreamType_STREAM_TYPE_UNSPECIFIED
+}
+
+func (x *ReplayGameRequest) GetRoundNumber() uint32 {
+	if x != nil {
+		return x.RoundNumber
+	}
+	return 0
 }
 
 func (x *ReplayGameRequest) GetAfter() string {
@@ -2133,14 +2141,16 @@ const file_gameplay_v1_rpc_game_service_proto_rawDesc = "" +
 	"\ttotal_pnl\x18\x04 \x01(\tR\btotalPnl\x12!\n" +
 	"\ftotal_volume\x18\x05 \x01(\tR\vtotalVolume\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xdd\x01\n" +
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x8c\x02\n" +
 	"\x11ReplayGameRequest\x12(\n" +
 	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\x12$\n" +
 	"\agame_id\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06gameId\x12@\n" +
 	"\vstream_type\x18\x03 \x01(\x0e2\x17.gameplay.v1.StreamTypeB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"streamType\x12\x14\n" +
-	"\x05after\x18\x04 \x01(\tR\x05after\x12 \n" +
-	"\x05limit\x18\x05 \x01(\x05B\n" +
+	"streamType\x12-\n" +
+	"\fround_number\x18\x04 \x01(\rB\n" +
+	"\xbaH\a*\x05\x18\xff\x01(\x00R\vroundNumber\x12\x14\n" +
+	"\x05after\x18\x05 \x01(\tR\x05after\x12 \n" +
+	"\x05limit\x18\x06 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\xe8\a(\x00R\x05limit\"\x80\x01\n" +
 	"\x12ReplayGameResponse\x126\n" +
 	"\bmessages\x18\x01 \x03(\v2\x1a.gameplay.v1.ReplayMessageR\bmessages\x12\x19\n" +

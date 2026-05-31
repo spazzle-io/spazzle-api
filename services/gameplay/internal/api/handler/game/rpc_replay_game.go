@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+
 	"buf.build/go/protovalidate"
 
 	"github.com/google/uuid"
@@ -31,6 +33,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		Str("game_server_id", req.GetServerId()).
 		Str("game_id", req.GetGameId()).
 		Str("stream_type", req.GetStreamType().String()).
+		Uint32("round", req.GetRoundNumber()).
 		Logger()
 
 	userID := uuid.Nil
@@ -66,13 +69,26 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		GameID:       gameID,
 	}
 
-	after := strings.TrimSpace(req.GetAfter())
-	if after == "" || after == "0" {
-		markerID, err := h.Bus.MarkerID(ctx, game, streamType, eventbus.MarkerRoundEnded)
+	markerID := ""
+	if req.GetRoundNumber() > 0 {
+		roundNumber, err := commonUtil.Uint32ToUint8(req.GetRoundNumber())
 		if err != nil {
-			logger.Error().Err(err).Msg("failed to get marker round ended")
+			logger.Error().Err(err).Msg("invalid round number. out of range")
+			return nil, status.Error(codes.InvalidArgument, handler.InvalidRoundNumberError)
+		}
+
+		markerID, err = h.Bus.MarkerID(ctx, game, streamType, eventbus.Marker{
+			Round: roundNumber,
+			Type:  eventbus.MarkerRoundStarted,
+		})
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to get marker round started")
 			return nil, status.Error(codes.Internal, handler.InternalServerError)
 		}
+	}
+
+	after := strings.TrimSpace(req.GetAfter())
+	if after == "" || after == "0" {
 		after = markerID
 	}
 
@@ -89,7 +105,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 		replayVisibility = eventbus.ReplayVisibilityForClient
 	}
 
-	result, err := h.Bus.Replay(ctx, userID, game, streamType, replayVisibility, after, int(limit))
+	result, err := h.Bus.Replay(ctx, userID, game, streamType, replayVisibility, "", after, int(limit))
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to replay game")
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
