@@ -6,16 +6,21 @@ import (
 )
 
 type Logger struct {
-	logger zerolog.Logger
+	logger   zerolog.Logger
+	isDevEnv bool
 }
 
-func New(logger zerolog.Logger) *Logger {
+func New(logger zerolog.Logger, isDevEnv bool) *Logger {
 	return &Logger{
-		logger: logger,
+		logger:   logger,
+		isDevEnv: isDevEnv,
 	}
 }
 
 func (l *Logger) Debug(msg string, keyVals ...interface{}) {
+	if !l.isDevEnv {
+		return
+	}
 	l.logger.Debug().Fields(toFields(keyVals)).Msg(msg)
 }
 

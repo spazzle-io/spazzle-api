@@ -50,6 +50,10 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 
 	registerGlobalSignalHandlers(ctx, state, notifyCh)
 
+	if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
+		state.Logger().Warn("failed to publish round started event", "error", err)
+	}
+
 	for {
 		switch state.Phase {
 		case types.PhaseWaiting:

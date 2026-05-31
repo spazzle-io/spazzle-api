@@ -28,6 +28,7 @@ const (
 	ServerArchivedError      string = "Server archived"
 	InvalidStakePerGameError string = "Invalid stake per game"
 	InvalidStreamTypeError   string = "Invalid stream type"
+	InvalidRoundNumberError  string = "Invalid round number"
 	InvalidGameRoleError     string = "Invalid game role"
 	GameNotFoundError        string = "Game not found"
 	UserStatsNotFoundError   string = "No game history found for this user"

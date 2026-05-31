@@ -114,6 +114,7 @@ func (b *redisEventBus) Replay(
 	game GameIdentifier,
 	streamType StreamType,
 	visibility ReplayVisibility,
+	before string,
 	after string,
 	limit int,
 ) (ReplayResult, error) {
@@ -130,11 +131,16 @@ func (b *redisEventBus) Replay(
 
 	sk := streamKey(b.serviceConfig, streamType, game)
 
-	cursor := after
-	if cursor == "" || cursor == "0" {
-		cursor = "-" // minimum ID
+	start := after
+	if start == "" || start == "0" {
+		start = "-" // minimum ID
 	} else {
-		cursor = "(" + cursor // exclusive start
+		start = "(" + start // exclusive start
+	}
+
+	end := before
+	if end == "" || end == "0" {
+		end = "+" // read to end of stream
 	}
 
 	batchSize := int64(limit)
@@ -142,7 +148,7 @@ func (b *redisEventBus) Replay(
 	var lastID string
 
 	for {
-		msgs, err := b.client.XRangeN(ctx, sk, cursor, "+", batchSize).Result()
+		msgs, err := b.client.XRangeN(ctx, sk, start, end, batchSize).Result()
 		if err != nil {
 			return ReplayResult{}, fmt.Errorf("event bus failed to replay messages: %w", err)
 		}
@@ -180,7 +186,7 @@ func (b *redisEventBus) Replay(
 			}
 		}
 
-		cursor = "(" + msgs[len(msgs)-1].ID
+		start = "(" + msgs[len(msgs)-1].ID
 
 		if int64(len(msgs)) < batchSize {
 			break
@@ -192,6 +198,30 @@ func (b *redisEventBus) Replay(
 		HasMore:  false,
 		LastID:   lastID,
 	}, nil
+}
+
+func (b *redisEventBus) TrimStreamBefore(
+	ctx context.Context,
+	game GameIdentifier,
+	streamType StreamType,
+	upToID string,
+) error {
+	b.mu.RLock()
+	if b.closed {
+		b.mu.RUnlock()
+		return ErrClosedEventBus
+	}
+	b.mu.RUnlock()
+
+	sk := streamKey(b.serviceConfig, streamType, game)
+
+	// XTrimMinID trims all entries with IDs less than upToID.
+	// The entry at upToID itself is retained.
+	if err := b.client.XTrimMinID(ctx, sk, upToID).Err(); err != nil {
+		return fmt.Errorf("failed to trim stream before %s: %w", upToID, err)
+	}
+
+	return nil
 }
 
 func (b *redisEventBus) MarkerID(
@@ -233,15 +263,27 @@ func (b *redisEventBus) deleteStreams(ctx context.Context, game GameIdentifier) 
 }
 
 func (b *redisEventBus) deleteMarkers(ctx context.Context, game GameIdentifier) error {
-	keys := make([]string, 0, len(AllStreamTypes)*len(AllMarkers))
 	for _, st := range AllStreamTypes {
-		for _, m := range AllMarkers {
-			keys = append(keys, markerKey(b.serviceConfig, st, game, m))
-		}
-	}
+		registryKey := markerRegistryKey(b.serviceConfig, st, game)
 
-	if err := b.client.Del(ctx, keys...).Err(); err != nil {
-		return fmt.Errorf("failed to delete markers: %w", err)
+		markerNames, err := b.client.SMembers(ctx, registryKey).Result()
+		if err != nil {
+			return fmt.Errorf("failed to get marker registry: %w", err)
+		}
+
+		if len(markerNames) == 0 {
+			continue
+		}
+
+		keys := make([]string, 0, len(markerNames)+1)
+		for _, name := range markerNames {
+			keys = append(keys, markerKeyFromString(b.serviceConfig, st, game, name))
+		}
+		keys = append(keys, registryKey)
+
+		if err := b.client.Del(ctx, keys...).Err(); err != nil {
+			return fmt.Errorf("failed to delete marker keys: %w", err)
+		}
 	}
 
 	return nil

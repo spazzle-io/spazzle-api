@@ -16,12 +16,14 @@ func getTemporalNamespace(config *util.Config) string {
 }
 
 func getTemporalClientOpts(config *util.Config) temporalclient.Options {
+	isDevEnv := config.Is(commonConfig.Development)
+
 	opts := temporalclient.Options{
 		Namespace: getTemporalNamespace(config),
-		Logger:    logger.New(log.Logger),
+		Logger:    logger.New(log.Logger, isDevEnv),
 	}
 
-	if !config.Is(commonConfig.Development) {
+	if !isDevEnv {
 		opts.HostPort = config.TemporalHostPort
 		opts.Credentials = temporalclient.NewAPIKeyStaticCredentials(config.TemporalAPIKey)
 	}

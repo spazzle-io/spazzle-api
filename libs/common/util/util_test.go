@@ -181,7 +181,7 @@ func TestUInt64ToUInt32(t *testing.T) {
 		},
 		{
 			name:    "input too large",
-			input:   uint64(math.MaxUint64),
+			input:   math.MaxUint64,
 			success: false,
 		},
 	}
@@ -189,6 +189,45 @@ func TestUInt64ToUInt32(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result, err := Uint64ToUint32(tc.input)
+			if tc.success {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+				return
+			}
+
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestUInt32ToUInt8(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    uint32
+		expected uint8
+		success  bool
+	}{
+		{
+			name:     "success",
+			input:    12,
+			expected: 12,
+			success:  true,
+		},
+		{
+			name:    "zero",
+			input:   uint32(0),
+			success: true,
+		},
+		{
+			name:    "input too large",
+			input:   math.MaxUint32,
+			success: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Uint32ToUint8(tc.input)
 			if tc.success {
 				require.NoError(t, err)
 				require.Equal(t, tc.expected, result)

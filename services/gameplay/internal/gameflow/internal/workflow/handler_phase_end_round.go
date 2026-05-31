@@ -108,14 +108,24 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 		IsFinalRound:    isFinalRound,
 	}
 	_, err = sendGameEvent(ctx, state, notifyCh, gameevents.TypeRoundEnded, roundResults,
-		WithMarker(eventbus.MarkerRoundEnded),
+		WithMarker(eventbus.Marker{
+			Round: state.CurrentRound,
+			Type:  eventbus.MarkerRoundEnded,
+		}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to send round ended event to game events stream: %w", err)
 	}
-	_, err = sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundEnded, nil,
+
+	markerPayload := gameevents.RoundMarkerPayload{
+		Round: state.CurrentRound,
+	}
+	_, err = sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundEnded, markerPayload,
 		WithStreamType(eventbus.DrawingUpdatesStreamType),
-		WithMarker(eventbus.MarkerRoundEnded),
+		WithMarker(eventbus.Marker{
+			Round: state.CurrentRound,
+			Type:  eventbus.MarkerRoundEnded,
+		}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to send round ended event to drawing updates stream: %w", err)
@@ -136,6 +146,9 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 	} else {
 		state.CurrentRound++
 		state.Phase = types.PhasePrepareRound
+		if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
+			state.Logger().Warn("failed to publish round started event", "error", err)
+		}
 	}
 
 	state.Logger().Info("round ended", "round", state.CurrentRound)
@@ -393,9 +406,7 @@ func topRoundResults(
 	artist *gameevents.PlayerRoundResult,
 	n int,
 ) []*gameevents.PlayerRoundResult {
-	if len(correctGuessers) < n {
-		n = len(correctGuessers)
-	}
+	n = min(n, len(correctGuessers))
 
 	top := correctGuessers[:n:n]
 	if artist == nil {

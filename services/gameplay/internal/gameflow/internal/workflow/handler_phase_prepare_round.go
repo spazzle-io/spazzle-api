@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
@@ -105,4 +107,33 @@ func selectAndNotifyArtist(
 			artist.IsConnected = false
 		}
 	}
+}
+
+func publishRoundStartedEvent(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) error {
+	payload := gameevents.RoundMarkerPayload{
+		Round: state.CurrentRound,
+	}
+
+	_, err := sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundStarted, payload,
+		WithMarker(eventbus.Marker{
+			Round: state.CurrentRound,
+			Type:  eventbus.MarkerRoundStarted,
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to send round started event to game events stream: %w", err)
+	}
+
+	_, err = sendGameEvent[any](ctx, state, notifyCh, gameevents.TypeRoundStarted, payload,
+		WithStreamType(eventbus.DrawingUpdatesStreamType),
+		WithMarker(eventbus.Marker{
+			Round: state.CurrentRound,
+			Type:  eventbus.MarkerRoundStarted,
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to send round started event to drawing updates stream: %w", err)
+	}
+
+	return nil
 }

@@ -23,6 +23,7 @@ const (
 	TypeBeginDrawing       = "begin_drawing"
 	TypeUpdateDrawing      = "update_drawing"
 	TypeEndDrawing         = "end_drawing"
+	TypeRoundStarted       = "round_started"
 	TypeRoundEnded         = "round_ended"
 	TypePlayerRoundResult  = "player_round_result"
 )
@@ -102,6 +103,10 @@ type UpdateDrawingPayload struct{} // TODO: Implement
 type EndDrawingPayload struct {
 	CurrentRound uint8  `json:"current_round"`
 	Word         string `json:"word"`
+}
+
+type RoundMarkerPayload struct {
+	Round uint8 `json:"round"`
 }
 
 type PlayerRoundResult struct {

@@ -12,11 +12,12 @@ const (
 )
 
 type ConnectionInfoPayload struct {
-	ServerID uuid.UUID `json:"server_id"`
-	GameID   uuid.UUID `json:"game_id"`
-	UserID   uuid.UUID `json:"user_id"`
-	ConnID   uuid.UUID `json:"conn_id"`
-	Role     string    `json:"role"`
+	ServerID     uuid.UUID `json:"server_id"`
+	GameID       uuid.UUID `json:"game_id"`
+	CurrentRound uint8     `json:"current_round"`
+	UserID       uuid.UUID `json:"user_id"`
+	ConnID       uuid.UUID `json:"conn_id"`
+	Role         string    `json:"role"`
 }
 
 type JoinGamePayload struct {

@@ -29,7 +29,10 @@ func TestPublishGameEvent(t *testing.T) {
 					CurrentRound: uint8(1),
 					EndsAt:       time.Now().UTC(),
 				},
-				Marker: eventbus.MarkerRoundEnded,
+				Marker: eventbus.Marker{
+					Round: uint8(3),
+					Type:  eventbus.MarkerRoundEnded,
+				},
 			},
 		},
 	}

@@ -104,8 +104,9 @@ message ReplayGameRequest {
   string server_id = 1 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
   string game_id = 2 [(buf.validate.field).required = true, (buf.validate.field).string.uuid = true];
   StreamType stream_type = 3 [(buf.validate.field).required = true];
-  string after = 4;
-  int32 limit = 5 [(buf.validate.field).int32 = {gte: 0, lte: 1000}];
+  uint32 round_number = 4 [(buf.validate.field).uint32 = {gte: 0, lte: 255}];
+  string after = 5;
+  int32 limit = 6 [(buf.validate.field).int32 = {gte: 0, lte: 1000}];
 }
 
 message ReplayGameResponse {

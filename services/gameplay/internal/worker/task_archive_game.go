@@ -193,7 +193,7 @@ func (processor *RedisTaskProcessor) replayGameStream(
 	after := "0"
 
 	for {
-		result, err := processor.bus.Replay(ctx, uuid.Nil, game, streamType, eventbus.ReplayVisibilityAll, after, archiveReplayLimit)
+		result, err := processor.bus.Replay(ctx, uuid.Nil, game, streamType, eventbus.ReplayVisibilityAll, "0", after, archiveReplayLimit)
 		if err != nil {
 			return nil, fmt.Errorf("failed to replay stream %s: %w", streamType, err)
 		}

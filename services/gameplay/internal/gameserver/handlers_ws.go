@@ -388,11 +388,12 @@ func (gs *GameServer) sendConnectionInfoMsg(c *Client) {
 	logger := gs.loggerWithClient(c)
 
 	payload, err := json.Marshal(&gameevents.ConnectionInfoPayload{
-		ServerID: gs.serverID,
-		GameID:   gs.GetGameID(),
-		UserID:   c.userID,
-		ConnID:   c.connID,
-		Role:     string(c.Role()),
+		ServerID:     gs.serverID,
+		GameID:       gs.GetGameID(),
+		CurrentRound: gs.getCurrentRound(),
+		UserID:       c.userID,
+		ConnID:       c.connID,
+		Role:         string(c.Role()),
 	})
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to marshal player connected payload")
