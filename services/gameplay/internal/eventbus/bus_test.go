@@ -503,6 +503,19 @@ func TestCleanup_RemovesAllRoundMarkers(t *testing.T) {
 		require.NoError(t, err)
 	}
 
+	for i := 1; i <= 3; i++ {
+		startMarker := Marker{Type: MarkerRoundStarted, Round: uint8(i)}
+		endMarker := Marker{Type: MarkerRoundEnded, Round: uint8(i)}
+
+		id, err := bus.MarkerID(context.Background(), game, GameEventsStreamType, startMarker)
+		require.NoError(t, err)
+		require.NotEmpty(t, id)
+
+		id, err = bus.MarkerID(context.Background(), game, GameEventsStreamType, endMarker)
+		require.NoError(t, err)
+		require.NotEmpty(t, id)
+	}
+
 	err = bus.Cleanup(context.Background(), game)
 	require.NoError(t, err)
 
