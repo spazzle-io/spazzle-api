@@ -185,6 +185,21 @@ func (mr *MockTemporalMockRecorder) CountActivities(ctx, options any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountActivities", reflect.TypeOf((*MockTemporal)(nil).CountActivities), ctx, options)
 }
 
+// CountNexusOperations mocks base method.
+func (m *MockTemporal) CountNexusOperations(ctx context.Context, options client.CountNexusOperationsOptions) (*client.CountNexusOperationsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountNexusOperations", ctx, options)
+	ret0, _ := ret[0].(*client.CountNexusOperationsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountNexusOperations indicates an expected call of CountNexusOperations.
+func (mr *MockTemporalMockRecorder) CountNexusOperations(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountNexusOperations", reflect.TypeOf((*MockTemporal)(nil).CountNexusOperations), ctx, options)
+}
+
 // CountWorkflow mocks base method.
 func (m *MockTemporal) CountWorkflow(ctx context.Context, request *workflowservice.CountWorkflowExecutionsRequest) (*workflowservice.CountWorkflowExecutionsResponse, error) {
 	m.ctrl.T.Helper()
@@ -326,6 +341,20 @@ func (m *MockTemporal) GetActivityHandle(options client.GetActivityHandleOptions
 func (mr *MockTemporalMockRecorder) GetActivityHandle(options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActivityHandle", reflect.TypeOf((*MockTemporal)(nil).GetActivityHandle), options)
+}
+
+// GetNexusOperationHandle mocks base method.
+func (m *MockTemporal) GetNexusOperationHandle(options client.GetNexusOperationHandleOptions) client.NexusOperationHandle {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNexusOperationHandle", options)
+	ret0, _ := ret[0].(client.NexusOperationHandle)
+	return ret0
+}
+
+// GetNexusOperationHandle indicates an expected call of GetNexusOperationHandle.
+func (mr *MockTemporalMockRecorder) GetNexusOperationHandle(options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNexusOperationHandle", reflect.TypeOf((*MockTemporal)(nil).GetNexusOperationHandle), options)
 }
 
 // GetSearchAttributes mocks base method.
@@ -475,6 +504,21 @@ func (mr *MockTemporalMockRecorder) ListClosedWorkflow(ctx, request any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListClosedWorkflow", reflect.TypeOf((*MockTemporal)(nil).ListClosedWorkflow), ctx, request)
 }
 
+// ListNexusOperations mocks base method.
+func (m *MockTemporal) ListNexusOperations(ctx context.Context, options client.ListNexusOperationsOptions) (client.ListNexusOperationsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListNexusOperations", ctx, options)
+	ret0, _ := ret[0].(client.ListNexusOperationsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListNexusOperations indicates an expected call of ListNexusOperations.
+func (mr *MockTemporalMockRecorder) ListNexusOperations(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListNexusOperations", reflect.TypeOf((*MockTemporal)(nil).ListNexusOperations), ctx, options)
+}
+
 // ListOpenWorkflow mocks base method.
 func (m *MockTemporal) ListOpenWorkflow(ctx context.Context, request *workflowservice.ListOpenWorkflowExecutionsRequest) (*workflowservice.ListOpenWorkflowExecutionsResponse, error) {
 	m.ctrl.T.Helper()
@@ -503,6 +547,21 @@ func (m *MockTemporal) ListWorkflow(ctx context.Context, request *workflowservic
 func (mr *MockTemporalMockRecorder) ListWorkflow(ctx, request any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkflow", reflect.TypeOf((*MockTemporal)(nil).ListWorkflow), ctx, request)
+}
+
+// NewNexusClient mocks base method.
+func (m *MockTemporal) NewNexusClient(options client.NexusClientOptions) (client.NexusClient, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewNexusClient", options)
+	ret0, _ := ret[0].(client.NexusClient)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NewNexusClient indicates an expected call of NewNexusClient.
+func (mr *MockTemporalMockRecorder) NewNexusClient(options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewNexusClient", reflect.TypeOf((*MockTemporal)(nil).NewNexusClient), options)
 }
 
 // NewWithStartWorkflowOperation mocks base method.
