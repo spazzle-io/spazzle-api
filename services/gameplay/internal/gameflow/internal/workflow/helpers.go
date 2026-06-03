@@ -18,6 +18,10 @@ func getGameServerID(ctx workflow.Context) uuid.UUID {
 	return uuid.MustParse(workflow.GetInfo(ctx).WorkflowExecution.ID)
 }
 
+func isActivePlayer(player *PlayerGameState) bool {
+	return player != nil && player.IsConnected && !player.IsEjected
+}
+
 func generateUUID(ctx workflow.Context) (uuid.UUID, error) {
 	encodedCorrelationID := workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
 		return uuid.New()

@@ -13,11 +13,12 @@ const (
 	GameServerHeartbeatInterval = time.Second * 10
 
 	WordSelectionTimeout = 15 * time.Second
+	MaxPlayerReports     = 100
 )
 
 type GameInput struct {
 	GameID          uuid.UUID
-	NumRounds       int32
+	NumRounds       uint8
 	DrawingDuration time.Duration
 	StakePerGame    string
 }
@@ -59,13 +60,13 @@ type CorrectGuess struct {
 }
 
 type PlayerReport struct {
-	ReporterID uuid.UUID
-	ReportedID uuid.UUID
+	Reporter     uuid.UUID
+	ReportTarget uuid.UUID
 }
 
 type PlayerEjection struct {
-	PlayerID  uuid.UUID
-	EjectorID uuid.UUID
+	PlayerID uuid.UUID
+	Ejector  uuid.UUID
 }
 
 type GameStateView struct {
@@ -76,7 +77,7 @@ type GameStateView struct {
 	Phase             Phase
 	SubPhase          SubPhase
 	CurrentRound      uint8
-	NumRounds         int32
+	NumRounds         uint8
 	CurrentArtist     uuid.UUID
 	CurrentWord       Word
 	Players           map[uuid.UUID]bool

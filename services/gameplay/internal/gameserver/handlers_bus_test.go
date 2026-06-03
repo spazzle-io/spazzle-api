@@ -201,7 +201,7 @@ func TestHandlePlayersEjected(t *testing.T) {
 		msg := newBusMsg(t, gameevents.TypePlayersEjected, gameevents.PlayersEjectedPayload{
 			CurrentRound: 1,
 			Ejections: []gameevents.PlayerEjection{
-				{PlayerID: ejected, IsArtist: false, EjectorID: uuid.New(), TotalReports: 3},
+				{PlayerID: ejected, IsArtist: false, Ejector: uuid.New(), TotalReports: 3},
 			},
 		})
 

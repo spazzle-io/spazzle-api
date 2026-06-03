@@ -105,7 +105,7 @@ func mapCurrentGameToPb(currentGame *types.GameStateView) (pb.CurrentGameInfo, e
 		Phase:             string(currentGame.Phase),
 		SubPhase:          string(currentGame.SubPhase),
 		CurrentRound:      uint32(currentGame.CurrentRound),
-		NumRounds:         currentGame.NumRounds,
+		NumRounds:         uint32(currentGame.NumRounds),
 		CurrentArtist:     currentGame.CurrentArtist.String(),
 		NumPlayers:        numPlayers,
 		StartedAt:         timestamppb.New(currentGame.StartedAt),

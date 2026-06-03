@@ -1536,7 +1536,7 @@ type CurrentGameInfo struct {
 	Phase             string                 `protobuf:"bytes,2,opt,name=phase,proto3" json:"phase,omitempty"`
 	SubPhase          string                 `protobuf:"bytes,3,opt,name=sub_phase,json=subPhase,proto3" json:"sub_phase,omitempty"`
 	CurrentRound      uint32                 `protobuf:"varint,4,opt,name=current_round,json=currentRound,proto3" json:"current_round,omitempty"`
-	NumRounds         int32                  `protobuf:"varint,5,opt,name=num_rounds,json=numRounds,proto3" json:"num_rounds,omitempty"`
+	NumRounds         uint32                 `protobuf:"varint,5,opt,name=num_rounds,json=numRounds,proto3" json:"num_rounds,omitempty"`
 	CurrentArtist     string                 `protobuf:"bytes,6,opt,name=current_artist,json=currentArtist,proto3" json:"current_artist,omitempty"`
 	NumPlayers        int32                  `protobuf:"varint,7,opt,name=num_players,json=numPlayers,proto3" json:"num_players,omitempty"`
 	StartedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
@@ -1604,7 +1604,7 @@ func (x *CurrentGameInfo) GetCurrentRound() uint32 {
 	return 0
 }
 
-func (x *CurrentGameInfo) GetNumRounds() int32 {
+func (x *CurrentGameInfo) GetNumRounds() uint32 {
 	if x != nil {
 		return x.NumRounds
 	}
@@ -2184,7 +2184,7 @@ const file_gameplay_v1_rpc_game_service_proto_rawDesc = "" +
 	"\tsub_phase\x18\x03 \x01(\tR\bsubPhase\x12#\n" +
 	"\rcurrent_round\x18\x04 \x01(\rR\fcurrentRound\x12\x1d\n" +
 	"\n" +
-	"num_rounds\x18\x05 \x01(\x05R\tnumRounds\x12%\n" +
+	"num_rounds\x18\x05 \x01(\rR\tnumRounds\x12%\n" +
 	"\x0ecurrent_artist\x18\x06 \x01(\tR\rcurrentArtist\x12\x1f\n" +
 	"\vnum_players\x18\a \x01(\x05R\n" +
 	"numPlayers\x129\n" +

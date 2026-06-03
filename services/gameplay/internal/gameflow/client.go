@@ -159,13 +159,13 @@ func (c *client) RemovePlayers(gameServerID uuid.UUID, playerIDs []uuid.UUID) {
 	c.signalBuffer.removePlayers[gameServerID] = append(c.signalBuffer.removePlayers[gameServerID], playerIDs...)
 }
 
-func (c *client) ReportPlayer(gameServerID uuid.UUID, reporter uuid.UUID, reported uuid.UUID) {
+func (c *client) ReportPlayer(gameServerID uuid.UUID, reporter uuid.UUID, reportTarget uuid.UUID) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.signalBuffer.reportPlayers[gameServerID] = append(c.signalBuffer.reportPlayers[gameServerID], types.PlayerReport{
-		ReporterID: reporter,
-		ReportedID: reported,
+		Reporter:     reporter,
+		ReportTarget: reportTarget,
 	})
 }
 
@@ -176,13 +176,13 @@ func (c *client) ClearPlayerReports(gameServerID uuid.UUID, playerID uuid.UUID) 
 	c.signalBuffer.clearPlayerReports[gameServerID] = append(c.signalBuffer.clearPlayerReports[gameServerID], playerID)
 }
 
-func (c *client) EjectPlayer(gameServerID uuid.UUID, playerID uuid.UUID, ejectorID uuid.UUID) {
+func (c *client) EjectPlayer(gameServerID uuid.UUID, playerID uuid.UUID, ejector uuid.UUID) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.signalBuffer.ejectPlayers[gameServerID] = append(c.signalBuffer.ejectPlayers[gameServerID], types.PlayerEjection{
-		PlayerID:  playerID,
-		EjectorID: ejectorID,
+		PlayerID: playerID,
+		Ejector:  ejector,
 	})
 }
 

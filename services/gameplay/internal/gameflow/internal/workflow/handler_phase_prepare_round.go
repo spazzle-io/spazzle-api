@@ -53,6 +53,13 @@ func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Chan
 		return fmt.Errorf("failed to select and notify artist: %w", err)
 	}
 
+	if !state.RoundStartedPublished[state.CurrentRound] {
+		if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
+			return fmt.Errorf("failed to publish round started event: %w", err)
+		}
+		state.RoundStartedPublished[state.CurrentRound] = true
+	}
+
 	if !hasEnoughPlayers(state) {
 		state.Phase = types.PhaseWaiting
 		return errors.New("not enough players. returning to waiting phase")
@@ -71,6 +78,10 @@ func selectAndNotifyArtist(
 	notifyCh workflow.Channel,
 ) (artistID uuid.UUID, err error) {
 	for {
+		if state.IsTerminated {
+			return uuid.Nil, errors.New("game terminated during artist selection")
+		}
+
 		artistID = state.CurrentArtist
 		if artistID == uuid.Nil {
 			artistID, err = selectArtist(ctx, state)

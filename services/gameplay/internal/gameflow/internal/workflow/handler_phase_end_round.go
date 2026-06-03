@@ -95,7 +95,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 		return fmt.Errorf("failed to send player round results: %w", err)
 	}
 
-	isFinalRound := int32(state.CurrentRound) >= state.NumRounds
+	isFinalRound := state.CurrentRound >= state.NumRounds
 	broadcastedResults := topRoundResults(correctGuessersResults, artistResult, 10)
 
 	roundResults := gameevents.RoundEndedPayload{
@@ -135,6 +135,8 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 	state.CurrentArtist = state.NextArtist
 	state.NextArtist = uuid.Nil
 	state.DrawingStartedAt = time.Time{}
+	delete(state.CorrectGuesses, state.CurrentRound)
+	delete(state.CorrectGuessers, state.CurrentRound)
 
 	err = workflow.Sleep(ctx, endRoundCooldown)
 	if err != nil {
@@ -146,9 +148,6 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 	} else {
 		state.CurrentRound++
 		state.Phase = types.PhasePrepareRound
-		if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
-			state.Logger().Warn("failed to publish round started event", "error", err)
-		}
 	}
 
 	state.Logger().Info("round ended", "round", state.CurrentRound)

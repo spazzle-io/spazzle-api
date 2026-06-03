@@ -13,6 +13,7 @@ import (
 
 type PlayerGameState struct {
 	PlayerID     uuid.UUID
+	PlayerIdx    uint32
 	Points       int64
 	StakeLost    string
 	RoundsPlayed uint8
@@ -42,13 +43,14 @@ type GameState struct {
 	EndedAt      time.Time
 	IsTerminated bool
 
-	Phase         types.Phase
-	SubPhase      types.SubPhase
-	NumRounds     int32
-	CurrentRound  uint8
-	GamePot       string
-	StakePerGame  string
-	StakePerRound string
+	Phase                 types.Phase
+	SubPhase              types.SubPhase
+	NumRounds             uint8
+	CurrentRound          uint8
+	GamePot               string
+	StakePerGame          string
+	StakePerRound         string
+	RoundStartedPublished map[uint8]bool
 
 	Players              map[uuid.UUID]*PlayerGameState
 	MinNumPlayersToStart uint8
@@ -67,7 +69,9 @@ type GameState struct {
 	GameServerInstances             map[uuid.UUID]*GameServerInstanceState
 	GameServerInstancesLastPrunedAt time.Time
 
-	PlayerReports  map[uuid.UUID]map[uuid.UUID]bool
+	PlayerReportsMade  map[uuid.UUID][]uint32
+	PlayerReportCounts map[uuid.UUID]uint32
+
 	EjectedPlayers map[uuid.UUID]bool
 }
 

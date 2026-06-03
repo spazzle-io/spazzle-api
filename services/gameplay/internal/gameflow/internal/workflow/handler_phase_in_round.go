@@ -27,6 +27,11 @@ func handlePhaseInRound(ctx workflow.Context, state *GameState, notifyCh workflo
 	state.SubPhase = types.SubPhaseConfirmArtist
 
 	for {
+		if state.IsTerminated {
+			state.Phase = types.PhaseEndRound
+			return
+		}
+
 		var err error
 
 		switch state.SubPhase {
@@ -359,7 +364,7 @@ func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
 }
 
 func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
-	if int32(state.CurrentRound) == state.NumRounds {
+	if state.CurrentRound == state.NumRounds {
 		state.Logger().Info("last round. skipping next artist selection")
 		return
 	}

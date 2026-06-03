@@ -515,8 +515,8 @@ func TestReportPlayer(t *testing.T) {
 		reported := uuid.New()
 		reports := []types.PlayerReport{
 			{
-				ReportedID: reported,
-				ReporterID: reporter,
+				ReportTarget: reported,
+				Reporter:     reporter,
 			},
 		}
 		signal := workflow.PlayersReportedSignal{
@@ -547,8 +547,8 @@ func TestReportPlayer(t *testing.T) {
 		reported := uuid.New()
 		reports := []types.PlayerReport{
 			{
-				ReportedID: reported,
-				ReporterID: reporter,
+				ReportTarget: reported,
+				Reporter:     reporter,
 			},
 		}
 		signal := workflow.PlayersReportedSignal{
@@ -579,8 +579,8 @@ func TestReportPlayer(t *testing.T) {
 		reported := uuid.New()
 		reports := []types.PlayerReport{
 			{
-				ReportedID: reported,
-				ReporterID: reporter,
+				ReportTarget: reported,
+				Reporter:     reporter,
 			},
 		}
 		signal := workflow.PlayersReportedSignal{
@@ -714,8 +714,8 @@ func TestEjectPlayer(t *testing.T) {
 		ejectorID := uuid.New()
 		ejections := []types.PlayerEjection{
 			{
-				PlayerID:  playerID,
-				EjectorID: ejectorID,
+				PlayerID: playerID,
+				Ejector:  ejectorID,
 			},
 		}
 		signal := workflow.PlayersEjectedSignal{
@@ -746,8 +746,8 @@ func TestEjectPlayer(t *testing.T) {
 		ejectorID := uuid.New()
 		ejections := []types.PlayerEjection{
 			{
-				PlayerID:  playerID,
-				EjectorID: ejectorID,
+				PlayerID: playerID,
+				Ejector:  ejectorID,
 			},
 		}
 		signal := workflow.PlayersEjectedSignal{
@@ -778,8 +778,8 @@ func TestEjectPlayer(t *testing.T) {
 		ejectorID := uuid.New()
 		ejections := []types.PlayerEjection{
 			{
-				PlayerID:  playerID,
-				EjectorID: ejectorID,
+				PlayerID: playerID,
+				Ejector:  ejectorID,
 			},
 		}
 		signal := workflow.PlayersEjectedSignal{

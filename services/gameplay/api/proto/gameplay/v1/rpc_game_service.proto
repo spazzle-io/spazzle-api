@@ -172,7 +172,7 @@ message CurrentGameInfo {
   string phase = 2;
   string sub_phase = 3;
   uint32 current_round = 4;
-  int32 num_rounds = 5;
+  uint32 num_rounds = 5;
   string current_artist = 6;
   int32 num_players = 7;
   google.protobuf.Timestamp started_at = 8;
