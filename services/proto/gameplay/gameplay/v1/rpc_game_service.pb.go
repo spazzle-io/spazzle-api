@@ -275,10 +275,11 @@ func (x *GetCurrentGameRequest) GetServerId() string {
 }
 
 type GetCurrentGameResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Game          *CurrentGameInfo       `protobuf:"bytes,1,opt,name=game,proto3" json:"game,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Game               *CurrentGameInfo       `protobuf:"bytes,1,opt,name=game,proto3" json:"game,omitempty"`
+	LastCompletedRound *RoundSummary          `protobuf:"bytes,2,opt,name=last_completed_round,json=lastCompletedRound,proto3" json:"last_completed_round,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GetCurrentGameResponse) Reset() {
@@ -314,6 +315,13 @@ func (*GetCurrentGameResponse) Descriptor() ([]byte, []int) {
 func (x *GetCurrentGameResponse) GetGame() *CurrentGameInfo {
 	if x != nil {
 		return x.Game
+	}
+	return nil
+}
+
+func (x *GetCurrentGameResponse) GetLastCompletedRound() *RoundSummary {
+	if x != nil {
+		return x.LastCompletedRound
 	}
 	return nil
 }
@@ -1646,6 +1654,190 @@ func (x *CurrentGameInfo) GetStakePerGame() string {
 	return ""
 }
 
+type RoundStanding struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId          string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	GuessTimeMs       int64                  `protobuf:"varint,2,opt,name=guess_time_ms,json=guessTimeMs,proto3" json:"guess_time_ms,omitempty"`
+	Tier              string                 `protobuf:"bytes,3,opt,name=tier,proto3" json:"tier,omitempty"`
+	RoundPosition     int64                  `protobuf:"varint,4,opt,name=round_position,json=roundPosition,proto3" json:"round_position,omitempty"`
+	RoundPoints       int64                  `protobuf:"varint,5,opt,name=round_points,json=roundPoints,proto3" json:"round_points,omitempty"`
+	RoundStakeLost    string                 `protobuf:"bytes,6,opt,name=round_stake_lost,json=roundStakeLost,proto3" json:"round_stake_lost,omitempty"`
+	TotalPoints       int64                  `protobuf:"varint,7,opt,name=total_points,json=totalPoints,proto3" json:"total_points,omitempty"`
+	TotalStakeLost    string                 `protobuf:"bytes,8,opt,name=total_stake_lost,json=totalStakeLost,proto3" json:"total_stake_lost,omitempty"`
+	ProvisionalPayout string                 `protobuf:"bytes,9,opt,name=provisional_payout,json=provisionalPayout,proto3" json:"provisional_payout,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *RoundStanding) Reset() {
+	*x = RoundStanding{}
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoundStanding) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoundStanding) ProtoMessage() {}
+
+func (x *RoundStanding) ProtoReflect() protoreflect.Message {
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoundStanding.ProtoReflect.Descriptor instead.
+func (*RoundStanding) Descriptor() ([]byte, []int) {
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *RoundStanding) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *RoundStanding) GetGuessTimeMs() int64 {
+	if x != nil {
+		return x.GuessTimeMs
+	}
+	return 0
+}
+
+func (x *RoundStanding) GetTier() string {
+	if x != nil {
+		return x.Tier
+	}
+	return ""
+}
+
+func (x *RoundStanding) GetRoundPosition() int64 {
+	if x != nil {
+		return x.RoundPosition
+	}
+	return 0
+}
+
+func (x *RoundStanding) GetRoundPoints() int64 {
+	if x != nil {
+		return x.RoundPoints
+	}
+	return 0
+}
+
+func (x *RoundStanding) GetRoundStakeLost() string {
+	if x != nil {
+		return x.RoundStakeLost
+	}
+	return ""
+}
+
+func (x *RoundStanding) GetTotalPoints() int64 {
+	if x != nil {
+		return x.TotalPoints
+	}
+	return 0
+}
+
+func (x *RoundStanding) GetTotalStakeLost() string {
+	if x != nil {
+		return x.TotalStakeLost
+	}
+	return ""
+}
+
+func (x *RoundStanding) GetProvisionalPayout() string {
+	if x != nil {
+		return x.ProvisionalPayout
+	}
+	return ""
+}
+
+type RoundSummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Round         uint32                 `protobuf:"varint,1,opt,name=round,proto3" json:"round,omitempty"`
+	ArtistId      string                 `protobuf:"bytes,2,opt,name=artist_id,json=artistId,proto3" json:"artist_id,omitempty"`
+	Word          string                 `protobuf:"bytes,3,opt,name=word,proto3" json:"word,omitempty"`
+	TotalPot      string                 `protobuf:"bytes,4,opt,name=total_pot,json=totalPot,proto3" json:"total_pot,omitempty"`
+	Standings     []*RoundStanding       `protobuf:"bytes,5,rep,name=standings,proto3" json:"standings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoundSummary) Reset() {
+	*x = RoundSummary{}
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoundSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoundSummary) ProtoMessage() {}
+
+func (x *RoundSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoundSummary.ProtoReflect.Descriptor instead.
+func (*RoundSummary) Descriptor() ([]byte, []int) {
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *RoundSummary) GetRound() uint32 {
+	if x != nil {
+		return x.Round
+	}
+	return 0
+}
+
+func (x *RoundSummary) GetArtistId() string {
+	if x != nil {
+		return x.ArtistId
+	}
+	return ""
+}
+
+func (x *RoundSummary) GetWord() string {
+	if x != nil {
+		return x.Word
+	}
+	return ""
+}
+
+func (x *RoundSummary) GetTotalPot() string {
+	if x != nil {
+		return x.TotalPot
+	}
+	return ""
+}
+
+func (x *RoundSummary) GetStandings() []*RoundStanding {
+	if x != nil {
+		return x.Standings
+	}
+	return nil
+}
+
 type GamePlayerEntry struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	UserId            string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -1662,7 +1854,7 @@ type GamePlayerEntry struct {
 
 func (x *GamePlayerEntry) Reset() {
 	*x = GamePlayerEntry{}
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[22]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1674,7 +1866,7 @@ func (x *GamePlayerEntry) String() string {
 func (*GamePlayerEntry) ProtoMessage() {}
 
 func (x *GamePlayerEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[22]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1687,7 +1879,7 @@ func (x *GamePlayerEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GamePlayerEntry.ProtoReflect.Descriptor instead.
 func (*GamePlayerEntry) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{22}
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GamePlayerEntry) GetUserId() string {
@@ -1759,7 +1951,7 @@ type LeaderboardEntry struct {
 
 func (x *LeaderboardEntry) Reset() {
 	*x = LeaderboardEntry{}
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[23]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1771,7 +1963,7 @@ func (x *LeaderboardEntry) String() string {
 func (*LeaderboardEntry) ProtoMessage() {}
 
 func (x *LeaderboardEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[23]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1784,7 +1976,7 @@ func (x *LeaderboardEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaderboardEntry.ProtoReflect.Descriptor instead.
 func (*LeaderboardEntry) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{23}
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *LeaderboardEntry) GetUserId() string {
@@ -1838,7 +2030,7 @@ type UserGameEntry struct {
 
 func (x *UserGameEntry) Reset() {
 	*x = UserGameEntry{}
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[24]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1850,7 +2042,7 @@ func (x *UserGameEntry) String() string {
 func (*UserGameEntry) ProtoMessage() {}
 
 func (x *UserGameEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[24]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1863,7 +2055,7 @@ func (x *UserGameEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserGameEntry.ProtoReflect.Descriptor instead.
 func (*UserGameEntry) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{24}
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *UserGameEntry) GetGame() *GameInfo {
@@ -1936,7 +2128,7 @@ type ReplayMessage struct {
 
 func (x *ReplayMessage) Reset() {
 	*x = ReplayMessage{}
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[25]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1948,7 +2140,7 @@ func (x *ReplayMessage) String() string {
 func (*ReplayMessage) ProtoMessage() {}
 
 func (x *ReplayMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[25]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1961,7 +2153,7 @@ func (x *ReplayMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplayMessage.ProtoReflect.Descriptor instead.
 func (*ReplayMessage) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{25}
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ReplayMessage) GetId() string {
@@ -2017,7 +2209,7 @@ type GamesCursor struct {
 
 func (x *GamesCursor) Reset() {
 	*x = GamesCursor{}
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[26]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2029,7 +2221,7 @@ func (x *GamesCursor) String() string {
 func (*GamesCursor) ProtoMessage() {}
 
 func (x *GamesCursor) ProtoReflect() protoreflect.Message {
-	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[26]
+	mi := &file_gameplay_v1_rpc_game_service_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2042,7 +2234,7 @@ func (x *GamesCursor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GamesCursor.ProtoReflect.Descriptor instead.
 func (*GamesCursor) Descriptor() ([]byte, []int) {
-	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{26}
+	return file_gameplay_v1_rpc_game_service_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GamesCursor) GetAfterEndedAt() *timestamppb.Timestamp {
@@ -2072,9 +2264,10 @@ const file_gameplay_v1_rpc_game_service_proto_rawDesc = "" +
 	"\n" +
 	"\"gameplay/v1/rpc_game_service.proto\x12\vgameplay.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"A\n" +
 	"\x15GetCurrentGameRequest\x12(\n" +
-	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"J\n" +
+	"\tserver_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\bserverId\"\x97\x01\n" +
 	"\x16GetCurrentGameResponse\x120\n" +
-	"\x04game\x18\x01 \x01(\v2\x1c.gameplay.v1.CurrentGameInfoR\x04game\"6\n" +
+	"\x04game\x18\x01 \x01(\v2\x1c.gameplay.v1.CurrentGameInfoR\x04game\x12K\n" +
+	"\x14last_completed_round\x18\x02 \x01(\v2\x19.gameplay.v1.RoundSummaryR\x12lastCompletedRound\"6\n" +
 	"\x0eGetGameRequest\x12$\n" +
 	"\agame_id\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\xb0\x01\x01R\x06gameId\"<\n" +
 	"\x0fGetGameResponse\x12)\n" +
@@ -2192,7 +2385,23 @@ const file_gameplay_v1_rpc_game_service_proto_rawDesc = "" +
 	"started_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12.\n" +
 	"\x13drawing_duration_ms\x18\t \x01(\x03R\x11drawingDurationMs\x12$\n" +
 	"\x0estake_per_game\x18\n" +
-	" \x01(\tR\fstakePerGame\"\x8b\x02\n" +
+	" \x01(\tR\fstakePerGame\"\xd4\x02\n" +
+	"\rRoundStanding\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\"\n" +
+	"\rguess_time_ms\x18\x02 \x01(\x03R\vguessTimeMs\x12\x12\n" +
+	"\x04tier\x18\x03 \x01(\tR\x04tier\x12%\n" +
+	"\x0eround_position\x18\x04 \x01(\x03R\rroundPosition\x12!\n" +
+	"\fround_points\x18\x05 \x01(\x03R\vroundPoints\x12(\n" +
+	"\x10round_stake_lost\x18\x06 \x01(\tR\x0eroundStakeLost\x12!\n" +
+	"\ftotal_points\x18\a \x01(\x03R\vtotalPoints\x12(\n" +
+	"\x10total_stake_lost\x18\b \x01(\tR\x0etotalStakeLost\x12-\n" +
+	"\x12provisional_payout\x18\t \x01(\tR\x11provisionalPayout\"\xac\x01\n" +
+	"\fRoundSummary\x12\x14\n" +
+	"\x05round\x18\x01 \x01(\rR\x05round\x12\x1b\n" +
+	"\tartist_id\x18\x02 \x01(\tR\bartistId\x12\x12\n" +
+	"\x04word\x18\x03 \x01(\tR\x04word\x12\x1b\n" +
+	"\ttotal_pot\x18\x04 \x01(\tR\btotalPot\x128\n" +
+	"\tstandings\x18\x05 \x03(\v2\x1a.gameplay.v1.RoundStandingR\tstandings\"\x8b\x02\n" +
 	"\x0fGamePlayerEntry\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05score\x18\x02 \x01(\x05R\x05score\x12\x10\n" +
@@ -2270,7 +2479,7 @@ func file_gameplay_v1_rpc_game_service_proto_rawDescGZIP() []byte {
 }
 
 var file_gameplay_v1_rpc_game_service_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_gameplay_v1_rpc_game_service_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_gameplay_v1_rpc_game_service_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_gameplay_v1_rpc_game_service_proto_goTypes = []any{
 	(GameRole)(0),                        // 0: gameplay.v1.GameRole
 	(StreamType)(0),                      // 1: gameplay.v1.StreamType
@@ -2298,55 +2507,59 @@ var file_gameplay_v1_rpc_game_service_proto_goTypes = []any{
 	(*JoinGameResponse)(nil),             // 23: gameplay.v1.JoinGameResponse
 	(*GameInfo)(nil),                     // 24: gameplay.v1.GameInfo
 	(*CurrentGameInfo)(nil),              // 25: gameplay.v1.CurrentGameInfo
-	(*GamePlayerEntry)(nil),              // 26: gameplay.v1.GamePlayerEntry
-	(*LeaderboardEntry)(nil),             // 27: gameplay.v1.LeaderboardEntry
-	(*UserGameEntry)(nil),                // 28: gameplay.v1.UserGameEntry
-	(*ReplayMessage)(nil),                // 29: gameplay.v1.ReplayMessage
-	(*GamesCursor)(nil),                  // 30: gameplay.v1.GamesCursor
-	(*wrapperspb.Int32Value)(nil),        // 31: google.protobuf.Int32Value
-	(*timestamppb.Timestamp)(nil),        // 32: google.protobuf.Timestamp
-	(*wrapperspb.StringValue)(nil),       // 33: google.protobuf.StringValue
-	(*structpb.Struct)(nil),              // 34: google.protobuf.Struct
+	(*RoundStanding)(nil),                // 26: gameplay.v1.RoundStanding
+	(*RoundSummary)(nil),                 // 27: gameplay.v1.RoundSummary
+	(*GamePlayerEntry)(nil),              // 28: gameplay.v1.GamePlayerEntry
+	(*LeaderboardEntry)(nil),             // 29: gameplay.v1.LeaderboardEntry
+	(*UserGameEntry)(nil),                // 30: gameplay.v1.UserGameEntry
+	(*ReplayMessage)(nil),                // 31: gameplay.v1.ReplayMessage
+	(*GamesCursor)(nil),                  // 32: gameplay.v1.GamesCursor
+	(*wrapperspb.Int32Value)(nil),        // 33: google.protobuf.Int32Value
+	(*timestamppb.Timestamp)(nil),        // 34: google.protobuf.Timestamp
+	(*wrapperspb.StringValue)(nil),       // 35: google.protobuf.StringValue
+	(*structpb.Struct)(nil),              // 36: google.protobuf.Struct
 }
 var file_gameplay_v1_rpc_game_service_proto_depIdxs = []int32{
 	25, // 0: gameplay.v1.GetCurrentGameResponse.game:type_name -> gameplay.v1.CurrentGameInfo
-	24, // 1: gameplay.v1.GetGameResponse.game:type_name -> gameplay.v1.GameInfo
-	26, // 2: gameplay.v1.GetGameLeaderboardResponse.players:type_name -> gameplay.v1.GamePlayerEntry
-	31, // 3: gameplay.v1.ListServerGamesRequest.page_size:type_name -> google.protobuf.Int32Value
-	32, // 4: gameplay.v1.ListServerGamesRequest.after_ended_at:type_name -> google.protobuf.Timestamp
-	33, // 5: gameplay.v1.ListServerGamesRequest.after_id:type_name -> google.protobuf.StringValue
-	24, // 6: gameplay.v1.ListServerGamesResponse.games:type_name -> gameplay.v1.GameInfo
-	30, // 7: gameplay.v1.ListServerGamesResponse.cursor:type_name -> gameplay.v1.GamesCursor
-	2,  // 8: gameplay.v1.GetServerLeaderboardRequest.time_window:type_name -> gameplay.v1.TimeWindow
-	27, // 9: gameplay.v1.GetServerLeaderboardResponse.players:type_name -> gameplay.v1.LeaderboardEntry
-	2,  // 10: gameplay.v1.GetServerLeaderboardResponse.time_window:type_name -> gameplay.v1.TimeWindow
-	31, // 11: gameplay.v1.ListUserGamesRequest.page_size:type_name -> google.protobuf.Int32Value
-	32, // 12: gameplay.v1.ListUserGamesRequest.after_ended_at:type_name -> google.protobuf.Timestamp
-	33, // 13: gameplay.v1.ListUserGamesRequest.after_id:type_name -> google.protobuf.StringValue
-	28, // 14: gameplay.v1.ListUserGamesResponse.games:type_name -> gameplay.v1.UserGameEntry
-	30, // 15: gameplay.v1.ListUserGamesResponse.cursor:type_name -> gameplay.v1.GamesCursor
-	2,  // 16: gameplay.v1.GetGlobalLeaderboardRequest.time_window:type_name -> gameplay.v1.TimeWindow
-	27, // 17: gameplay.v1.GetGlobalLeaderboardResponse.players:type_name -> gameplay.v1.LeaderboardEntry
-	2,  // 18: gameplay.v1.GetGlobalLeaderboardResponse.time_window:type_name -> gameplay.v1.TimeWindow
-	32, // 19: gameplay.v1.GetUserStatsResponse.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 20: gameplay.v1.ReplayGameRequest.stream_type:type_name -> gameplay.v1.StreamType
-	29, // 21: gameplay.v1.ReplayGameResponse.messages:type_name -> gameplay.v1.ReplayMessage
-	0,  // 22: gameplay.v1.JoinGameRequest.role:type_name -> gameplay.v1.GameRole
-	3,  // 23: gameplay.v1.JoinGameResponse.status:type_name -> gameplay.v1.JoinGameStatus
-	32, // 24: gameplay.v1.JoinGameResponse.join_code_expires_at:type_name -> google.protobuf.Timestamp
-	32, // 25: gameplay.v1.GameInfo.started_at:type_name -> google.protobuf.Timestamp
-	32, // 26: gameplay.v1.GameInfo.ended_at:type_name -> google.protobuf.Timestamp
-	32, // 27: gameplay.v1.CurrentGameInfo.started_at:type_name -> google.protobuf.Timestamp
-	24, // 28: gameplay.v1.UserGameEntry.game:type_name -> gameplay.v1.GameInfo
-	32, // 29: gameplay.v1.ReplayMessage.timestamp:type_name -> google.protobuf.Timestamp
-	1,  // 30: gameplay.v1.ReplayMessage.stream_type:type_name -> gameplay.v1.StreamType
-	34, // 31: gameplay.v1.ReplayMessage.payload:type_name -> google.protobuf.Struct
-	32, // 32: gameplay.v1.GamesCursor.after_ended_at:type_name -> google.protobuf.Timestamp
-	33, // [33:33] is the sub-list for method output_type
-	33, // [33:33] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	27, // 1: gameplay.v1.GetCurrentGameResponse.last_completed_round:type_name -> gameplay.v1.RoundSummary
+	24, // 2: gameplay.v1.GetGameResponse.game:type_name -> gameplay.v1.GameInfo
+	28, // 3: gameplay.v1.GetGameLeaderboardResponse.players:type_name -> gameplay.v1.GamePlayerEntry
+	33, // 4: gameplay.v1.ListServerGamesRequest.page_size:type_name -> google.protobuf.Int32Value
+	34, // 5: gameplay.v1.ListServerGamesRequest.after_ended_at:type_name -> google.protobuf.Timestamp
+	35, // 6: gameplay.v1.ListServerGamesRequest.after_id:type_name -> google.protobuf.StringValue
+	24, // 7: gameplay.v1.ListServerGamesResponse.games:type_name -> gameplay.v1.GameInfo
+	32, // 8: gameplay.v1.ListServerGamesResponse.cursor:type_name -> gameplay.v1.GamesCursor
+	2,  // 9: gameplay.v1.GetServerLeaderboardRequest.time_window:type_name -> gameplay.v1.TimeWindow
+	29, // 10: gameplay.v1.GetServerLeaderboardResponse.players:type_name -> gameplay.v1.LeaderboardEntry
+	2,  // 11: gameplay.v1.GetServerLeaderboardResponse.time_window:type_name -> gameplay.v1.TimeWindow
+	33, // 12: gameplay.v1.ListUserGamesRequest.page_size:type_name -> google.protobuf.Int32Value
+	34, // 13: gameplay.v1.ListUserGamesRequest.after_ended_at:type_name -> google.protobuf.Timestamp
+	35, // 14: gameplay.v1.ListUserGamesRequest.after_id:type_name -> google.protobuf.StringValue
+	30, // 15: gameplay.v1.ListUserGamesResponse.games:type_name -> gameplay.v1.UserGameEntry
+	32, // 16: gameplay.v1.ListUserGamesResponse.cursor:type_name -> gameplay.v1.GamesCursor
+	2,  // 17: gameplay.v1.GetGlobalLeaderboardRequest.time_window:type_name -> gameplay.v1.TimeWindow
+	29, // 18: gameplay.v1.GetGlobalLeaderboardResponse.players:type_name -> gameplay.v1.LeaderboardEntry
+	2,  // 19: gameplay.v1.GetGlobalLeaderboardResponse.time_window:type_name -> gameplay.v1.TimeWindow
+	34, // 20: gameplay.v1.GetUserStatsResponse.updated_at:type_name -> google.protobuf.Timestamp
+	1,  // 21: gameplay.v1.ReplayGameRequest.stream_type:type_name -> gameplay.v1.StreamType
+	31, // 22: gameplay.v1.ReplayGameResponse.messages:type_name -> gameplay.v1.ReplayMessage
+	0,  // 23: gameplay.v1.JoinGameRequest.role:type_name -> gameplay.v1.GameRole
+	3,  // 24: gameplay.v1.JoinGameResponse.status:type_name -> gameplay.v1.JoinGameStatus
+	34, // 25: gameplay.v1.JoinGameResponse.join_code_expires_at:type_name -> google.protobuf.Timestamp
+	34, // 26: gameplay.v1.GameInfo.started_at:type_name -> google.protobuf.Timestamp
+	34, // 27: gameplay.v1.GameInfo.ended_at:type_name -> google.protobuf.Timestamp
+	34, // 28: gameplay.v1.CurrentGameInfo.started_at:type_name -> google.protobuf.Timestamp
+	26, // 29: gameplay.v1.RoundSummary.standings:type_name -> gameplay.v1.RoundStanding
+	24, // 30: gameplay.v1.UserGameEntry.game:type_name -> gameplay.v1.GameInfo
+	34, // 31: gameplay.v1.ReplayMessage.timestamp:type_name -> google.protobuf.Timestamp
+	1,  // 32: gameplay.v1.ReplayMessage.stream_type:type_name -> gameplay.v1.StreamType
+	36, // 33: gameplay.v1.ReplayMessage.payload:type_name -> google.protobuf.Struct
+	34, // 34: gameplay.v1.GamesCursor.after_ended_at:type_name -> google.protobuf.Timestamp
+	35, // [35:35] is the sub-list for method output_type
+	35, // [35:35] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_gameplay_v1_rpc_game_service_proto_init() }
@@ -2360,7 +2573,7 @@ func file_gameplay_v1_rpc_game_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gameplay_v1_rpc_game_service_proto_rawDesc), len(file_gameplay_v1_rpc_game_service_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   27,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

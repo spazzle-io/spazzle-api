@@ -70,6 +70,21 @@ func (mr *MockEventBusMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockEventBus)(nil).Close))
 }
 
+// GetMarkerMessage mocks base method.
+func (m *MockEventBus) GetMarkerMessage(ctx context.Context, game eventbus.GameIdentifier, streamType eventbus.StreamType, marker eventbus.Marker) (*eventbus.Message, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMarkerMessage", ctx, game, streamType, marker)
+	ret0, _ := ret[0].(*eventbus.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMarkerMessage indicates an expected call of GetMarkerMessage.
+func (mr *MockEventBusMockRecorder) GetMarkerMessage(ctx, game, streamType, marker any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMarkerMessage", reflect.TypeOf((*MockEventBus)(nil).GetMarkerMessage), ctx, game, streamType, marker)
+}
+
 // MarkerID mocks base method.
 func (m *MockEventBus) MarkerID(ctx context.Context, game eventbus.GameIdentifier, streamType eventbus.StreamType, marker eventbus.Marker) (string, error) {
 	m.ctrl.T.Helper()

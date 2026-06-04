@@ -249,6 +249,38 @@ func (b *redisEventBus) MarkerID(
 	return id, nil
 }
 
+func (b *redisEventBus) GetMarkerMessage(ctx context.Context, game GameIdentifier, streamType StreamType, marker Marker) (*Message, error) {
+	b.mu.RLock()
+	if b.closed {
+		b.mu.RUnlock()
+		return nil, ErrClosedEventBus
+	}
+	b.mu.RUnlock()
+
+	markerID, err := b.MarkerID(ctx, game, streamType, marker)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get marker ID: %w", err)
+	}
+
+	sk := streamKey(b.serviceConfig, streamType, game)
+
+	msgs, err := b.client.XRangeN(ctx, sk, markerID, markerID, 1).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch marker message: %w", err)
+	}
+
+	if len(msgs) == 0 {
+		return nil, nil
+	}
+
+	markerMsg, err := decodeMessage(msgs[0].ID, msgs[0].Values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode marker message: %w", err)
+	}
+
+	return &markerMsg, nil
+}
+
 func (b *redisEventBus) deleteStreams(ctx context.Context, game GameIdentifier) error {
 	keys := make([]string, 0, len(AllStreamTypes))
 	for _, st := range AllStreamTypes {

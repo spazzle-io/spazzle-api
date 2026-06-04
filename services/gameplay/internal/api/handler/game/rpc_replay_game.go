@@ -70,7 +70,7 @@ func (h *Handler) ReplayGame(ctx context.Context, req *pb.ReplayGameRequest) (*p
 	}
 
 	markerID := ""
-	if req.GetRoundNumber() > 0 {
+	if req.GetRoundNumber() > 1 {
 		roundNumber, err := commonUtil.Uint32ToUint8(req.GetRoundNumber())
 		if err != nil {
 			logger.Error().Err(err).Msg("invalid round number. out of range")
