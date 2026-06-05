@@ -139,7 +139,7 @@ func (s *EndGameTestSuite) TestEndGame() {
 	s.NotZero(capturedState.EndedAt)
 	s.Empty(capturedState.CurrentArtist)
 	s.Empty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func TestGetFinalPlayerResults(t *testing.T) {

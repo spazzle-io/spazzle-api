@@ -80,7 +80,7 @@ type GameStateView struct {
 	NumRounds                  uint8
 	CurrentArtist              uuid.UUID
 	CurrentWord                Word
-	Players                    map[uuid.UUID]bool
+	NumActivePlayers           int
 	StakePerGame               string
 	CurrentRoundCorrectGuesses int
 }

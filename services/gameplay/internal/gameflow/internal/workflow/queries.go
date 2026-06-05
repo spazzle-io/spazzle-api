@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 	"go.temporal.io/sdk/workflow"
 )
@@ -18,11 +17,11 @@ func registerWorkflowQueries(ctx workflow.Context, state *GameState) error {
 
 func registerGetGameStateQuery(ctx workflow.Context, state *GameState) error {
 	return workflow.SetQueryHandler(ctx, QueryGetGameState, func() (*types.GameStateView, error) {
-		activePlayers := make(map[uuid.UUID]bool)
+		var numActivePlayers int
 		for _, playerID := range sortedUUIDs(state.Players) {
 			player := state.Players[playerID]
 			if player.IsConnected && !player.IsEjected {
-				activePlayers[playerID] = true
+				numActivePlayers++
 			}
 		}
 
@@ -37,7 +36,7 @@ func registerGetGameStateQuery(ctx workflow.Context, state *GameState) error {
 			NumRounds:                  state.NumRounds,
 			CurrentArtist:              state.CurrentArtist,
 			CurrentWord:                state.CurrentWord,
-			Players:                    activePlayers,
+			NumActivePlayers:           numActivePlayers,
 			StakePerGame:               state.StakePerGame,
 			CurrentRoundCorrectGuesses: len(state.CorrectGuesses),
 		}, nil

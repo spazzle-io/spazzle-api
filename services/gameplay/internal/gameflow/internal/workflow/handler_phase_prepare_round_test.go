@@ -94,10 +94,10 @@ func (s *PhasePrepareRoundTestSuite) TestPreparesRoundSuccessfully() {
 	s.NoError(val.Get(&capturedState))
 
 	s.Equal(gameID, capturedState.GameID)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 
 	s.Equal(gameID, capturedState.GameID)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
@@ -160,5 +160,5 @@ func (s *PhasePrepareRoundTestSuite) TestCouldNotSelectAndNotifyArtist() {
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhasePrepareRound, capturedState.Phase)
 	s.Empty(capturedState.CurrentArtist)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }

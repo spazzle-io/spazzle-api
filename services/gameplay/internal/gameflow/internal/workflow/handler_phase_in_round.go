@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
@@ -328,9 +327,6 @@ func toWordTokens(tokens []types.Token) []gameevents.WordToken {
 }
 
 func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
-	state.CorrectGuesses = nil
-	state.CorrectGuessers = make(map[uuid.UUID]struct{})
-
 	ch := workflow.GetSignalChannel(ctx, SignalCorrectGuesses)
 
 	for {

@@ -148,7 +148,7 @@ func (s *EndRoundTestSuite) TestEndRound() {
 	s.True(sentEventOnDrawingUpdatesStream)
 	s.Equal(2, numPlayerRoundResultsSent)
 	s.Equal(gameID, capturedState.GameID)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func TestGetSortedGuesses(t *testing.T) {

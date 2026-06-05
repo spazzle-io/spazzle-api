@@ -97,7 +97,7 @@ func mapEventBusMessagesToPb(messages []eventbus.Message) ([]*pb.ReplayMessage, 
 }
 
 func mapCurrentGameToPb(currentGame *types.GameStateView) (pb.CurrentGameInfo, error) {
-	numPlayers, err := commonUtil.IntToInt32(len(currentGame.Players))
+	numPlayers, err := commonUtil.IntToInt32(currentGame.NumActivePlayers)
 	if err != nil {
 		return pb.CurrentGameInfo{}, fmt.Errorf("failed to get num players in current game: %v", err)
 	}

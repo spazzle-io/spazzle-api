@@ -287,7 +287,7 @@ func (gs *GameServer) doInitialize() error {
 	gs.currentArtist = gameState.CurrentArtist
 	gs.currentWord = gameState.CurrentWord.Text
 	gs.stakePerGame = gameState.StakePerGame
-	gs.activePlayers = gameState.Players
+	gs.activePlayers = make(map[uuid.UUID]bool)
 	gs.correctGuessers = make(map[uuid.UUID]bool)
 	gs.isGameActive.Store(true)
 

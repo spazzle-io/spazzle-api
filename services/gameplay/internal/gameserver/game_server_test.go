@@ -133,10 +133,7 @@ func TestInitializeGame(t *testing.T) {
 		CurrentWord: types.Word{
 			Text: "current word",
 		},
-		Players: map[uuid.UUID]bool{
-			uuid.New(): true,
-			uuid.New(): true,
-		},
+		NumActivePlayers: 2,
 	}
 
 	testCases := []struct {
@@ -422,7 +419,7 @@ func TestInitializeGame(t *testing.T) {
 			require.NotEmpty(t, gameServer.currentRound)
 			require.NotEmpty(t, gameServer.currentArtist)
 			require.NotEmpty(t, gameServer.currentWord)
-			require.NotEmpty(t, gameServer.activePlayers)
+			require.Empty(t, gameServer.activePlayers)
 			require.Empty(t, gameServer.correctGuessers)
 			require.NotEmpty(t, gameServer.busSession)
 			require.True(t, gameServer.isGameActive.Load())
