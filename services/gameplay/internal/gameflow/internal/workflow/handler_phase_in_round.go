@@ -328,8 +328,8 @@ func toWordTokens(tokens []types.Token) []gameevents.WordToken {
 }
 
 func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
-	state.CorrectGuesses[state.CurrentRound] = make([]types.CorrectGuess, 0)
-	state.CorrectGuessers[state.CurrentRound] = make(map[uuid.UUID]bool)
+	state.CorrectGuesses = nil
+	state.CorrectGuessers = make(map[uuid.UUID]struct{})
 
 	ch := workflow.GetSignalChannel(ctx, SignalCorrectGuesses)
 
@@ -344,12 +344,12 @@ func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
 			}
 
 			for _, guess := range signal.Guesses {
-				if state.CorrectGuessers[state.CurrentRound][guess.PlayerID] {
+				if _, hasAlreadyGuessed := state.CorrectGuessers[guess.PlayerID]; hasAlreadyGuessed {
 					continue
 				}
 
-				state.CorrectGuessers[state.CurrentRound][guess.PlayerID] = true
-				state.CorrectGuesses[state.CurrentRound] = append(state.CorrectGuesses[state.CurrentRound], guess)
+				state.CorrectGuessers[guess.PlayerID] = struct{}{}
+				state.CorrectGuesses = append(state.CorrectGuesses, guess)
 				state.Logger().Info("correct guess recorded",
 					"player_id", guess.PlayerID, "guessed_at", guess.Timestamp)
 			}

@@ -53,11 +53,11 @@ func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Chan
 		return fmt.Errorf("failed to select and notify artist: %w", err)
 	}
 
-	if !state.RoundStartedPublished[state.CurrentRound] {
+	if _, hasPublishedRound := state.RoundStartedPublished[state.CurrentRound]; !hasPublishedRound {
 		if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
 			return fmt.Errorf("failed to publish round started event: %w", err)
 		}
-		state.RoundStartedPublished[state.CurrentRound] = true
+		state.RoundStartedPublished[state.CurrentRound] = struct{}{}
 	}
 
 	if !hasEnoughPlayers(state) {

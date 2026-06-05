@@ -100,16 +100,15 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) (*GameStat
 		GamePot:               commonUtil.ZeroWei().String(),
 		StakePerGame:          input.StakePerGame,
 		StakePerRound:         stakePerRound.String(),
-		RoundStartedPublished: make(map[uint8]bool),
+		RoundStartedPublished: make(map[uint8]struct{}),
 
 		Players:              make(map[uuid.UUID]*PlayerGameState),
 		MinNumPlayersToStart: DefaultMinNumPlayersToStart,
 		DrawingDuration:      input.DrawingDuration,
 
-		CorrectGuesses:  make(map[uint8][]types.CorrectGuess),
-		CorrectGuessers: make(map[uint8]map[uuid.UUID]bool),
+		CorrectGuessers: make(map[uuid.UUID]struct{}),
 
-		PastArtists: make(map[uuid.UUID]bool),
+		PastArtists: make(map[uuid.UUID]struct{}),
 		PendingAcks: make(map[uuid.UUID]*PendingAck),
 
 		GameServerInstances:             make(map[uuid.UUID]*GameServerInstanceState),
@@ -118,6 +117,6 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) (*GameStat
 		PlayerReportsMade:  make(map[uuid.UUID][]uint32),
 		PlayerReportCounts: make(map[uuid.UUID]uint32),
 
-		EjectedPlayers: make(map[uuid.UUID]bool),
+		EjectedPlayers: make(map[uuid.UUID]struct{}),
 	}, nil
 }

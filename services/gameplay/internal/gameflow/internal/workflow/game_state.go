@@ -50,7 +50,7 @@ type GameState struct {
 	GamePot               string
 	StakePerGame          string
 	StakePerRound         string
-	RoundStartedPublished map[uint8]bool
+	RoundStartedPublished map[uint8]struct{}
 
 	Players              map[uuid.UUID]*PlayerGameState
 	MinNumPlayersToStart uint8
@@ -60,10 +60,10 @@ type GameState struct {
 	CurrentArtist    uuid.UUID
 	NextArtist       uuid.UUID
 	DrawingStartedAt time.Time
-	CorrectGuesses   map[uint8][]types.CorrectGuess
-	CorrectGuessers  map[uint8]map[uuid.UUID]bool
+	CorrectGuesses   []types.CorrectGuess
+	CorrectGuessers  map[uuid.UUID]struct{}
 
-	PastArtists map[uuid.UUID]bool
+	PastArtists map[uuid.UUID]struct{}
 	PendingAcks map[uuid.UUID]*PendingAck
 
 	GameServerInstances             map[uuid.UUID]*GameServerInstanceState
@@ -72,7 +72,7 @@ type GameState struct {
 	PlayerReportsMade  map[uuid.UUID][]uint32
 	PlayerReportCounts map[uuid.UUID]uint32
 
-	EjectedPlayers map[uuid.UUID]bool
+	EjectedPlayers map[uuid.UUID]struct{}
 }
 
 func (gs *GameState) Logger() log.Logger {

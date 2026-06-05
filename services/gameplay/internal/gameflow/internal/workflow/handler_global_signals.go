@@ -72,7 +72,7 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 			}
 		} else {
 			for _, playerID := range sig.PlayerIDs {
-				if state.EjectedPlayers[playerID] {
+				if _, isEjected := state.EjectedPlayers[playerID]; isEjected {
 					payload.RejectedPlayers = append(payload.RejectedPlayers, gameevents.RejectedPlayer{
 						PlayerID: playerID,
 						Reason:   gameevents.RejectionReasonEjectedPlayer,
@@ -238,7 +238,7 @@ func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh work
 			if player, exists := state.Players[ejection.PlayerID]; exists {
 				player.IsEjected = true
 				player.EjectedAt = workflow.Now(ctx).UTC()
-				state.EjectedPlayers[ejection.PlayerID] = true
+				state.EjectedPlayers[ejection.PlayerID] = struct{}{}
 
 				// TODO: Fine ejected player and reset player scores to zero
 

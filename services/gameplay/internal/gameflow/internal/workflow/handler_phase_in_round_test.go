@@ -630,7 +630,7 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Equal(2, capturedState.NumCorrectGuesses[DefaultRoundNumber])
+	s.Equal(2, capturedState.CurrentRoundCorrectGuesses)
 	s.Len(capturedState.Players, 2)
 }
 

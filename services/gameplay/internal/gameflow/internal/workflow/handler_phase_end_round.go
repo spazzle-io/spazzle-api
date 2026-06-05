@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -135,8 +136,8 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 	state.CurrentArtist = state.NextArtist
 	state.NextArtist = uuid.Nil
 	state.DrawingStartedAt = time.Time{}
-	delete(state.CorrectGuesses, state.CurrentRound)
-	delete(state.CorrectGuessers, state.CurrentRound)
+	state.CorrectGuesses = nil
+	state.CorrectGuessers = make(map[uuid.UUID]struct{})
 
 	err = workflow.Sleep(ctx, endRoundCooldown)
 	if err != nil {
@@ -155,9 +156,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 }
 
 func getSortedGuesses(state *GameState) []types.CorrectGuess {
-	guesses := make([]types.CorrectGuess, len(state.CorrectGuesses[state.CurrentRound]))
-	copy(guesses, state.CorrectGuesses[state.CurrentRound])
-
+	guesses := slices.Clone(state.CorrectGuesses)
 	sort.Slice(guesses, func(i, j int) bool {
 		return guesses[i].Timestamp.Before(guesses[j].Timestamp)
 	})
@@ -246,8 +245,7 @@ func processNonGuessers(state *GameState, nonGuessersPosition int) ([]*gameevent
 			continue
 		}
 
-		guessedCorrectly := state.CorrectGuessers[state.CurrentRound][playerID]
-		if guessedCorrectly {
+		if _, guessedCorrectly := state.CorrectGuessers[playerID]; guessedCorrectly {
 			continue
 		}
 
