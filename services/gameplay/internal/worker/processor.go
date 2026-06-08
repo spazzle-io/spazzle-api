@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -19,25 +20,25 @@ import (
 )
 
 type TaskProcessor interface {
-	Start() error
+	StartWorker() error
+	StartScheduler() error
 	Stop()
-	ProcessTaskArchiveGame(ctx context.Context, task *asynq.Task) error
-	ProcessTaskRecomputeTrending(ctx context.Context, task *asynq.Task) error
-	ProcessTaskDeployTreasury(ctx context.Context, task *asynq.Task) error
 }
 
 type scheduledTask struct {
-	interval         string
-	retentionPercent float64
-	taskType         string
-	payload          []byte
+	interval string
+	taskType string
+	payload  any
+	timeout  time.Duration
+	maxRetry int
 }
 
 var scheduledTasks = []scheduledTask{
 	{
-		interval:         "@every 15m",
-		retentionPercent: 0.8,
-		taskType:         TaskRecomputeServerTrendingScores,
+		interval: "@every 15m",
+		taskType: TaskRecomputeServerTrendingScores,
+		timeout:  10 * time.Minute,
+		maxRetry: 5,
 	},
 }
 
@@ -88,49 +89,75 @@ func NewRedisTaskProcessor(
 	}
 }
 
-func (processor *RedisTaskProcessor) Start() error {
+func (p *RedisTaskProcessor) StartWorker() error {
 	mux := asynq.NewServeMux()
 
-	mux.HandleFunc(TaskArchiveGame, processor.ProcessTaskArchiveGame)
-	mux.HandleFunc(TaskDeployTreasury, processor.ProcessTaskDeployTreasury)
-	mux.HandleFunc(TaskRecomputeServerTrendingScores, processor.ProcessTaskRecomputeTrending)
+	mux.HandleFunc(TaskArchiveGame, p.processTaskArchiveGame)
+	mux.HandleFunc(TaskDeployTreasury, p.processTaskDeployTreasury)
+	mux.HandleFunc(TaskRecomputeServerTrendingScores, p.processTaskRecomputeTrending)
 
-	err := processor.registerScheduledTasks()
-	if err != nil {
+	if err := p.server.Run(mux); err != nil {
+		if errors.Is(err, asynq.ErrServerClosed) {
+			return nil
+		}
+
 		return err
 	}
 
-	go func() {
-		if err := processor.scheduler.Run(); err != nil {
-			log.Error().Err(err).Msg("failed to start task scheduler")
-		}
-	}()
-
-	return processor.server.Start(mux)
+	return nil
 }
 
-func (processor *RedisTaskProcessor) Stop() {
-	processor.scheduler.Shutdown()
-	processor.server.Shutdown()
+func (p *RedisTaskProcessor) StartScheduler() error {
+	if err := p.registerScheduledTasks(); err != nil {
+		return err
+	}
+
+	if err := p.scheduler.Run(); err != nil {
+		return fmt.Errorf("task scheduler runtime error: %w", err)
+	}
+
+	return nil
+}
+
+func (p *RedisTaskProcessor) Stop() {
+	if p == nil {
+		return
+	}
+
+	p.scheduler.Shutdown()
+	p.server.Shutdown()
+
 	log.Info().Msg("stopped task processor")
 }
 
-func (processor *RedisTaskProcessor) registerScheduledTasks() error {
+func (p *RedisTaskProcessor) registerScheduledTasks() error {
 	for _, st := range scheduledTasks {
-		duration, err := parseIntervalDuration(st.interval)
+		intervalDuration, err := parseIntervalDuration(st.interval)
 		if err != nil {
-			return fmt.Errorf("failed to parse interval for %s: %w", st.taskType, err)
+			return fmt.Errorf("failed to parse interval duration for %s: %w", st.taskType, err)
 		}
 
-		retention := time.Duration(float64(duration) * st.retentionPercent)
+		if st.timeout >= intervalDuration {
+			return fmt.Errorf(
+				"invalid scheduled task %s: timeout (%v) must be strictly less than its interval frequency (%v)",
+				st.taskType, st.timeout, intervalDuration,
+			)
+		}
 
-		_, err = processor.scheduler.Register(
+		var payloadBytes []byte
+		if st.payload != nil {
+			payloadBytes, err = json.Marshal(st.payload)
+			if err != nil {
+				return fmt.Errorf("failed to marshal payload config for %s: %w", st.taskType, err)
+			}
+		}
+
+		_, err = p.scheduler.Register(
 			st.interval,
-			asynq.NewTask(st.taskType, st.payload),
+			asynq.NewTask(st.taskType, payloadBytes),
 			asynq.TaskID(st.taskType),
-			asynq.MaxRetry(5),
-			asynq.Timeout(duration),
-			asynq.Retention(retention),
+			asynq.MaxRetry(st.maxRetry),
+			asynq.Timeout(st.timeout),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to register scheduled task %s: %w", st.taskType, err)

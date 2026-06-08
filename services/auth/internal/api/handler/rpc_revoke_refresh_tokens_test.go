@@ -83,17 +83,13 @@ func TestRevokeRefreshTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			cache := mockcache.NewMockCache(ctrl)
-			store := mockdb.NewMockStore(ctrl)
+			h := newTestHandler(deps)
+			tc.buildStubs(deps.store, deps.cache)
 
-			handler := newTestHandler(t, store, cache)
-			tc.buildStubs(store, cache)
-
-			ctx := tc.buildContext(t, handler.tokenMaker)
-			res, err := handler.RevokeRefreshTokens(ctx, tc.req)
+			ctx := tc.buildContext(t, deps.tokenMaker)
+			res, err := h.RevokeRefreshTokens(ctx, tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

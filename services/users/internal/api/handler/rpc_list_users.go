@@ -43,13 +43,13 @@ func (h *Handler) ListUsers(ctx context.Context, req *pb.ListUsersRequest) (*pb.
 		},
 	}
 
-	users, err := h.store.ListUsers(ctx, params)
+	users, err := h.Store.ListUsers(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch users")
 		return nil, status.Errorf(codes.Internal, InternalServerError)
 	}
 
-	numTotalUsers, err := h.store.GetTotalUserCount(ctx)
+	numTotalUsers, err := h.Store.GetTotalUserCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("could not get total user count")
 		return nil, status.Errorf(codes.Internal, InternalServerError)

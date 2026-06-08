@@ -115,18 +115,14 @@ func TestRefreshAccessToken(t *testing.T) {
 		tc := testCase
 
 		t.Run(testCase.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
+			h := newTestHandler(deps)
 
-			handler := newTestHandler(t, store, cache)
+			tc.buildStubs(deps.store, deps.cache)
+			ctx := tc.buildContext(t, deps.tokenMaker)
 
-			tc.buildStubs(store, cache)
-			ctx := tc.buildContext(t, handler.tokenMaker)
-
-			res, err := handler.RefreshAccessToken(ctx, tc.req)
+			res, err := h.RefreshAccessToken(ctx, tc.req)
 			testCase.checkResponse(t, res, err)
 		})
 	}

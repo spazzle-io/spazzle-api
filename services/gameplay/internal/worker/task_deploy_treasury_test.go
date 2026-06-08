@@ -583,7 +583,7 @@ func TestProcessTaskDeployTreasury(t *testing.T) {
 			tc.buildStubs(store, treasuryClient)
 
 			task := asynq.NewTask(TaskDeployTreasury, tc.payload)
-			err := processor.ProcessTaskDeployTreasury(context.Background(), task)
+			err := processor.processTaskDeployTreasury(context.Background(), task)
 			tc.checkResponse(t, err)
 		})
 	}

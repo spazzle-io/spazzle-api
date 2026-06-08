@@ -7,11 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
 	mockdb "github.com/spazzle-io/spazzle-api/services/users/internal/db/mock"
 	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
-	mockservices "github.com/spazzle-io/spazzle-api/services/users/internal/services/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -81,18 +79,13 @@ func TestGetUser(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
-			authService := mockservices.NewMockAuthGrpcService(ctrl)
+			tc.buildStubs(deps.store)
 
-			tc.buildStubs(store)
+			h := newTestHandler(deps)
 
-			handler := newTestHandler(store, cache, authService)
-
-			res, err := handler.GetUser(context.Background(), tc.req)
+			res, err := h.GetUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

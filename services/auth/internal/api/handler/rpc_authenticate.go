@@ -50,7 +50,7 @@ func (h *Handler) Authenticate(ctx context.Context, req *pb.AuthenticateRequest)
 		return nil, status.Error(codes.PermissionDenied, UnauthorizedAccessError)
 	}
 
-	cachedSIWEMessage, err := siwe.FetchSIWEMessage(ctx, h.config, h.cache, req.GetWalletAddress())
+	cachedSIWEMessage, err := siwe.FetchSIWEMessage(ctx, h.Config, h.Cache, req.GetWalletAddress())
 	if err != nil {
 		logger.Error().Err(err).Msg("could not fetch cached SIWE message")
 
@@ -100,7 +100,7 @@ func (h *Handler) handleCredentialAndSession(
 	req *pb.AuthenticateRequest,
 	logger zerolog.Logger,
 ) (db.Credential, *Session, error) {
-	credential, err := h.store.GetCredentialByWalletAddress(ctx, req.GetWalletAddress())
+	credential, err := h.Store.GetCredentialByWalletAddress(ctx, req.GetWalletAddress())
 	if err != nil && !errors.Is(err, db.RecordNotFoundError) {
 		logger.Error().Err(err).Msg("could not fetch credential by wallet address")
 		return db.Credential{}, nil, status.Error(codes.Internal, InternalServerError)
@@ -128,7 +128,7 @@ func (h *Handler) handleExistingCredential(
 	}
 
 	session, err := NewSession(
-		ctx, h.store, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.config, h.tokenMaker,
+		ctx, h.Store, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.Config, h.TokenMaker,
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not create session")
@@ -146,14 +146,14 @@ func (h *Handler) createCredentialAndSession(
 ) (db.Credential, *Session, error) {
 	var session *Session
 
-	txRes, err := h.store.CreateCredentialTx(ctx, db.CreateCredentialTxParams{
+	txRes, err := h.Store.CreateCredentialTx(ctx, db.CreateCredentialTxParams{
 		CreateCredentialParams: db.CreateCredentialParams{
 			WalletAddress: walletAddress,
 			UserID:        userId,
 		},
 		AfterCreate: func(q db.Querier, credential db.Credential) error {
 			s, err := NewSession(
-				ctx, q, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.config, h.tokenMaker,
+				ctx, q, credential.UserID, credential.WalletAddress, token.Role(credential.Role), h.Config, h.TokenMaker,
 			)
 			if err != nil {
 				logger.Error().Err(err).Msg("could not create session")

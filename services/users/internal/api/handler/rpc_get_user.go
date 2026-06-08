@@ -28,7 +28,7 @@ func (h *Handler) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetU
 		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
 	}
 
-	user, err := h.store.GetUserById(ctx, userId)
+	user, err := h.Store.GetUserById(ctx, userId)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get user")
 		return nil, status.Error(codes.NotFound, UserNotFoundError)

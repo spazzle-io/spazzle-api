@@ -7,9 +7,11 @@ import (
 	"net/url"
 	"strings"
 
-	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/infra"
+
+	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameserver"
 
@@ -26,22 +28,19 @@ var (
 	ErrMissingJoinCode     = errors.New("missing join code")
 )
 
-type WsHandler struct {
-	*deps.APIServerDeps
-}
-
-func (h *WsHandler) ServeWs(
+func ServeWs(
 	ctx context.Context,
+	res *infra.Resources,
 	w http.ResponseWriter,
 	r *http.Request,
 ) (*gameserver.Client, error) {
-	joinCode, err := h.extractJoinCode(w, r)
+	joinCode, err := extractJoinCode(w, r)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to extract join code from request")
 		return nil, err
 	}
 
-	joinCodeEntry, err := h.GameCache.GetJoinCodeEntry(ctx, joinCode)
+	joinCodeEntry, err := res.GameCache.GetJoinCodeEntry(ctx, joinCode)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get join code entry")
 		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
@@ -54,16 +53,16 @@ func (h *WsHandler) ServeWs(
 		Logger()
 
 	gameServerConfig := &gameserver.Config{
-		Env:       h.Config,
-		Store:     h.Store,
-		Cache:     h.Cache,
-		GameCache: h.GameCache,
-		Bus:       h.Bus,
-		GfClient:  h.GfClient,
-		WordStore: h.WordStore,
+		Env:       res.Config,
+		Store:     res.Store,
+		Cache:     res.Cache,
+		GameCache: res.GameCache,
+		Bus:       res.Bus,
+		GfClient:  res.GfClient,
+		WordStore: res.WordStore,
 	}
 
-	gameServer, err := h.GsManager.GetOrCreateGameServer(joinCodeEntry.ServerID, gameServerConfig)
+	gameServer, err := res.GsManager.GetOrCreateGameServer(joinCodeEntry.ServerID, gameServerConfig)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to get or create game server instance")
 		http.Error(w, ErrInternalServerError.Error(), http.StatusInternalServerError)
@@ -82,7 +81,7 @@ func (h *WsHandler) ServeWs(
 		return nil, ErrInternalServerError
 	}
 
-	_, err = h.GameCache.ValidateJoinCode(ctx, joinCode, gameServer.GetServerId(), gameServer.GetGameID())
+	_, err = res.GameCache.ValidateJoinCode(ctx, joinCode, gameServer.GetServerId(), gameServer.GetGameID())
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to validate join code")
 		http.Error(w, ErrUnauthorizedAccess.Error(), http.StatusUnauthorized)
@@ -92,7 +91,7 @@ func (h *WsHandler) ServeWs(
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  4096,
 		WriteBufferSize: 4096,
-		CheckOrigin:     h.checkOrigin(joinCodeEntry.UserID),
+		CheckOrigin:     checkOrigin(res.Config, joinCodeEntry.UserID),
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -127,7 +126,7 @@ func (h *WsHandler) ServeWs(
 		return client, err
 	}
 
-	err = h.GameCache.InvalidateJoinCode(ctx, joinCode)
+	err = res.GameCache.InvalidateJoinCode(ctx, joinCode)
 	if err != nil {
 		logger.Warn().Err(err).Msg("failed to invalidate join code")
 	}
@@ -135,7 +134,7 @@ func (h *WsHandler) ServeWs(
 	return client, nil
 }
 
-func (h *WsHandler) extractJoinCode(w http.ResponseWriter, r *http.Request) (string, error) {
+func extractJoinCode(w http.ResponseWriter, r *http.Request) (string, error) {
 	joinCode := r.URL.Query().Get("join_code")
 	if joinCode == "" {
 		http.Error(w, ErrMissingJoinCode.Error(), http.StatusBadRequest)
@@ -145,7 +144,7 @@ func (h *WsHandler) extractJoinCode(w http.ResponseWriter, r *http.Request) (str
 	return joinCode, nil
 }
 
-func (h *WsHandler) checkOrigin(userID uuid.UUID) func(r *http.Request) bool {
+func checkOrigin(config *util.Config, userID uuid.UUID) func(r *http.Request) bool {
 	return func(r *http.Request) (isValid bool) {
 		origin := r.Header.Get("Origin")
 		defer func() {
@@ -153,18 +152,18 @@ func (h *WsHandler) checkOrigin(userID uuid.UUID) func(r *http.Request) bool {
 				Str("origin", origin).
 				Str("user_id", userID.String()).
 				Bool("is_valid", isValid).
-				Bool("in_dev_env", h.Config.Is(commonConfig.Development)).
+				Bool("in_dev_env", config.Is(commonConfig.Development)).
 				Msg("validated ws upgrade request origin")
 		}()
 		if origin == "" {
 			return true
 		}
 
-		if h.Config.Is(commonConfig.Development) {
+		if config.Is(commonConfig.Development) {
 			return true
 		}
 
-		allowedOrigins := h.Config.AllowedOrigins
+		allowedOrigins := config.AllowedOrigins
 
 		parsedOrigin, err := url.Parse(origin)
 		if err != nil {

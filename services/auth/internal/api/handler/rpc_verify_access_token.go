@@ -16,7 +16,7 @@ func (h *Handler) VerifyAccessToken(
 	ctx context.Context,
 	_ *pb.VerifyAccessTokenRequest,
 ) (*pb.VerifyAccessTokenResponse, error) {
-	tkPayload, err := middleware.AuthorizeToken(ctx, h.tokenMaker, token.AccessToken, nil)
+	tkPayload, err := middleware.AuthorizeToken(ctx, h.TokenMaker, token.AccessToken, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("could not authorize token")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)

@@ -2,7 +2,11 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog/log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -30,9 +34,16 @@ func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) erro
 		return err
 	}
 
+	defer func() {
+		if rbErr := tx.Rollback(ctx); rbErr != nil {
+			if !errors.Is(rbErr, pgx.ErrTxClosed) {
+				log.Error().Err(rbErr).Msg("unexpected db tx rollback error")
+			}
+		}
+	}()
+
 	q := New(tx)
-	err = fn(q)
-	if err != nil {
+	if err = fn(q); err != nil {
 		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			return fmt.Errorf("transaction err: %v, rollback err: %v", err, rbErr)
 		}

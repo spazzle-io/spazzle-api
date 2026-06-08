@@ -6,8 +6,6 @@ import (
 
 	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
-
 	"github.com/google/uuid"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
 	"github.com/stretchr/testify/require"
@@ -137,12 +135,7 @@ func TestCheckOrigin(t *testing.T) {
 				req.Header.Set("Origin", tc.originHeader)
 			}
 
-			wsHandler := &WsHandler{
-				APIServerDeps: &deps.APIServerDeps{
-					Config: cfg,
-				},
-			}
-			checkFn := wsHandler.checkOrigin(userId)
+			checkFn := checkOrigin(cfg, userId)
 			valid := checkFn(req)
 
 			require.Equal(t, tc.expectedValid, valid)

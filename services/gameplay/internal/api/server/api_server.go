@@ -3,7 +3,8 @@ package server
 import (
 	"fmt"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/infra"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/game"
 
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/handler/word"
@@ -21,14 +22,14 @@ type APIServer struct {
 	GameHandler        *game.Handler
 }
 
-func NewAPIServer(deps *deps.APIServerDeps) (*APIServer, error) {
-	serverHandler := server.New(deps)
-	serverAdminHandler := serveradmin.New(deps)
-	wordHandler := word.New(deps)
-	gameHandler := game.New(deps)
+func NewAPIServer(res *infra.Resources) (*APIServer, error) {
+	serverHandler := server.New(res)
+	serverAdminHandler := serveradmin.New(res)
+	wordHandler := word.New(res)
+	gameHandler := game.New(res)
 
 	err := setupRateLimiter(
-		deps.Config.ServiceName, deps.Config.RedisConnURL,
+		res.Config.ServiceName, res.Config.RedisConnURL,
 		serverHandler.RateLimits(), serverAdminHandler.RateLimits(), wordHandler.RateLimits(), gameHandler.RateLimits(),
 	)
 	if err != nil {

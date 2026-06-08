@@ -14,18 +14,18 @@ const (
 	trendingWindowMins                = 15
 )
 
-func (processor *RedisTaskProcessor) ProcessTaskRecomputeTrending(ctx context.Context, _ *asynq.Task) error {
+func (p *RedisTaskProcessor) processTaskRecomputeTrending(ctx context.Context, _ *asynq.Task) error {
 	trendingWindow := pgtype.Interval{
 		Microseconds: trendingWindowMins * 60 * 1000 * 1000,
 		Valid:        true,
 	}
 
-	err := processor.store.RecomputeTrendingScores(ctx, trendingWindow)
+	err := p.store.RecomputeTrendingScores(ctx, trendingWindow)
 	if err != nil {
 		return fmt.Errorf("failed to recompute server trending scores: %w", err)
 	}
 
-	err = processor.store.ResetTrendingScores(ctx, trendingWindow)
+	err = p.store.ResetTrendingScores(ctx, trendingWindow)
 	if err != nil {
 		return fmt.Errorf("failed to reset server trending scores: %w", err)
 	}

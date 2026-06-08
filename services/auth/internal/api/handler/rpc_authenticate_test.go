@@ -498,17 +498,13 @@ func TestAuthenticate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
+			tc.buildStubs(deps.store, deps.cache)
 
-			tc.buildStubs(store, cache)
+			h := newTestHandler(deps)
 
-			handler := newTestHandler(t, store, cache)
-
-			res, err := handler.Authenticate(tc.inputCtx, tc.req)
+			res, err := h.Authenticate(tc.inputCtx, tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

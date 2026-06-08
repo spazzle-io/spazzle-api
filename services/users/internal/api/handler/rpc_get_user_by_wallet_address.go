@@ -23,7 +23,7 @@ func (h *Handler) GetUserByWalletAddress(ctx context.Context, req *pb.GetUserByW
 		return nil, invalidArgumentError(violations)
 	}
 
-	user, err := h.store.GetUserByWalletAddress(ctx, req.GetWalletAddress())
+	user, err := h.Store.GetUserByWalletAddress(ctx, req.GetWalletAddress())
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get user")
 		return nil, status.Error(codes.NotFound, UserNotFoundError)

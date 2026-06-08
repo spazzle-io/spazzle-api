@@ -6,13 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
-	mockdb "github.com/spazzle-io/spazzle-api/services/auth/internal/db/mock"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
 )
 
 func TestHandler_VerifyAccessToken(t *testing.T) {
@@ -60,16 +57,12 @@ func TestHandler_VerifyAccessToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
+			h := newTestHandler(deps)
 
-			handler := newTestHandler(t, store, cache)
-
-			ctx := tc.buildContext(t, handler.tokenMaker)
-			res, err := handler.VerifyAccessToken(ctx, tc.req)
+			ctx := tc.buildContext(t, deps.tokenMaker)
+			res, err := h.VerifyAccessToken(ctx, tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

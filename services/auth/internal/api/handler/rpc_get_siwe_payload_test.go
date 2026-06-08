@@ -7,7 +7,6 @@ import (
 
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
-	mockdb "github.com/spazzle-io/spazzle-api/services/auth/internal/db/mock"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -97,17 +96,13 @@ func TestHandler_GetSIWEPayload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(deps.cache)
 
-			cache := mockcache.NewMockCache(ctrl)
-			tc.buildStubs(cache)
+			h := newTestHandler(deps)
 
-			handler := newTestHandler(t, store, cache)
-
-			res, err := handler.GetSIWEPayload(context.Background(), tc.req)
+			res, err := h.GetSIWEPayload(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

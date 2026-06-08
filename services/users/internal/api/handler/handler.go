@@ -3,29 +3,21 @@ package handler
 import (
 	"time"
 
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
+	"github.com/spazzle-io/spazzle-api/services/users/internal/infra"
+
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
-	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
-	"github.com/spazzle-io/spazzle-api/services/users/internal/services"
-	"github.com/spazzle-io/spazzle-api/services/users/internal/util"
 )
 
 type Handler struct {
 	pb.UnimplementedUserServiceServer
 
-	config      *util.Config
-	store       db.Store
-	cache       commonCache.Cache
-	authService services.AuthGrpcService
+	*infra.Resources
 }
 
-func New(config *util.Config, store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
+func New(res *infra.Resources) *Handler {
 	return &Handler{
-		config:      config,
-		store:       store,
-		cache:       cache,
-		authService: authService,
+		Resources: res,
 	}
 }
 

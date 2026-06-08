@@ -15,7 +15,7 @@ func (h *Handler) RevokeRefreshTokens(
 	ctx context.Context,
 	_ *pb.RevokeRefreshTokensRequest,
 ) (*pb.RevokeRefreshTokensResponse, error) {
-	tkPayload, err := middleware.AuthorizeToken(ctx, h.tokenMaker, token.AccessToken, nil)
+	tkPayload, err := middleware.AuthorizeToken(ctx, h.TokenMaker, token.AccessToken, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("could not authorize token")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
@@ -23,7 +23,7 @@ func (h *Handler) RevokeRefreshTokens(
 
 	logger := log.With().Str("user_id", tkPayload.UserID.String()).Logger()
 
-	ct, err := h.store.RevokeSessions(ctx, tkPayload.UserID)
+	ct, err := h.Store.RevokeSessions(ctx, tkPayload.UserID)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not revoke sessions")
 		return nil, status.Error(codes.Internal, InternalServerError)
