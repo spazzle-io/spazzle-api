@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.1.4](https://github.com/spazzle-io/spazzle-api/compare/v0.1.3...v0.1.4) (2026-06-08)
+
+
+### Features
+
+* add aggressive artist liveness check ([#106](https://github.com/spazzle-io/spazzle-api/issues/106)) ([ac9ef58](https://github.com/spazzle-io/spazzle-api/commit/ac9ef5862609252a6198989c452d18e55a03acd5))
+* add AGPL license ([#64](https://github.com/spazzle-io/spazzle-api/issues/64)) ([ed72cab](https://github.com/spazzle-io/spazzle-api/commit/ed72cabdb17b8cc701d72f856588c8e7fedaf346))
+* add server treasuries ([#128](https://github.com/spazzle-io/spazzle-api/issues/128)) ([33bfe09](https://github.com/spazzle-io/spazzle-api/commit/33bfe093f3f7d8839c098918c974f8d6ba407eb4))
+* add temporal ([#93](https://github.com/spazzle-io/spazzle-api/issues/93)) ([031d51f](https://github.com/spazzle-io/spazzle-api/commit/031d51fbd1ef8bc8c66491c8dcc9dde8825beba0))
+* **common:** add s3 compatible storage shared lib ([#108](https://github.com/spazzle-io/spazzle-api/issues/108)) ([367cac5](https://github.com/spazzle-io/spazzle-api/commit/367cac52e266245adfb86bc291e4ac80b0593776))
+* **gameplay:** add create server endpoint ([#52](https://github.com/spazzle-io/spazzle-api/issues/52)) ([40a29e1](https://github.com/spazzle-io/spazzle-api/commit/40a29e1cf1f8f654e52fea27da46d1cdb08bf50a))
+* **gameplay:** add game service endpoints ([#111](https://github.com/spazzle-io/spazzle-api/issues/111)) ([d63b0b6](https://github.com/spazzle-io/spazzle-api/commit/d63b0b6209dfc3551ec9af58392cd52228690374))
+* **gameplay:** add gameplay service ([#50](https://github.com/spazzle-io/spazzle-api/issues/50)) ([e919794](https://github.com/spazzle-io/spazzle-api/commit/e919794cd5adaf190f506f413f6426d30a77f90e))
+* **gameplay:** add join server http endpoint ([#91](https://github.com/spazzle-io/spazzle-api/issues/91)) ([95a6eb1](https://github.com/spazzle-io/spazzle-api/commit/95a6eb1a7b333b60be1fd0c287d5fdc7cc063039))
+* **gameplay:** add join server ws endpoint ([#83](https://github.com/spazzle-io/spazzle-api/issues/83)) ([3aea9b3](https://github.com/spazzle-io/spazzle-api/commit/3aea9b3ae1be22a3908076d06dec1f891bf1f646))
+* **gameplay:** add server admin endpoints ([#65](https://github.com/spazzle-io/spazzle-api/issues/65)) ([5ff93bf](https://github.com/spazzle-io/spazzle-api/commit/5ff93bfdd55253c288e1a7bcd66ce67539cd6689))
+* **gameplay:** add server fetch endpoints ([#54](https://github.com/spazzle-io/spazzle-api/issues/54)) ([4837d8f](https://github.com/spazzle-io/spazzle-api/commit/4837d8ff48d1639bdff0f22e9e4675cf297dda2d))
+* **gameplay:** add server mutation endpoints ([#58](https://github.com/spazzle-io/spazzle-api/issues/58)) ([b485e2b](https://github.com/spazzle-io/spazzle-api/commit/b485e2b821624838540953e77a305f1974198370))
+* **gameplay:** add word service endpoints ([#76](https://github.com/spazzle-io/spazzle-api/issues/76)) ([3218d41](https://github.com/spazzle-io/spazzle-api/commit/3218d41cf5c36bb57aeb8e1d836595b3f0d87ce0))
+* **gameplay:** implement game streams cleanup and persistence ([#109](https://github.com/spazzle-io/spazzle-api/issues/109)) ([db7f4c5](https://github.com/spazzle-io/spazzle-api/commit/db7f4c53f3a2005f068c3c9a85da78d47a9b03ce))
+* **gameplay:** implement struct marker type ([#144](https://github.com/spazzle-io/spazzle-api/issues/144)) ([e187a8e](https://github.com/spazzle-io/spazzle-api/commit/e187a8e4fc6e453ab9a3d51ebe9d0489ed42f3e6))
+* **gameplay:** implement temporal game server workflow  ([#96](https://github.com/spazzle-io/spazzle-api/issues/96)) ([558e4f8](https://github.com/spazzle-io/spazzle-api/commit/558e4f8de2037a4d48cf06694d1126af705e9188))
+* **gameplay:** isolate gameserver package ([#92](https://github.com/spazzle-io/spazzle-api/issues/92)) ([87aa646](https://github.com/spazzle-io/spazzle-api/commit/87aa6466c20f144d07201646915f3b1244fc11f7))
+* implement game replay endpoint ([#107](https://github.com/spazzle-io/spazzle-api/issues/107)) ([48da3a9](https://github.com/spazzle-io/spazzle-api/commit/48da3a9ab770ad59240396309510b5c199c6a29b))
+* merge services to single proto file ([#63](https://github.com/spazzle-io/spazzle-api/issues/63)) ([2ce9e09](https://github.com/spazzle-io/spazzle-api/commit/2ce9e09dc7ffea0dd3a699ff2038816e7d66aa51))
+* migrate reqs to google pb wrappers ([#60](https://github.com/spazzle-io/spazzle-api/issues/60)) ([eb6136d](https://github.com/spazzle-io/spazzle-api/commit/eb6136d1454649e307ec3608967e18c5e5c185b1))
+* remove userId as a param to verify access token request ([#61](https://github.com/spazzle-io/spazzle-api/issues/61)) ([eac5904](https://github.com/spazzle-io/spazzle-api/commit/eac5904a02ea8119551ccb82bc3c8d4f639fb18e))
+* **users:** migrate list users endpoint to use keyset pagination ([#59](https://github.com/spazzle-io/spazzle-api/issues/59)) ([0eb5d6d](https://github.com/spazzle-io/spazzle-api/commit/0eb5d6dbf83de87124c9300e6f63742a27e54c43))
+
+
+### Bug Fixes
+
+* **gameplay:** reset treasury deployer nonce on development env ([#131](https://github.com/spazzle-io/spazzle-api/issues/131)) ([3875e04](https://github.com/spazzle-io/spazzle-api/commit/3875e040d2f2388f84cc81894d88df38b4cb02d4))
+
+
+### Performance Improvements
+
+* **gameplay:** optimize round/game ended ws payloads ([#129](https://github.com/spazzle-io/spazzle-api/issues/129)) ([5ea407f](https://github.com/spazzle-io/spazzle-api/commit/5ea407fde19998a5fc99496180046e0a2b16d1fa))
+* increment max stream len ([#141](https://github.com/spazzle-io/spazzle-api/issues/141)) ([d54437a](https://github.com/spazzle-io/spazzle-api/commit/d54437a9d91d59d2163a8b558f01820af03b1101))
+* optimize redis streams event bus ([#140](https://github.com/spazzle-io/spazzle-api/issues/140)) ([9611a30](https://github.com/spazzle-io/spazzle-api/commit/9611a305ba44791f98049e7e0fd832a356b0f4c7))
+
 ## [0.1.3](https://github.com/spazzle-io/spazzle-api/compare/v0.1.2...v0.1.3) (2025-08-10)
 
 
