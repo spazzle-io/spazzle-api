@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/internal/activities"
@@ -27,6 +26,11 @@ func handlePhaseInRound(ctx workflow.Context, state *GameState, notifyCh workflo
 	state.SubPhase = types.SubPhaseConfirmArtist
 
 	for {
+		if state.IsTerminated {
+			state.Phase = types.PhaseEndRound
+			return
+		}
+
 		var err error
 
 		switch state.SubPhase {
@@ -323,9 +327,6 @@ func toWordTokens(tokens []types.Token) []gameevents.WordToken {
 }
 
 func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
-	state.CorrectGuesses[state.CurrentRound] = make([]types.CorrectGuess, 0)
-	state.CorrectGuessers[state.CurrentRound] = make(map[uuid.UUID]bool)
-
 	ch := workflow.GetSignalChannel(ctx, SignalCorrectGuesses)
 
 	for {
@@ -339,12 +340,12 @@ func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
 			}
 
 			for _, guess := range signal.Guesses {
-				if state.CorrectGuessers[state.CurrentRound][guess.PlayerID] {
+				if _, hasAlreadyGuessed := state.CorrectGuessers[guess.PlayerID]; hasAlreadyGuessed {
 					continue
 				}
 
-				state.CorrectGuessers[state.CurrentRound][guess.PlayerID] = true
-				state.CorrectGuesses[state.CurrentRound] = append(state.CorrectGuesses[state.CurrentRound], guess)
+				state.CorrectGuessers[guess.PlayerID] = struct{}{}
+				state.CorrectGuesses = append(state.CorrectGuesses, guess)
 				state.Logger().Info("correct guess recorded",
 					"player_id", guess.PlayerID, "guessed_at", guess.Timestamp)
 			}
@@ -359,7 +360,7 @@ func handleCorrectGuesses(ctx workflow.Context, state *GameState) {
 }
 
 func scheduleNextArtistSelection(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
-	if int32(state.CurrentRound) == state.NumRounds {
+	if state.CurrentRound == state.NumRounds {
 		state.Logger().Info("last round. skipping next artist selection")
 		return
 	}

@@ -475,6 +475,54 @@ func TestMarkerID_CacheMiss(t *testing.T) {
 	require.Empty(t, markerID)
 }
 
+func TestGetMarkerMessage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping event bus test in short mode")
+	}
+
+	bus := newEventBus(t)
+	game := newGameIdentifier()
+
+	session, err := bus.Session(game)
+	require.NoError(t, err)
+
+	for i := 0; i < 3; i++ {
+		msg := PublishMessage{
+			Type: "some_event",
+		}
+		id, err := session.Publish(context.Background(), GameEventsStreamType, msg)
+		require.NotEmpty(t, id)
+		require.NoError(t, err)
+	}
+
+	marker := Marker{
+		Round: 10,
+		Type:  MarkerRoundEnded,
+	}
+
+	markerMsg := PublishMessage{
+		Type:   "marked_event",
+		Marker: marker,
+	}
+	id, err := session.Publish(context.Background(), GameEventsStreamType, markerMsg)
+	require.NotEmpty(t, id)
+	require.NoError(t, err)
+
+	for i := 0; i < 3; i++ {
+		msg := PublishMessage{
+			Type: "some_other_event",
+		}
+		id, err := session.Publish(context.Background(), GameEventsStreamType, msg)
+		require.NotEmpty(t, id)
+		require.NoError(t, err)
+	}
+
+	gotMarkerMsg, err := bus.GetMarkerMessage(context.Background(), game, GameEventsStreamType, marker)
+	require.NoError(t, err)
+	require.NotNil(t, gotMarkerMsg)
+	require.Equal(t, id, gotMarkerMsg.ID)
+}
+
 func TestCleanup_RemovesAllRoundMarkers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping event bus test in short mode")

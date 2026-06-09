@@ -56,14 +56,14 @@ func (distributor *RedisTaskDistributor) DistributeTaskDeployTreasury(
 	return nil
 }
 
-func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Context, task *asynq.Task) error {
+func (p *RedisTaskProcessor) processTaskDeployTreasury(ctx context.Context, task *asynq.Task) error {
 	var payload PayloadDeployTreasury
 	err := json.Unmarshal(task.Payload(), &payload)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal task payload: %v: %w", err, asynq.SkipRetry)
 	}
 
-	server, err := processor.store.GetServerById(ctx, payload.ServerID)
+	server, err := p.store.GetServerById(ctx, payload.ServerID)
 	if err != nil {
 		if errors.Is(err, db.RecordNotFoundError) {
 			return fmt.Errorf("server not found: %v, %w", err, asynq.SkipRetry)
@@ -76,7 +76,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 		return fmt.Errorf("failed to parse server address: %v, %w", err, asynq.SkipRetry)
 	}
 
-	treasury, err := processor.store.GetTreasury(ctx, serverAddress.Hex())
+	treasury, err := p.store.GetTreasury(ctx, serverAddress.Hex())
 	if err != nil {
 		if errors.Is(err, db.RecordNotFoundError) {
 			return fmt.Errorf("treasury not found: %v, %w", err, asynq.SkipRetry)
@@ -88,7 +88,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 		return nil
 	}
 
-	predicted, err := processor.treasuryClient.PredictAddress(payload.ServerID, payload.OwnerAddress)
+	predicted, err := p.treasuryClient.PredictAddress(payload.ServerID, payload.OwnerAddress)
 	if err != nil {
 		if errors.Is(err, safe.ErrVersionNotOnChain) {
 			return fmt.Errorf("version not on chain: %w", asynq.SkipRetry)
@@ -97,30 +97,30 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 	}
 
 	if predicted != serverAddress {
-		if _, err := processor.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); err != nil {
+		if _, err := p.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); err != nil {
 			log.Error().Err(err).Str("address", serverAddress.Hex()).Msg("failed to mark treasury as failed")
 		}
 		return fmt.Errorf("predicted %s does not match stored %s: %w",
 			predicted.Hex(), serverAddress.Hex(), asynq.SkipRetry)
 	}
 
-	deployed, err := processor.treasuryClient.IsDeployed(ctx, payload.ServerID, payload.OwnerAddress)
+	deployed, err := p.treasuryClient.IsDeployed(ctx, payload.ServerID, payload.OwnerAddress)
 	if err != nil {
 		log.Warn().Err(err).Str("address", serverAddress.Hex()).Msg("failed to determine if treasury was deployed")
 	}
 	if deployed {
-		if _, err = processor.store.RecoverDeployedTreasury(ctx, serverAddress.Hex()); err != nil {
+		if _, err = p.store.RecoverDeployedTreasury(ctx, serverAddress.Hex()); err != nil {
 			return fmt.Errorf("failed to recover deployed treasury: %w", err)
 		}
 		log.Info().Str("server_id", server.ID.String()).Msg("successfully recovered deployed treasury")
 		return nil
 	}
 
-	if _, err = processor.store.MarkTreasuryDeploying(ctx, serverAddress.Hex()); err != nil {
+	if _, err = p.store.MarkTreasuryDeploying(ctx, serverAddress.Hex()); err != nil {
 		return fmt.Errorf("failed to mark treasury as deploying: %w", err)
 	}
 
-	result, err := processor.treasuryClient.Deploy(ctx, payload.ServerID, payload.OwnerAddress)
+	result, err := p.treasuryClient.Deploy(ctx, payload.ServerID, payload.OwnerAddress)
 	if err != nil {
 		if errors.Is(err, safe.ErrAddressAlreadyDeployed) {
 			return fmt.Errorf("treasury already deployed on-chain, recovering on retry: %w", err)
@@ -131,7 +131,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 		}
 
 		if errors.Is(err, safe.ErrTransactionReverted) {
-			if _, markErr := processor.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); markErr != nil {
+			if _, markErr := p.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); markErr != nil {
 				log.Error().Err(markErr).Str("address", serverAddress.Hex()).Msg("failed to mark treasury as failed")
 			}
 			return fmt.Errorf("treasury deployment reverted on-chain: %w", asynq.SkipRetry)
@@ -139,7 +139,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 
 		var mismatchErr *safe.DeploymentMismatchError
 		if errors.As(err, &mismatchErr) {
-			if _, markErr := processor.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); markErr != nil {
+			if _, markErr := p.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); markErr != nil {
 				log.Error().Err(markErr).Str("address", serverAddress.Hex()).Msg("failed to mark treasury as failed")
 			}
 			log.Error().
@@ -153,7 +153,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 		retried, _ := asynq.GetRetryCount(ctx)
 		maxRetry, _ := asynq.GetMaxRetry(ctx)
 		if retried >= maxRetry {
-			if _, markErr := processor.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); markErr != nil {
+			if _, markErr := p.store.MarkTreasuryFailed(ctx, serverAddress.Hex()); markErr != nil {
 				log.Error().Err(markErr).Str("address", serverAddress.Hex()).Msg("failed to mark treasury as failed on exhaustion")
 			}
 			log.Error().
@@ -174,7 +174,7 @@ func (processor *RedisTaskProcessor) ProcessTaskDeployTreasury(ctx context.Conte
 		return fmt.Errorf("failed to convert gas used to int64: %w", err)
 	}
 
-	_, err = processor.store.MarkTreasuryDeployed(ctx, db.MarkTreasuryDeployedParams{
+	_, err = p.store.MarkTreasuryDeployed(ctx, db.MarkTreasuryDeployedParams{
 		Address: serverAddress.Hex(),
 		TxHash: pgtype.Text{
 			String: result.TxHash.Hex(),

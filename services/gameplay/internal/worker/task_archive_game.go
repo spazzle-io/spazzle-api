@@ -64,7 +64,7 @@ func (distributor *RedisTaskDistributor) DistributeTaskArchiveGame(
 	return nil
 }
 
-func (processor *RedisTaskProcessor) ProcessTaskArchiveGame(ctx context.Context, task *asynq.Task) error {
+func (p *RedisTaskProcessor) processTaskArchiveGame(ctx context.Context, task *asynq.Task) error {
 	var payload PayloadArchiveGame
 	err := json.Unmarshal(task.Payload(), &payload)
 	if err != nil {
@@ -76,16 +76,16 @@ func (processor *RedisTaskProcessor) ProcessTaskArchiveGame(ctx context.Context,
 		GameID:       payload.GameID,
 	}
 
-	gameEventsMessages, err := processor.archiveStreamsToS3(ctx, game, payload)
+	gameEventsMessages, err := p.archiveStreamsToS3(ctx, game, payload)
 	if err != nil {
 		return err
 	}
 
-	if err := processor.archiveGameToDB(ctx, payload, gameEventsMessages); err != nil {
+	if err := p.archiveGameToDB(ctx, payload, gameEventsMessages); err != nil {
 		return err
 	}
 
-	if err := processor.bus.Cleanup(ctx, game); err != nil {
+	if err := p.bus.Cleanup(ctx, game); err != nil {
 		return fmt.Errorf("failed to clean up game streams: %w", err)
 	}
 
@@ -97,7 +97,7 @@ func (processor *RedisTaskProcessor) ProcessTaskArchiveGame(ctx context.Context,
 	return nil
 }
 
-func (processor *RedisTaskProcessor) archiveStreamsToS3(
+func (p *RedisTaskProcessor) archiveStreamsToS3(
 	ctx context.Context,
 	game eventbus.GameIdentifier,
 	payload PayloadArchiveGame,
@@ -105,7 +105,7 @@ func (processor *RedisTaskProcessor) archiveStreamsToS3(
 	var gameEventsMessages []eventbus.Message
 
 	for _, streamType := range eventbus.AllStreamTypes {
-		messages, err := processor.replayGameStream(ctx, game, streamType)
+		messages, err := p.replayGameStream(ctx, game, streamType)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +124,7 @@ func (processor *RedisTaskProcessor) archiveStreamsToS3(
 		}
 
 		key := fmt.Sprintf("games/%s/%s/%s.json", payload.ServerID, payload.GameID, streamType)
-		err = processor.objectStore.Put(ctx, archiveBucket, key, bytes.NewReader(data), "application/json")
+		err = p.objectStore.Put(ctx, archiveBucket, key, bytes.NewReader(data), "application/json")
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func (processor *RedisTaskProcessor) archiveStreamsToS3(
 	return gameEventsMessages, nil
 }
 
-func (processor *RedisTaskProcessor) archiveGameToDB(
+func (p *RedisTaskProcessor) archiveGameToDB(
 	ctx context.Context,
 	payload PayloadArchiveGame,
 	gameEventsMessages []eventbus.Message,
@@ -173,7 +173,7 @@ func (processor *RedisTaskProcessor) archiveGameToDB(
 		EndedAt:       payload.GameEndedAt,
 	}
 
-	_, err = processor.store.ArchiveGameTx(ctx, txParams)
+	_, err = p.store.ArchiveGameTx(ctx, txParams)
 	if err != nil {
 		if errors.Is(err, db.ErrGameAlreadyExists) {
 		} else {
@@ -184,7 +184,7 @@ func (processor *RedisTaskProcessor) archiveGameToDB(
 	return nil
 }
 
-func (processor *RedisTaskProcessor) replayGameStream(
+func (p *RedisTaskProcessor) replayGameStream(
 	ctx context.Context,
 	game eventbus.GameIdentifier,
 	streamType eventbus.StreamType,
@@ -193,7 +193,7 @@ func (processor *RedisTaskProcessor) replayGameStream(
 	after := "0"
 
 	for {
-		result, err := processor.bus.Replay(ctx, uuid.Nil, game, streamType, eventbus.ReplayVisibilityAll, "0", after, archiveReplayLimit)
+		result, err := p.bus.Replay(ctx, uuid.Nil, game, streamType, eventbus.ReplayVisibilityAll, "0", after, archiveReplayLimit)
 		if err != nil {
 			return nil, fmt.Errorf("failed to replay stream %s: %w", streamType, err)
 		}

@@ -15,6 +15,7 @@ message GetCurrentGameRequest {
 
 message GetCurrentGameResponse {
   CurrentGameInfo game = 1;
+  RoundSummary last_completed_round = 2;
 }
 
 message GetGameRequest {
@@ -172,12 +173,32 @@ message CurrentGameInfo {
   string phase = 2;
   string sub_phase = 3;
   uint32 current_round = 4;
-  int32 num_rounds = 5;
+  uint32 num_rounds = 5;
   string current_artist = 6;
   int32 num_players = 7;
   google.protobuf.Timestamp started_at = 8;
   int64 drawing_duration_ms = 9;
   string stake_per_game = 10;
+}
+
+message RoundStanding {
+  string player_id = 1;
+  int64 guess_time_ms = 2;
+  string tier = 3;
+  int64 round_position = 4;
+  int64 round_points = 5;
+  string round_stake_lost = 6;
+  int64 total_points = 7;
+  string total_stake_lost = 8;
+  string provisional_payout = 9;
+}
+
+message RoundSummary {
+  uint32 round = 1;
+  string artist_id = 2;
+  string word = 3;
+  string total_pot = 4;
+  repeated RoundStanding standings = 5;
 }
 
 message GamePlayerEntry {

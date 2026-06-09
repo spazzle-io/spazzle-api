@@ -239,6 +239,94 @@ func TestUInt32ToUInt8(t *testing.T) {
 	}
 }
 
+func TestInt32ToUInt8(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    int32
+		expected uint8
+		success  bool
+	}{
+		{
+			name:     "success",
+			input:    12,
+			expected: 12,
+			success:  true,
+		},
+		{
+			name:    "zero",
+			input:   int32(0),
+			success: true,
+		},
+		{
+			name:    "input too large",
+			input:   math.MaxInt32,
+			success: false,
+		},
+		{
+			name:    "negative",
+			input:   int32(-4),
+			success: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Int32ToUint8(tc.input)
+			if tc.success {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+				return
+			}
+
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestIntToUint32(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    int
+		expected uint32
+		success  bool
+	}{
+		{
+			name:     "success",
+			input:    12,
+			expected: 12,
+			success:  true,
+		},
+		{
+			name:    "zero",
+			input:   0,
+			success: true,
+		},
+		{
+			name:    "input too large",
+			input:   math.MaxInt64,
+			success: false,
+		},
+		{
+			name:    "negative",
+			input:   -4,
+			success: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := IntToUint32(tc.input)
+			if tc.success {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+				return
+			}
+
+			require.Error(t, err)
+		})
+	}
+}
+
 func TestIntToInt32(t *testing.T) {
 	testCases := []struct {
 		name     string

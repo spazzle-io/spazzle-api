@@ -30,7 +30,7 @@ func (h *Handler) GetSIWEPayload(
 	}
 
 	payload, err := siwe.GenerateSIWEPayload(
-		ctx, h.config, h.cache, req.GetDomain(), req.GetUri(), req.GetWalletAddress(),
+		ctx, h.Config, h.Cache, req.GetDomain(), req.GetUri(), req.GetWalletAddress(),
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not generate SIWE payload")

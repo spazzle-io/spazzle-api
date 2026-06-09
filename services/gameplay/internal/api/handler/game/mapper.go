@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	db "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
@@ -95,7 +97,7 @@ func mapEventBusMessagesToPb(messages []eventbus.Message) ([]*pb.ReplayMessage, 
 }
 
 func mapCurrentGameToPb(currentGame *types.GameStateView) (pb.CurrentGameInfo, error) {
-	numPlayers, err := commonUtil.IntToInt32(len(currentGame.Players))
+	numPlayers, err := commonUtil.IntToInt32(currentGame.NumActivePlayers)
 	if err != nil {
 		return pb.CurrentGameInfo{}, fmt.Errorf("failed to get num players in current game: %v", err)
 	}
@@ -105,13 +107,47 @@ func mapCurrentGameToPb(currentGame *types.GameStateView) (pb.CurrentGameInfo, e
 		Phase:             string(currentGame.Phase),
 		SubPhase:          string(currentGame.SubPhase),
 		CurrentRound:      uint32(currentGame.CurrentRound),
-		NumRounds:         currentGame.NumRounds,
+		NumRounds:         uint32(currentGame.NumRounds),
 		CurrentArtist:     currentGame.CurrentArtist.String(),
 		NumPlayers:        numPlayers,
 		StartedAt:         timestamppb.New(currentGame.StartedAt),
 		DrawingDurationMs: currentGame.DrawingDuration.Milliseconds(),
 		StakePerGame:      currentGame.StakePerGame,
 	}, nil
+}
+
+func mapRoundStandingToPb(playerResult *gameevents.PlayerRoundResult) *pb.RoundStanding {
+	return &pb.RoundStanding{
+		PlayerId:          playerResult.PlayerID.String(),
+		GuessTimeMs:       playerResult.GuessTimeMs,
+		Tier:              playerResult.Tier,
+		RoundPosition:     int64(playerResult.RoundPosition),
+		RoundPoints:       playerResult.RoundPoints,
+		RoundStakeLost:    playerResult.RoundStakeLost,
+		TotalPoints:       playerResult.TotalPoints,
+		TotalStakeLost:    playerResult.TotalStakeLost,
+		ProvisionalPayout: playerResult.ProvisionalPayout,
+	}
+}
+
+func mapRoundStandingsToPb(playerResults []*gameevents.PlayerRoundResult) []*pb.RoundStanding {
+	pbRoundStandings := make([]*pb.RoundStanding, 0, len(playerResults))
+
+	for _, playerResult := range playerResults {
+		pbRoundStandings = append(pbRoundStandings, mapRoundStandingToPb(playerResult))
+	}
+
+	return pbRoundStandings
+}
+
+func mapRoundSummaryToPb(payload gameevents.RoundEndedPayload) *pb.RoundSummary {
+	return &pb.RoundSummary{
+		Round:     uint32(payload.Round),
+		ArtistId:  payload.ArtistID.String(),
+		Word:      payload.Word,
+		TotalPot:  payload.TotalPot,
+		Standings: mapRoundStandingsToPb(payload.Results),
+	}
 }
 
 func mapUserGamesToPb(userGames []db.ListUserGamesRow) ([]*pb.UserGameEntry, error) {

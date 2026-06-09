@@ -12,6 +12,10 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
+// TODO: Consider scenario where >= 1 round has been played but not enough players for additional rounds before game end.
+// Should game end? Cycle through remaining rounds? At a timer? How long? Wait for players instead?
+// Do players have to re-connect after each round? Automatically carried over? When does the scenario apply?
+
 func handlePhasePrepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel) {
 	state.Logger().Info("entering prepare round phase")
 
@@ -53,6 +57,13 @@ func prepareRound(ctx workflow.Context, state *GameState, notifyCh workflow.Chan
 		return fmt.Errorf("failed to select and notify artist: %w", err)
 	}
 
+	if _, hasPublishedRound := state.RoundStartedPublished[state.CurrentRound]; !hasPublishedRound {
+		if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
+			return fmt.Errorf("failed to publish round started event: %w", err)
+		}
+		state.RoundStartedPublished[state.CurrentRound] = struct{}{}
+	}
+
 	if !hasEnoughPlayers(state) {
 		state.Phase = types.PhaseWaiting
 		return errors.New("not enough players. returning to waiting phase")
@@ -71,6 +82,10 @@ func selectAndNotifyArtist(
 	notifyCh workflow.Channel,
 ) (artistID uuid.UUID, err error) {
 	for {
+		if state.IsTerminated {
+			return uuid.Nil, errors.New("game terminated during artist selection")
+		}
+
 		artistID = state.CurrentArtist
 		if artistID == uuid.Nil {
 			artistID, err = selectArtist(ctx, state)

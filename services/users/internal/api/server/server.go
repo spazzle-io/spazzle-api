@@ -3,28 +3,20 @@ package server
 import (
 	"fmt"
 
-	"github.com/spazzle-io/spazzle-api/services/users/internal/services"
+	"github.com/spazzle-io/spazzle-api/services/users/internal/infra"
 
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	"github.com/spazzle-io/spazzle-api/services/users/internal/api/handler"
-	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
-	"github.com/spazzle-io/spazzle-api/services/users/internal/util"
 )
 
 type Server struct {
 	handler.Handler
 }
 
-func New(config *util.Config, store db.Store, cache commonCache.Cache) (*Server, error) {
-	authService, err := services.NewAuthServiceGrpcClient(config.AuthServiceGRPCServerAddr)
-	if err != nil {
-		return nil, fmt.Errorf("could not create auth service gRPC client: %w", err)
-	}
+func New(res *infra.Resources) (*Server, error) {
+	h := handler.New(res)
 
-	h := handler.New(config, store, cache, authService)
-
-	err = setupRateLimiter(config.ServiceName, config.RedisConnURL, h.RateLimits())
+	err := setupRateLimiter(res.Config.ServiceName, res.Config.RedisConnURL, h.RateLimits())
 	if err != nil {
 		return nil, fmt.Errorf("could not setup rate limiter: %w", err)
 	}

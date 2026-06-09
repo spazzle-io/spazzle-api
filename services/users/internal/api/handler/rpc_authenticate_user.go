@@ -64,7 +64,7 @@ func (h *Handler) handleAuthenticateUser(
 	req *pb.AuthenticateUserRequest,
 	logger zerolog.Logger,
 ) (*db.User, *authPb.AuthenticateResponse, error) {
-	user, err := h.store.GetUserByWalletAddress(ctx, req.GetWalletAddress())
+	user, err := h.Store.GetUserByWalletAddress(ctx, req.GetWalletAddress())
 	if err != nil && !errors.Is(err, db.RecordNotFoundError) {
 		logger.Error().Err(err).Msg("could not fetch user by wallet address")
 		return nil, nil, status.Error(codes.Internal, InternalServerError)
@@ -90,7 +90,7 @@ func (h *Handler) handleExistingUser(
 		Signature:     signature,
 	}
 
-	authenticateRes, err := h.authService.Authenticate(ctx, h.config, authenticateRequest)
+	authenticateRes, err := h.AuthService.Authenticate(ctx, h.Config, authenticateRequest)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not authenticate user")
 		return nil, status.Error(codes.Internal, InternalServerError)
@@ -117,7 +117,7 @@ func (h *Handler) handleCreateUser(
 				Signature:     signature,
 			}
 
-			authenticateRes, err = h.authService.Authenticate(ctx, h.config, authenticateRequest)
+			authenticateRes, err = h.AuthService.Authenticate(ctx, h.Config, authenticateRequest)
 			if err != nil {
 				logger.Error().Err(err).Msg("could not authenticate user")
 			}
@@ -126,7 +126,7 @@ func (h *Handler) handleCreateUser(
 		},
 	}
 
-	txResult, err := h.store.CreateUserTx(ctx, params)
+	txResult, err := h.Store.CreateUserTx(ctx, params)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not create user")
 		return nil, nil, handleCreateUserTxError(err)

@@ -3,16 +3,26 @@ package handler
 import (
 	"testing"
 
+	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
+	mockdb "github.com/spazzle-io/spazzle-api/services/users/internal/db/mock"
+	"github.com/spazzle-io/spazzle-api/services/users/internal/infra"
+	mockservices "github.com/spazzle-io/spazzle-api/services/users/internal/services/mock"
+	"go.uber.org/mock/gomock"
+
 	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
-	db "github.com/spazzle-io/spazzle-api/services/users/internal/db/sqlc"
-	"github.com/spazzle-io/spazzle-api/services/users/internal/services"
 	"github.com/spazzle-io/spazzle-api/services/users/internal/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
 )
+
+type testDeps struct {
+	ctrl        *gomock.Controller
+	store       *mockdb.MockStore
+	cache       *mockcache.MockCache
+	authService *mockservices.MockAuthGrpcService
+}
 
 func getTestConfig() *util.Config {
 	return &util.Config{
@@ -23,10 +33,26 @@ func getTestConfig() *util.Config {
 	}
 }
 
-func newTestHandler(store db.Store, cache commonCache.Cache, authService services.AuthGrpcService) *Handler {
-	config := getTestConfig()
+func newTestDeps(t *testing.T) *testDeps {
+	t.Helper()
 
-	return New(config, store, cache, authService)
+	ctrl := gomock.NewController(t)
+
+	return &testDeps{
+		ctrl:        ctrl,
+		store:       mockdb.NewMockStore(ctrl),
+		cache:       mockcache.NewMockCache(ctrl),
+		authService: mockservices.NewMockAuthGrpcService(ctrl),
+	}
+}
+
+func newTestHandler(d *testDeps) *Handler {
+	return New(&infra.Resources{
+		Config:      getTestConfig(),
+		Store:       d.store,
+		Cache:       d.cache,
+		AuthService: d.authService,
+	})
 }
 
 func checkInvalidRequestParams(t *testing.T, err error, expectedFieldViolations []string) {

@@ -50,10 +50,6 @@ func GameWorkflow(ctx workflow.Context, input types.GameInput) (types.GameOutput
 
 	registerGlobalSignalHandlers(ctx, state, notifyCh)
 
-	if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
-		state.Logger().Warn("failed to publish round started event", "error", err)
-	}
-
 	for {
 		switch state.Phase {
 		case types.PhaseWaiting:
@@ -79,6 +75,9 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) (*GameStat
 	if input.NumRounds < 1 {
 		return nil, nonRetryableErr(ErrTypeInvalidInput, "invalid number of rounds", nil)
 	}
+	if input.DrawingDuration <= 0 {
+		return nil, nonRetryableErr(ErrTypeInvalidInput, "invalid drawing duration", nil)
+	}
 
 	stakePerGame, err := commonUtil.NewNonNegativeWei(input.StakePerGame)
 	if err != nil {
@@ -93,29 +92,31 @@ func initializeGameState(ctx workflow.Context, input types.GameInput) (*GameStat
 	return &GameState{
 		GameID: input.GameID,
 
-		Phase:         types.PhaseWaiting,
-		SubPhase:      types.SubPhaseNone,
-		NumRounds:     input.NumRounds,
-		CurrentRound:  DefaultRoundNumber,
-		StartedAt:     workflow.Now(ctx).UTC(),
-		GamePot:       commonUtil.ZeroWei().String(),
-		StakePerGame:  input.StakePerGame,
-		StakePerRound: stakePerRound.String(),
+		Phase:                 types.PhaseWaiting,
+		SubPhase:              types.SubPhaseNone,
+		NumRounds:             input.NumRounds,
+		CurrentRound:          DefaultRoundNumber,
+		StartedAt:             workflow.Now(ctx).UTC(),
+		GamePot:               commonUtil.ZeroWei().String(),
+		StakePerGame:          input.StakePerGame,
+		StakePerRound:         stakePerRound.String(),
+		RoundStartedPublished: make(map[uint8]struct{}),
 
 		Players:              make(map[uuid.UUID]*PlayerGameState),
 		MinNumPlayersToStart: DefaultMinNumPlayersToStart,
 		DrawingDuration:      input.DrawingDuration,
 
-		CorrectGuesses:  make(map[uint8][]types.CorrectGuess),
-		CorrectGuessers: make(map[uint8]map[uuid.UUID]bool),
+		CorrectGuessers: make(map[uuid.UUID]struct{}),
 
-		PastArtists: make(map[uuid.UUID]bool),
+		PastArtists: make(map[uuid.UUID]struct{}),
 		PendingAcks: make(map[uuid.UUID]*PendingAck),
 
 		GameServerInstances:             make(map[uuid.UUID]*GameServerInstanceState),
 		GameServerInstancesLastPrunedAt: workflow.Now(ctx).UTC(),
 
-		PlayerReports:  make(map[uuid.UUID]map[uuid.UUID]bool),
-		EjectedPlayers: make(map[uuid.UUID]bool),
+		PlayerReportsMade:  make(map[uuid.UUID][]uint32),
+		PlayerReportCounts: make(map[uuid.UUID]uint32),
+
+		EjectedPlayers: make(map[uuid.UUID]struct{}),
 	}, nil
 }

@@ -31,10 +31,13 @@ func handlePhaseWaiting(ctx workflow.Context, state *GameState, notifyCh workflo
 
 func hasEnoughPlayers(state *GameState) bool {
 	var activePlayers int
+
 	for _, playerID := range sortedUUIDs(state.Players) {
-		player := state.Players[playerID]
-		if player.IsConnected && !player.IsEjected {
+		if isActivePlayer(state.Players[playerID]) {
 			activePlayers++
+			if activePlayers >= int(state.MinNumPlayersToStart) {
+				return true
+			}
 		}
 	}
 

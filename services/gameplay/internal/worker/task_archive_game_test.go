@@ -418,7 +418,7 @@ func TestProcessTaskArchiveGame(t *testing.T) {
 
 			tc.buildStubs(payload, bus, objectStore, store)
 
-			err := processor.ProcessTaskArchiveGame(context.Background(), task)
+			err := processor.processTaskArchiveGame(context.Background(), task)
 			tc.checkResponse(t, err)
 		})
 	}

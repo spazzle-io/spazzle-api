@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
@@ -95,7 +96,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 		return fmt.Errorf("failed to send player round results: %w", err)
 	}
 
-	isFinalRound := int32(state.CurrentRound) >= state.NumRounds
+	isFinalRound := state.CurrentRound >= state.NumRounds
 	broadcastedResults := topRoundResults(correctGuessersResults, artistResult, 10)
 
 	roundResults := gameevents.RoundEndedPayload{
@@ -135,6 +136,8 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 	state.CurrentArtist = state.NextArtist
 	state.NextArtist = uuid.Nil
 	state.DrawingStartedAt = time.Time{}
+	state.CorrectGuesses = nil
+	state.CorrectGuessers = make(map[uuid.UUID]struct{})
 
 	err = workflow.Sleep(ctx, endRoundCooldown)
 	if err != nil {
@@ -146,9 +149,6 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 	} else {
 		state.CurrentRound++
 		state.Phase = types.PhasePrepareRound
-		if err := publishRoundStartedEvent(ctx, state, notifyCh); err != nil {
-			state.Logger().Warn("failed to publish round started event", "error", err)
-		}
 	}
 
 	state.Logger().Info("round ended", "round", state.CurrentRound)
@@ -156,9 +156,7 @@ func endRound(ctx workflow.Context, state *GameState, notifyCh workflow.Channel)
 }
 
 func getSortedGuesses(state *GameState) []types.CorrectGuess {
-	guesses := make([]types.CorrectGuess, len(state.CorrectGuesses[state.CurrentRound]))
-	copy(guesses, state.CorrectGuesses[state.CurrentRound])
-
+	guesses := slices.Clone(state.CorrectGuesses)
 	sort.Slice(guesses, func(i, j int) bool {
 		return guesses[i].Timestamp.Before(guesses[j].Timestamp)
 	})
@@ -247,8 +245,7 @@ func processNonGuessers(state *GameState, nonGuessersPosition int) ([]*gameevent
 			continue
 		}
 
-		guessedCorrectly := state.CorrectGuessers[state.CurrentRound][playerID]
-		if guessedCorrectly {
+		if _, guessedCorrectly := state.CorrectGuessers[playerID]; guessedCorrectly {
 			continue
 		}
 

@@ -865,7 +865,7 @@ func TestHandleReportPlayer(t *testing.T) {
 			ReportPlayer(gomock.Eq(gs.serverID), gomock.Eq(reporterID), gomock.Eq(reportedID)).
 			Times(1)
 
-		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportedID: reportedID})
+		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportTarget: reportedID})
 		gs.handleClientWsMessage(client, msg)
 	})
 
@@ -880,7 +880,7 @@ func TestHandleReportPlayer(t *testing.T) {
 		gs.activePlayers[spectatorID] = true
 		gs.mu.Unlock()
 
-		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportedID: uuid.New()})
+		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportTarget: uuid.New()})
 		gs.handleClientWsMessage(client, msg)
 	})
 
@@ -891,7 +891,7 @@ func TestHandleReportPlayer(t *testing.T) {
 		client := newStubClient(t, gs, outsiderID, Player)
 		registerClientOnServer(t, gs, client)
 
-		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportedID: uuid.New()})
+		msg := newClientWsMsg(t, gameevents.TypeReportPlayer, gameevents.ReportPlayerPayload{ReportTarget: uuid.New()})
 		gs.handleClientWsMessage(client, msg)
 	})
 }

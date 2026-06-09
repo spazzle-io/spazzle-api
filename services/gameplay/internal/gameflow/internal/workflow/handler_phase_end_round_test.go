@@ -148,7 +148,7 @@ func (s *EndRoundTestSuite) TestEndRound() {
 	s.True(sentEventOnDrawingUpdatesStream)
 	s.Equal(2, numPlayerRoundResultsSent)
 	s.Equal(gameID, capturedState.GameID)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func TestGetSortedGuesses(t *testing.T) {
@@ -169,8 +169,8 @@ func TestGetSortedGuesses(t *testing.T) {
 
 	state := &GameState{
 		CurrentRound: DefaultRoundNumber,
-		CorrectGuesses: map[uint8][]types.CorrectGuess{
-			DefaultRoundNumber: {guess3, guess1, guess2},
+		CorrectGuesses: []types.CorrectGuess{
+			guess3, guess1, guess2,
 		},
 	}
 
@@ -422,10 +422,8 @@ func TestProcessNonGuessers(t *testing.T) {
 		StakeLost:   "120000000000000",
 	}
 
-	correctGuessers := map[uint8]map[uuid.UUID]bool{
-		DefaultRoundNumber: {
-			player2.PlayerID: true,
-		},
+	correctGuessers := map[uuid.UUID]struct{}{
+		player2.PlayerID: {},
 	}
 
 	state := &GameState{

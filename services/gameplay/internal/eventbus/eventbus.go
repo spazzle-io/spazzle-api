@@ -11,6 +11,7 @@ type EventBus interface {
 	Replay(ctx context.Context, clientID uuid.UUID, game GameIdentifier, streamType StreamType, visibility ReplayVisibility, before string, after string, limit int) (ReplayResult, error)
 	TrimStreamBefore(ctx context.Context, game GameIdentifier, streamType StreamType, upToID string) error
 	MarkerID(ctx context.Context, game GameIdentifier, streamType StreamType, marker Marker) (string, error)
+	GetMarkerMessage(ctx context.Context, game GameIdentifier, streamType StreamType, marker Marker) (*Message, error)
 	Cleanup(ctx context.Context, game GameIdentifier) error
 	Close() error
 }

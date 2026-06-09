@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
+
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gamecache"
 
 	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
@@ -221,9 +223,14 @@ func (gs *GameServer) doInitialize() error {
 		return fmt.Errorf("failed to parse stake per game: %w", err)
 	}
 
+	numRoundsPerGame, err := commonUtil.Int32ToUint8(server.NumRoundsPerGame)
+	if err != nil {
+		return fmt.Errorf("failed to parse num rounds per game: %w", err)
+	}
+
 	gameID, err := gs.GfClient.Game(gs.serverID, types.GameInput{
 		GameID:          uuid.New(),
-		NumRounds:       server.NumRoundsPerGame,
+		NumRounds:       numRoundsPerGame,
 		DrawingDuration: time.Duration(server.RoundDurationSecs) * time.Second,
 		StakePerGame:    stakePerGame.String(),
 	})
@@ -280,7 +287,7 @@ func (gs *GameServer) doInitialize() error {
 	gs.currentArtist = gameState.CurrentArtist
 	gs.currentWord = gameState.CurrentWord.Text
 	gs.stakePerGame = gameState.StakePerGame
-	gs.activePlayers = gameState.Players
+	gs.activePlayers = make(map[uuid.UUID]bool)
 	gs.correctGuessers = make(map[uuid.UUID]bool)
 	gs.isGameActive.Store(true)
 

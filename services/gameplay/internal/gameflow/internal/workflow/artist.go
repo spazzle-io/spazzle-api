@@ -19,7 +19,7 @@ func getEligibleArtists(state *GameState) []uuid.UUID {
 			continue
 		}
 
-		if state.PastArtists[playerID] {
+		if _, isPastArtist := state.PastArtists[playerID]; isPastArtist {
 			continue
 		}
 
@@ -33,7 +33,7 @@ func selectArtist(ctx workflow.Context, state *GameState) (uuid.UUID, error) {
 	eligibleArtists := getEligibleArtists(state)
 
 	if len(eligibleArtists) == 0 {
-		state.PastArtists = make(map[uuid.UUID]bool)
+		state.PastArtists = make(map[uuid.UUID]struct{})
 		eligibleArtists = getEligibleArtists(state)
 	}
 
@@ -57,7 +57,7 @@ func selectArtist(ctx workflow.Context, state *GameState) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("failed to get artist: %w", err)
 	}
 
-	state.PastArtists[artistID] = true
+	state.PastArtists[artistID] = struct{}{}
 
 	return artistID, nil
 }

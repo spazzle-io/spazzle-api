@@ -30,7 +30,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 		return nil, status.Error(codes.InvalidArgument, InvalidUserIdError)
 	}
 
-	_, err = h.authService.VerifyAccessToken(ctx, h.config)
+	_, err = h.AuthService.VerifyAccessToken(ctx, h.Config)
 	if err != nil {
 		logger.Error().Err(err).Msg("access token verification failed")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
@@ -43,7 +43,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*p
 			Valid:  req.GetGamerTag() != nil,
 		},
 	}
-	user, err := h.store.UpdateUser(ctx, params)
+	user, err := h.Store.UpdateUser(ctx, params)
 	if err != nil {
 		logger.Info().Err(err).Msg("failed to update user")
 		return nil, status.Error(codes.Internal, InternalServerError)

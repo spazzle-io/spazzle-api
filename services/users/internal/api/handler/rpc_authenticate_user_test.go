@@ -9,7 +9,6 @@ import (
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 
 	"github.com/google/uuid"
-	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
 	authPb "github.com/spazzle-io/spazzle-api/services/proto/auth/auth/v1"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/users/users/v1"
 	mockdb "github.com/spazzle-io/spazzle-api/services/users/internal/db/mock"
@@ -351,18 +350,13 @@ func TestAuthenticateUser(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			deps := newTestDeps(t)
 
-			store := mockdb.NewMockStore(ctrl)
-			cache := mockcache.NewMockCache(ctrl)
-			authService := mockservices.NewMockAuthGrpcService(ctrl)
+			tc.buildStubs(deps.store, deps.authService)
 
-			tc.buildStubs(store, authService)
+			h := newTestHandler(deps)
 
-			handler := newTestHandler(store, cache, authService)
-
-			res, err := handler.AuthenticateUser(context.Background(), tc.req)
+			res, err := h.AuthenticateUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

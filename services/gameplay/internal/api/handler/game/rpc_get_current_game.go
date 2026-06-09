@@ -2,7 +2,13 @@ package game
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+
+	"github.com/rs/zerolog"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/eventbus"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
 
 	"buf.build/go/protovalidate"
 
@@ -30,10 +36,10 @@ func (h *Handler) GetCurrentGame(ctx context.Context, req *pb.GetCurrentGameRequ
 		return nil, status.Error(codes.InvalidArgument, handler.InvalidServerIdError)
 	}
 
-	var cached pb.GetCurrentGameResponse
-	err = h.GameCache.GetCurrentGame(ctx, serverID, &cached)
+	var cachedRes pb.GetCurrentGameResponse
+	err = h.GameCache.GetCurrentGame(ctx, serverID, &cachedRes)
 	if err == nil {
-		return &cached, nil
+		return &cachedRes, nil
 	}
 
 	currentGame, err := h.GfClient.GetGameState(serverID)
@@ -53,8 +59,11 @@ func (h *Handler) GetCurrentGame(ctx context.Context, req *pb.GetCurrentGameRequ
 		return nil, status.Error(codes.Internal, handler.InternalServerError)
 	}
 
+	lastRoundSummary := h.getLastRoundSummary(ctx, &logger, serverID, currentGame)
+
 	response := &pb.GetCurrentGameResponse{
-		Game: &currentGamePb,
+		Game:               &currentGamePb,
+		LastCompletedRound: lastRoundSummary,
 	}
 
 	if err := h.GameCache.SetCurrentGame(ctx, serverID, response); err != nil {
@@ -62,6 +71,50 @@ func (h *Handler) GetCurrentGame(ctx context.Context, req *pb.GetCurrentGameRequ
 	}
 
 	return response, nil
+}
+
+func (h *Handler) getLastRoundSummary(
+	ctx context.Context,
+	logger *zerolog.Logger,
+	gameServerID uuid.UUID,
+	currentGame *types.GameStateView,
+) *pb.RoundSummary {
+	if currentGame.CurrentRound <= 1 {
+		return nil
+	}
+
+	if currentGame.Phase == types.PhaseEndGame {
+		return nil
+	}
+
+	game := eventbus.GameIdentifier{
+		GameServerID: gameServerID,
+		GameID:       currentGame.GameID,
+	}
+
+	marker := eventbus.Marker{
+		Type:  eventbus.MarkerRoundEnded,
+		Round: currentGame.CurrentRound - 1,
+	}
+
+	prevRoundEndedMsg, err := h.Bus.GetMarkerMessage(ctx, game, eventbus.GameEventsStreamType, marker)
+	if err != nil {
+		logger.Warn().Err(err).Msg("error fetching last round ended msg")
+		return nil
+	}
+
+	if prevRoundEndedMsg == nil {
+		logger.Warn().Msg("last round ended msg not found")
+		return nil
+	}
+
+	var prevRoundEndedPayload gameevents.RoundEndedPayload
+	if err := json.Unmarshal(prevRoundEndedMsg.Payload, &prevRoundEndedPayload); err != nil {
+		logger.Warn().Err(err).Msg("failed to unmarshal last round ended payload")
+		return nil
+	}
+
+	return mapRoundSummaryToPb(prevRoundEndedPayload)
 }
 
 func validateGetCurrentGameRequest(req *pb.GetCurrentGameRequest) (violations []*errdetails.BadRequest_FieldViolation) {

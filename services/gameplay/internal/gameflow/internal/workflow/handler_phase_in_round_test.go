@@ -120,7 +120,7 @@ func (s *InRoundTestSuite) TestConfirmsArtist() {
 	s.Equal(types.PhaseInRound, capturedState.Phase)
 	s.Equal(types.SubPhaseConfirmArtist, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
@@ -227,7 +227,7 @@ func (s *InRoundTestSuite) TestWordSelected_AfterTimeout() {
 	s.NotEmpty(capturedState.CurrentWord)
 	s.Equal(selectedWord, capturedState.CurrentWord.Text)
 	s.Equal(selectedWordTokens, capturedState.CurrentWord.Tokens)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
@@ -340,7 +340,7 @@ func (s *InRoundTestSuite) TestWordSelected_ArtistProvided() {
 	s.NotEmpty(capturedState.CurrentWord)
 	s.Equal(selectedWord, capturedState.CurrentWord.Text)
 	s.Equal(selectedWordTokens, capturedState.CurrentWord.Tokens)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
@@ -433,7 +433,7 @@ func (s *InRoundTestSuite) TestBeginDrawingEventSent() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestEndDrawingEventSent() {
@@ -526,7 +526,7 @@ func (s *InRoundTestSuite) TestEndDrawingEventSent() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
@@ -630,8 +630,8 @@ func (s *InRoundTestSuite) TestHandlesCorrectGuesses() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Equal(2, capturedState.NumCorrectGuesses[DefaultRoundNumber])
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.CurrentRoundCorrectGuesses)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestSelectsNextArtist() {
@@ -733,7 +733,7 @@ func (s *InRoundTestSuite) TestSelectsNextArtist() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestSendsWordHints() {
@@ -838,7 +838,7 @@ func (s *InRoundTestSuite) TestSendsWordHints() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSent() {
@@ -959,7 +959,7 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistDisconnectSignalSen
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 1)
+	s.Equal(1, capturedState.NumActivePlayers)
 }
 
 func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
@@ -1078,5 +1078,5 @@ func (s *InRoundTestSuite) TestHandlesArtistDisconnect_ArtistLeft() {
 	s.Equal(types.SubPhaseDrawing, capturedState.SubPhase)
 	s.NotEmpty(capturedState.CurrentArtist)
 	s.NotEmpty(capturedState.CurrentWord)
-	s.Len(capturedState.Players, 1)
+	s.Equal(1, capturedState.NumActivePlayers)
 }

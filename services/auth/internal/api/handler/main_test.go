@@ -6,6 +6,11 @@ import (
 	"testing"
 	"time"
 
+	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
+	mockdb "github.com/spazzle-io/spazzle-api/services/auth/internal/db/mock"
+	"github.com/spazzle-io/spazzle-api/services/auth/internal/infra"
+	"go.uber.org/mock/gomock"
+
 	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 
 	"github.com/google/uuid"
@@ -15,12 +20,17 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/brianvoe/gofakeit/v7"
-	commonCache "github.com/spazzle-io/spazzle-api/libs/common/cache"
-	db "github.com/spazzle-io/spazzle-api/services/auth/internal/db/sqlc"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/token"
 	"github.com/spazzle-io/spazzle-api/services/auth/internal/util"
 	"github.com/stretchr/testify/require"
 )
+
+type testDeps struct {
+	ctrl       *gomock.Controller
+	store      *mockdb.MockStore
+	cache      *mockcache.MockCache
+	tokenMaker token.Maker
+}
 
 func getTestConfig() *util.Config {
 	return &util.Config{
@@ -38,14 +48,31 @@ func getTestConfig() *util.Config {
 	}
 }
 
-func newTestHandler(t *testing.T, store db.Store, cache commonCache.Cache) *Handler {
+func newTestDeps(t *testing.T) *testDeps {
+	t.Helper()
+
+	ctrl := gomock.NewController(t)
 	config := getTestConfig()
 
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	require.NoError(t, err)
 	require.NotEmpty(t, tokenMaker)
 
-	return New(config, store, cache, tokenMaker)
+	return &testDeps{
+		ctrl:       ctrl,
+		store:      mockdb.NewMockStore(ctrl),
+		cache:      mockcache.NewMockCache(ctrl),
+		tokenMaker: tokenMaker,
+	}
+}
+
+func newTestHandler(d *testDeps) *Handler {
+	return New(&infra.Resources{
+		Config:     getTestConfig(),
+		Store:      d.store,
+		Cache:      d.cache,
+		TokenMaker: d.tokenMaker,
+	})
 }
 
 func newContextWithBearerToken(

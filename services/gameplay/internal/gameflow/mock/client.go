@@ -107,15 +107,15 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 }
 
 // EjectPlayer mocks base method.
-func (m *MockClient) EjectPlayer(gameServerID, playerID, ejectorID uuid.UUID) {
+func (m *MockClient) EjectPlayer(gameServerID, playerID, ejector uuid.UUID) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "EjectPlayer", gameServerID, playerID, ejectorID)
+	m.ctrl.Call(m, "EjectPlayer", gameServerID, playerID, ejector)
 }
 
 // EjectPlayer indicates an expected call of EjectPlayer.
-func (mr *MockClientMockRecorder) EjectPlayer(gameServerID, playerID, ejectorID any) *gomock.Call {
+func (mr *MockClientMockRecorder) EjectPlayer(gameServerID, playerID, ejector any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EjectPlayer", reflect.TypeOf((*MockClient)(nil).EjectPlayer), gameServerID, playerID, ejectorID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EjectPlayer", reflect.TypeOf((*MockClient)(nil).EjectPlayer), gameServerID, playerID, ejector)
 }
 
 // Flush mocks base method.
@@ -199,15 +199,15 @@ func (mr *MockClientMockRecorder) RemovePlayers(gameServerID, playerIDs any) *go
 }
 
 // ReportPlayer mocks base method.
-func (m *MockClient) ReportPlayer(gameServerID, reporter, reported uuid.UUID) {
+func (m *MockClient) ReportPlayer(gameServerID, reporter, reportTarget uuid.UUID) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ReportPlayer", gameServerID, reporter, reported)
+	m.ctrl.Call(m, "ReportPlayer", gameServerID, reporter, reportTarget)
 }
 
 // ReportPlayer indicates an expected call of ReportPlayer.
-func (mr *MockClientMockRecorder) ReportPlayer(gameServerID, reporter, reported any) *gomock.Call {
+func (mr *MockClientMockRecorder) ReportPlayer(gameServerID, reporter, reportTarget any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportPlayer", reflect.TypeOf((*MockClient)(nil).ReportPlayer), gameServerID, reporter, reported)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportPlayer", reflect.TypeOf((*MockClient)(nil).ReportPlayer), gameServerID, reporter, reportTarget)
 }
 
 // SelectWord mocks base method.

@@ -83,7 +83,7 @@ func TestProcessTaskRecomputeTrending(t *testing.T) {
 
 			tc.buildStubs(store)
 
-			err := processor.ProcessTaskRecomputeTrending(context.Background(), nil)
+			err := processor.processTaskRecomputeTrending(context.Background(), nil)
 			tc.checkResponse(t, err)
 		})
 	}

@@ -1,7 +1,8 @@
 package workflow
 
 import (
-	"github.com/google/uuid"
+	"slices"
+
 	commonUtil "github.com/spazzle-io/spazzle-api/libs/common/util"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameevents"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/gameflow/types"
@@ -56,6 +57,8 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 
 		c.Receive(ctx, &sig)
 
+		// TODO: If endGame/endRound phase, don't accept new connections and return reason.
+		// Also ensure that disconnected players still receive their won pot but ejected players don't.
 		if state.Phase == types.PhaseEndGame {
 			return
 		}
@@ -69,7 +72,7 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 			}
 		} else {
 			for _, playerID := range sig.PlayerIDs {
-				if state.EjectedPlayers[playerID] {
+				if _, isEjected := state.EjectedPlayers[playerID]; isEjected {
 					payload.RejectedPlayers = append(payload.RejectedPlayers, gameevents.RejectedPlayer{
 						PlayerID: playerID,
 						Reason:   gameevents.RejectionReasonEjectedPlayer,
@@ -81,8 +84,16 @@ func handlePlayersJoinedSignal(ctx workflow.Context, state *GameState, notifyCh 
 					player.IsConnected = true
 					player.JoinedAt = workflow.Now(ctx).UTC()
 				} else {
+					playerIdx, err := commonUtil.IntToUint32(len(state.Players))
+					if err != nil {
+						state.Logger().Error("failed to compute player index",
+							"num_players", len(state.Players))
+						continue
+					}
+
 					state.Players[playerID] = &PlayerGameState{
 						PlayerID:    playerID,
+						PlayerIdx:   playerIdx,
 						StakeLost:   commonUtil.ZeroWei().String(),
 						IsConnected: true,
 						JoinedAt:    workflow.Now(ctx).UTC(),
@@ -124,6 +135,7 @@ func handlePlayersLeftSignal(ctx workflow.Context, state *GameState, notifyCh wo
 
 		c.Receive(ctx, &sig)
 
+		// TODO: Similar to player joined payload, return rejected players and reason.
 		if state.Phase == types.PhaseEndGame {
 			return
 		}
@@ -177,6 +189,8 @@ func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh w
 
 	selector.AddReceive(ch, func(c workflow.ReceiveChannel, more bool) {
 		var sig ClearPlayerReportsSignal
+		var payload gameevents.PlayerReportsClearedPayload
+
 		c.Receive(ctx, &sig)
 
 		if len(sig.PlayerIDs) == 0 {
@@ -184,12 +198,14 @@ func handleClearPlayerReports(ctx workflow.Context, state *GameState, notifyCh w
 		}
 
 		for _, playerID := range sig.PlayerIDs {
-			state.PlayerReports[playerID] = make(map[uuid.UUID]bool)
+			if _, exists := state.Players[playerID]; !exists {
+				continue
+			}
+
+			state.PlayerReportCounts[playerID] = 0
+			payload.PlayerIDs = append(payload.PlayerIDs, playerID)
 		}
 
-		payload := gameevents.PlayerReportsClearedPayload{
-			PlayerIDs: sig.PlayerIDs,
-		}
 		_, err := sendGameEvent(ctx, state, notifyCh, gameevents.TypePlayerReportsCleared, payload)
 		if err != nil {
 			state.Logger().Error("failed to send player reports cleared event", "error", err)
@@ -222,17 +238,17 @@ func handlePlayerEjections(ctx workflow.Context, state *GameState, notifyCh work
 			if player, exists := state.Players[ejection.PlayerID]; exists {
 				player.IsEjected = true
 				player.EjectedAt = workflow.Now(ctx).UTC()
-				state.EjectedPlayers[ejection.PlayerID] = true
+				state.EjectedPlayers[ejection.PlayerID] = struct{}{}
+
+				// TODO: Fine ejected player and reset player scores to zero
+
+				ejections = append(ejections, gameevents.PlayerEjection{
+					PlayerID:     ejection.PlayerID,
+					IsArtist:     state.CurrentArtist == ejection.PlayerID,
+					Ejector:      ejection.Ejector,
+					TotalReports: state.PlayerReportCounts[ejection.PlayerID],
+				})
 			}
-
-			// TODO: Fine ejected player and reset player scores to zero
-
-			ejections = append(ejections, gameevents.PlayerEjection{
-				PlayerID:     ejection.PlayerID,
-				IsArtist:     state.CurrentArtist == ejection.PlayerID,
-				EjectorID:    ejection.EjectorID,
-				TotalReports: len(state.PlayerReports[ejection.PlayerID]),
-			})
 		}
 
 		if len(ejections) == 0 {
@@ -405,47 +421,64 @@ func processPlayerReports(
 	var reports []gameevents.PlayerReport
 
 	for _, report := range signal.Reports {
-		if state.Players[report.ReporterID] == state.Players[report.ReportedID] {
+		reportedPlayerIdx := state.Players[report.ReportTarget].PlayerIdx
+		existingReporterTargets := state.PlayerReportsMade[report.Reporter]
+
+		if reporter, exists := state.Players[report.Reporter]; !exists || !isActivePlayer(reporter) {
+			state.Logger().Warn("invalid player report. invalid reporter",
+				"reporter", report.Reporter,
+				"is_reporter_connected", reporter.IsConnected,
+				"is_reporter_ejected", reporter.IsEjected)
+			continue
+		}
+
+		if reportTarget, exists := state.Players[report.ReportTarget]; !exists || !isActivePlayer(reportTarget) {
+			state.Logger().Warn("invalid player report. invalid report target",
+				"report_target", report.ReportTarget,
+				"is_report_target_connected", reportTarget.IsConnected,
+				"is_report_target_ejected", reportTarget.IsEjected)
+			continue
+		}
+
+		if report.Reporter == report.ReportTarget {
 			state.Logger().Warn(
 				"invalid player report. self reporting is not allowed",
-				"reporter", report.ReporterID, "reported", report.ReportedID,
+				"reporter", report.Reporter, "report_target", report.ReportTarget,
 			)
 			continue
 		}
 
-		_, reporterExists := state.Players[report.ReporterID]
-		_, reportedExists := state.Players[report.ReportedID]
-		if !reporterExists || !reportedExists {
-			state.Logger().Warn(
-				"invalid player report. player not in game",
-				"reporter", report.ReporterID, "reported", report.ReportedID,
-				"reporter_exists", reporterExists, "reported_exists", reportedExists,
-			)
+		if len(existingReporterTargets) > types.MaxPlayerReports {
+			state.Logger().Warn("reporter exceeded maximum allowed reports",
+				"reporter", report.Reporter, "max_allowed_reports", types.MaxPlayerReports)
 			continue
 		}
 
-		if state.PlayerReports[report.ReportedID] == nil {
-			state.PlayerReports[report.ReportedID] = make(map[uuid.UUID]bool)
-		}
-
-		if state.PlayerReports[report.ReportedID][report.ReporterID] {
+		if slices.Contains(existingReporterTargets, reportedPlayerIdx) {
 			state.Logger().Info("duplicate player report ignored",
-				"reporter", report.ReporterID, "reported", report.ReportedID)
+				"reporter", report.Reporter, "report_target", report.ReportTarget)
 			continue
 		}
 
-		state.PlayerReports[report.ReportedID][report.ReporterID] = true
-		numPlayerReports := len(state.PlayerReports[report.ReportedID])
+		if state.PlayerReportsMade[report.Reporter] == nil {
+			state.PlayerReportsMade[report.Reporter] = make([]uint32, 0)
+		}
+
+		state.PlayerReportCounts[report.ReportTarget]++
+		state.PlayerReportsMade[report.Reporter] = append(
+			state.PlayerReportsMade[report.Reporter], reportedPlayerIdx,
+		)
 
 		reports = append(reports, gameevents.PlayerReport{
-			ReportedID:   report.ReportedID,
-			ReporterID:   report.ReporterID,
-			IsArtist:     state.CurrentArtist == report.ReportedID,
-			TotalReports: numPlayerReports,
+			Reporter:       report.Reporter,
+			ReportedPlayer: report.ReportTarget,
+			IsArtist:       state.CurrentArtist == report.ReportTarget,
+			TotalReports:   state.PlayerReportCounts[report.ReportTarget],
 		})
 
 		state.Logger().Info("player report recorded",
-			"reporter", report.ReporterID, "reported", report.ReportedID, "total_reports", numPlayerReports)
+			"reporter", report.Reporter, "report_target", report.ReportTarget,
+			"total_reports", state.PlayerReportCounts[report.ReportTarget])
 	}
 
 	if len(reports) == 0 {

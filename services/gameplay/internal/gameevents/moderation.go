@@ -25,14 +25,14 @@ type PlayerWarnedPayload struct {
 }
 
 type ReportPlayerPayload struct {
-	ReportedID uuid.UUID `json:"reported_id"`
+	ReportTarget uuid.UUID `json:"report_target"`
 }
 
 type PlayerReport struct {
-	ReportedID   uuid.UUID `json:"reported_id"`
-	ReporterID   uuid.UUID `json:"reporter_id"`
-	IsArtist     bool      `json:"is_artist"`
-	TotalReports int       `json:"total_reports"`
+	ReportedPlayer uuid.UUID `json:"reported_player"`
+	Reporter       uuid.UUID `json:"reporter"`
+	IsArtist       bool      `json:"is_artist"`
+	TotalReports   uint32    `json:"total_reports"`
 }
 
 type PlayersReportedPayload struct {
@@ -55,8 +55,8 @@ type EjectPlayerPayload struct {
 type PlayerEjection struct {
 	PlayerID     uuid.UUID `json:"player_id"`
 	IsArtist     bool      `json:"is_artist"`
-	EjectorID    uuid.UUID `json:"ejector_id"`
-	TotalReports int       `json:"total_reports"`
+	Ejector      uuid.UUID `json:"ejector"`
+	TotalReports uint32    `json:"total_reports"`
 }
 
 type PlayersEjectedPayload struct {

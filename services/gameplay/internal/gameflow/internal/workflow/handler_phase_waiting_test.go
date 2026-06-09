@@ -79,7 +79,7 @@ func (s *PhaseWaitingTestSuite) TestTransitionsToPhasePrepareRound() {
 
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhasePrepareRound, capturedState.Phase)
-	s.Len(capturedState.Players, 2)
+	s.Equal(2, capturedState.NumActivePlayers)
 }
 
 func (s *PhaseWaitingTestSuite) TestNotEnoughPlayers_StaysInWaitingPhase() {
@@ -137,7 +137,7 @@ func (s *PhaseWaitingTestSuite) TestNotEnoughPlayers_StaysInWaitingPhase() {
 
 	s.Equal(gameID, capturedState.GameID)
 	s.Equal(types.PhaseWaiting, capturedState.Phase)
-	s.Len(capturedState.Players, 1)
+	s.Equal(1, capturedState.NumActivePlayers)
 }
 
 func TestHasEnoughPlayers(t *testing.T) {

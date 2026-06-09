@@ -1419,7 +1419,7 @@
         },
         "numRounds": {
           "type": "integer",
-          "format": "int32"
+          "format": "int64"
         },
         "currentArtist": {
           "type": "string"
@@ -1537,6 +1537,9 @@
       "properties": {
         "game": {
           "$ref": "#/definitions/v1CurrentGameInfo"
+        },
+        "lastCompletedRound": {
+          "$ref": "#/definitions/v1RoundSummary"
         }
       }
     },
@@ -1987,6 +1990,67 @@
         },
         "correlationId": {
           "type": "string"
+        }
+      }
+    },
+    "v1RoundStanding": {
+      "type": "object",
+      "properties": {
+        "playerId": {
+          "type": "string"
+        },
+        "guessTimeMs": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tier": {
+          "type": "string"
+        },
+        "roundPosition": {
+          "type": "string",
+          "format": "int64"
+        },
+        "roundPoints": {
+          "type": "string",
+          "format": "int64"
+        },
+        "roundStakeLost": {
+          "type": "string"
+        },
+        "totalPoints": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalStakeLost": {
+          "type": "string"
+        },
+        "provisionalPayout": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RoundSummary": {
+      "type": "object",
+      "properties": {
+        "round": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "artistId": {
+          "type": "string"
+        },
+        "word": {
+          "type": "string"
+        },
+        "totalPot": {
+          "type": "string"
+        },
+        "standings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoundStanding"
+          }
         }
       }
     },

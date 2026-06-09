@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -102,11 +103,13 @@ RunGRPCServer starts a gRPC server on the given address. It accepts a slice of
 GrpcMiddlewareProvider to chain unary interceptors, and a slice of GrpcServiceRegistrar
 to register service implementations.
 
-Panics on failure to listen or serve.
+Returns an error on failure to listen or serve.
 
 Example usage:
 
-	server.RunGRPCServer(
+	err := server.RunGRPCServer(
+		ctx,
+		waitGroup,
 	    ":9090",
 		[]GrpcMiddlewareProvider{
 			func() grpc.UnaryServerInterceptor { return middleware.GrpcExtractMetadata },
@@ -125,7 +128,7 @@ func RunGRPCServer(
 	address string,
 	middlewareProviders []GrpcMiddlewareProvider,
 	serviceRegistrars []GrpcServiceRegistrar,
-) {
+) error {
 	interceptors := []grpc.UnaryServerInterceptor{middleware.GrpcExtractMetadata}
 
 	for _, provider := range middlewareProviders {
@@ -144,7 +147,7 @@ func RunGRPCServer(
 
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create gRPC listener")
+		return fmt.Errorf("failed to listen on %s: %w", address, err)
 	}
 
 	waitGroup.Go(func() error {
@@ -170,13 +173,15 @@ func RunGRPCServer(
 
 		return nil
 	})
+
+	return nil
 }
 
 /*
 RunGatewayServer starts an HTTP server with gRPC-Gateway routing, optional HTTP routes,
 and a custom HTTP middleware stack. It also mounts Swagger docs in development mode.
 
-Panics on failure to listen or serve.
+Returns an error on failure to listen or serve.
 
 Parameters:
   - address: HTTP server listen address
@@ -187,9 +192,12 @@ Parameters:
 
 Example usage:
 
-	server.RunGatewayServer(
+	err := server.RunGatewayServer(
+		ctx,
+		waitGroup,
 	    ":8080",
 	    true,
+		[]string{"http://*.spazzle.io"},
 	    []server.GatewayRouteRegistrar{
 	        registerAuthGatewayHandler(authServer),
 	    },
@@ -208,7 +216,7 @@ func RunGatewayServer(
 	routeRegistrars []GatewayRouteRegistrar,
 	httpRouteRegistrars []HttpRouteRegistrar,
 	middlewareBuilder HttpMiddlewareBuilder,
-) {
+) error {
 	opt := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 		MarshalOptions: protojson.MarshalOptions{
 			EmitDefaultValues: true,
@@ -223,7 +231,7 @@ func RunGatewayServer(
 
 	for _, registrar := range routeRegistrars {
 		if err := registrar(ctx, grpcMux); err != nil {
-			log.Fatal().Err(err).Msg("failed to register gateway route")
+			return fmt.Errorf("failed to register gateway route: %w", err)
 		}
 	}
 
@@ -235,7 +243,11 @@ func RunGatewayServer(
 	}
 
 	if isDevelopmentEnvironment {
-		mux = serveSwagger(mux)
+		var err error
+		mux, err = serveSwagger(mux)
+		if err != nil {
+			return err
+		}
 	}
 
 	handler := middleware.HTTPExtractMetadata(
@@ -268,9 +280,14 @@ func RunGatewayServer(
 		IdleTimeout:  120 * time.Second,
 	}
 
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return fmt.Errorf("failed to listen on HTTP address %s: %w", address, err)
+	}
+
 	waitGroup.Go(func() error {
 		log.Info().Msgf("started HTTP gateway server at %s", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.Serve(listener); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				return nil
 			}
@@ -285,23 +302,28 @@ func RunGatewayServer(
 		<-ctx.Done()
 		log.Info().Msg("shutting down HTTP server")
 
-		if err := srv.Shutdown(context.Background()); err != nil {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
 			log.Error().Err(err).Msg("failed to shutdown HTTP server")
 		}
 
 		log.Info().Msg("HTTP server stopped")
 		return nil
 	})
+
+	return nil
 }
 
-func serveSwagger(mux *http.ServeMux) *http.ServeMux {
+func serveSwagger(mux *http.ServeMux) (*http.ServeMux, error) {
 	statikFS, err := fs.New()
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create statik fs")
+		return nil, fmt.Errorf("failed to create statik fs: %v", err)
 	}
 
 	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
 	mux.Handle("/swagger/", swaggerHandler)
 
-	return mux
+	return mux, nil
 }

@@ -327,7 +327,7 @@ func (gs *GameServer) handleReportPlayer(c *Client, msg *WsMessage) {
 		return
 	}
 
-	gs.GfClient.ReportPlayer(gs.serverID, c.userID, payload.ReportedID)
+	gs.GfClient.ReportPlayer(gs.serverID, c.userID, payload.ReportTarget)
 }
 
 func (gs *GameServer) handleClearPlayerReports(c *Client, msg *WsMessage) {

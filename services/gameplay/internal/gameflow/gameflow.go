@@ -13,9 +13,9 @@ type Client interface {
 
 	AddPlayers(gameServerID uuid.UUID, gameID uuid.UUID, playerIDs []uuid.UUID)
 	RemovePlayers(gameServerID uuid.UUID, playerIDs []uuid.UUID)
-	ReportPlayer(gameServerID uuid.UUID, reporter uuid.UUID, reported uuid.UUID)
+	ReportPlayer(gameServerID uuid.UUID, reporter uuid.UUID, reportTarget uuid.UUID)
 	ClearPlayerReports(gameServerID uuid.UUID, playerID uuid.UUID)
-	EjectPlayer(gameServerID uuid.UUID, playerID uuid.UUID, ejectorID uuid.UUID)
+	EjectPlayer(gameServerID uuid.UUID, playerID uuid.UUID, ejector uuid.UUID)
 
 	SelectWord(gameServerID uuid.UUID, gameID uuid.UUID, currentRound uint8, word string) error
 	RecordCorrectGuesses(gameServerID uuid.UUID, gameID uuid.UUID, currentRound uint8, correctGuesses []types.CorrectGuess)

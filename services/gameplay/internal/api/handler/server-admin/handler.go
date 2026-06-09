@@ -3,7 +3,7 @@ package server_admin
 import (
 	"time"
 
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/infra"
 
 	commonMiddleware "github.com/spazzle-io/spazzle-api/libs/common/middleware"
 	pb "github.com/spazzle-io/spazzle-api/services/proto/gameplay/gameplay/v1"
@@ -12,12 +12,12 @@ import (
 type Handler struct {
 	pb.UnimplementedServerAdminServiceServer
 
-	*deps.APIServerDeps
+	*infra.Resources
 }
 
-func New(deps *deps.APIServerDeps) *Handler {
+func New(res *infra.Resources) *Handler {
 	return &Handler{
-		APIServerDeps: deps,
+		Resources: res,
 	}
 }
 

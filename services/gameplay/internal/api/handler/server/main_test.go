@@ -3,12 +3,13 @@ package server
 import (
 	"testing"
 
+	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/infra"
+
 	mocktreasury "github.com/spazzle-io/spazzle-api/services/gameplay/internal/treasury/mock"
 
 	commonConfig "github.com/spazzle-io/spazzle-api/libs/common/config"
 
 	mockcache "github.com/spazzle-io/spazzle-api/libs/common/cache/mock"
-	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/api/deps"
 	mockdb "github.com/spazzle-io/spazzle-api/services/gameplay/internal/db/mock"
 	mockservices "github.com/spazzle-io/spazzle-api/services/gameplay/internal/services/mock"
 	"github.com/spazzle-io/spazzle-api/services/gameplay/internal/util"
@@ -47,7 +48,7 @@ func newTestDeps(t *testing.T) *testDeps {
 }
 
 func newTestHandler(d *testDeps) *Handler {
-	return New(&deps.APIServerDeps{
+	return New(&infra.Resources{
 		Config:         getTestConfig(),
 		Store:          d.store,
 		Cache:          d.cache,

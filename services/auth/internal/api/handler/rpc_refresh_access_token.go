@@ -16,7 +16,7 @@ func (h *Handler) RefreshAccessToken(
 	ctx context.Context,
 	_ *pb.RefreshAccessTokenRequest,
 ) (*pb.RefreshAccessTokenResponse, error) {
-	tkPayload, err := middleware.AuthorizeToken(ctx, h.tokenMaker, token.RefreshToken, nil)
+	tkPayload, err := middleware.AuthorizeToken(ctx, h.TokenMaker, token.RefreshToken, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("could not authorize refresh token")
 		return nil, status.Error(codes.Unauthenticated, UnauthorizedAccessError)
@@ -24,7 +24,7 @@ func (h *Handler) RefreshAccessToken(
 
 	logger := log.With().Str("user_id", tkPayload.UserID.String()).Logger()
 
-	session, err := h.store.GetSessionById(ctx, tkPayload.ID)
+	session, err := h.Store.GetSessionById(ctx, tkPayload.ID)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not get session")
 		return nil, status.Error(codes.Internal, InternalServerError)
@@ -35,8 +35,8 @@ func (h *Handler) RefreshAccessToken(
 		return nil, status.Error(codes.PermissionDenied, UnauthorizedAccessError)
 	}
 
-	accessToken, accessTokenPayload, err := h.tokenMaker.CreateToken(
-		tkPayload.UserID, tkPayload.WalletAddress, tkPayload.Role, token.AccessToken, h.config.AccessTokenDuration,
+	accessToken, accessTokenPayload, err := h.TokenMaker.CreateToken(
+		tkPayload.UserID, tkPayload.WalletAddress, tkPayload.Role, token.AccessToken, h.Config.AccessTokenDuration,
 	)
 	if err != nil {
 		logger.Error().Err(err).Msg("could not create access token")
